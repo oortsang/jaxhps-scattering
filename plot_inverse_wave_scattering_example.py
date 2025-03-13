@@ -14,7 +14,14 @@ from scipy.io import loadmat
 import pandas as pd
 
 from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.plotting import get_discrete_cmap, parula_cmap
+from hps.src.plotting import (
+    get_discrete_cmap,
+    parula_cmap,
+    make_scaled_colorbar,
+    FONTSIZE_3,
+    FIGSIZE_3,
+    TICKSIZE_3,
+)
 from hps.src.quadrature.quad_2D.interpolation import (
     interp_from_nonuniform_hps_to_regular_grid,
 )
@@ -59,9 +66,10 @@ def plot_uscat(
 ) -> None:
     uscat_real_fp = os.path.join(plots_dir, "utot_ground_truth_real.svg")
     logging.info("plot_uscat: Saving uscat plot to %s", uscat_real_fp)
-    plt.imshow(
+    fig, ax = plt.subplots(figsize=(FIGSIZE_3, FIGSIZE_3))
+    im = ax.imshow(
         uscat_regular.real,
-        cmap=parula_cmap,
+        cmap="bwr",
         vmin=-1 * uscat_regular.real.max(),
         vmax=uscat_regular.real.max(),
         extent=(XMIN, XMAX, YMIN, YMAX),
@@ -69,18 +77,27 @@ def plot_uscat(
     plt.plot(observation_pts[:, 0], observation_pts[:, 1], "x", color="black")
 
     # plt.plot(observation_pts[:, 0], observation_pts[:, 1], "x", color="black")
-    plt.colorbar()
+    make_scaled_colorbar(im, ax, fontsize=TICKSIZE_3)
+    # Make x and y ticks = [-1, 0, 1]
+    ax.set_xticks([-1, 0, 1])
+    ax.set_yticks([-1, 0, 1])
+    # Make the ticks the correct size
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_3)
     plt.savefig(uscat_real_fp, bbox_inches="tight")
     plt.clf()
 
     uscat_abs_fp = os.path.join(plots_dir, "utot_ground_truth_abs.svg")
     logging.info("plot_uscat: Saving uscat plot to %s", uscat_abs_fp)
-    plt.imshow(
+    ax = plt.gca()
+    im = ax.imshow(
         jnp.abs(uscat_regular),
         cmap="hot",
         extent=(XMIN, XMAX, YMIN, YMAX),
     )
-    plt.colorbar()
+    make_scaled_colorbar(im, ax, fontsize=TICKSIZE_3)
+    ax.set_xticks([-1, 0, 1])
+    ax.set_yticks([-1, 0, 1])
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_3)
     plt.savefig(uscat_abs_fp, bbox_inches="tight")
     plt.clf()
 
@@ -90,18 +107,16 @@ def plot_iterates(iterates: jnp.array, plots_dir: str, q_evals: jnp.array) -> No
     Make a plot of the evaluations of the ground-truth q and then draw arrows showing the iterates.
     """
 
-    fig, ax = plt.subplots(figsize=(5, 5))
-    FONTSIZE = 11
+    fig, ax = plt.subplots(figsize=(FIGSIZE_3, FIGSIZE_3))
     CAPSIZE = 2
     THICKNESS = 1.2
 
     # plot q
-    plt.imshow(q_evals, cmap=parula_cmap, extent=(XMIN, XMAX, YMIN, YMAX))
-    plt.colorbar()
+    im = ax.imshow(q_evals, cmap="plasma", extent=(XMIN, XMAX, YMIN, YMAX))
 
     # The wavelength is 2pi / K. Plot a white bar with the wavelength in the bottom-right corner.
     wavelength = (2 * np.pi) / K
-    ax.text(0.6, -0.7, "$\\lambda$", fontsize=FONTSIZE, color="white")
+    ax.text(0.6, -0.7, "$\\lambda$", fontsize=FONTSIZE_3, color="white")
 
     # Below lambda, plot a line with caps with length 1/16
     ax.errorbar(
@@ -144,167 +159,23 @@ def plot_iterates(iterates: jnp.array, plots_dir: str, q_evals: jnp.array) -> No
             zorder=4,
         )
 
-    # First one we want to put $t=0$ slightly left of the iterate
-    # GAP_0 = 0.05
-    # ax.text(
-    #     iterate_0[0] - GAP_0,
-    #     iterate_0[1],
-    #     f"$t={0}$ ",
-    #     fontsize=FONTSIZE,
-    #     color="white",
-    #     ha="right",
-    #     va="bottom",
-    # )
-
-    # # Last one we want to put $t=0$ slightly right of the iterate
-    # ax.text(
-    #     iterate_0[-2] + GAP_0,
-    #     iterate_0[-1],
-    #     f" $t={0}$",
-    #     fontsize=FONTSIZE,
-    #     color="white",
-    #     ha="left",
-    #     va="top",
-    # )
-
-    # # Middle two, put $t=0$ at T_0_A and draw arrows
-    # GAP = 0.8
-    # HEADWIDTH = 0.025
-    # HEADLENGTH = 0.025
-    # WIDTH = 7e-04
-    # T_0_A = [0.0, 0.5]
-    # ax.text(
-    #     T_0_A[0],
-    #     T_0_A[1],
-    #     f"$t=0$",
-    #     fontsize=FONTSIZE,
-    #     color="white",
-    #     ha="left",
-    #     va="bottom",
-    # )
-    # # Draw an arrow from T_0_A to iterate_0
-    # ax.arrow(
-    #     T_0_A[0],
-    #     T_0_A[1],
-    #     (iterate_0[2] - T_0_A[0]) * GAP,
-    #     (iterate_0[3] - T_0_A[1]) * GAP,
-    #     width=WIDTH,
-    #     head_width=HEADWIDTH,
-    #     head_length=HEADLENGTH,
-    #     length_includes_head=True,
-    #     fc="white",
-    #     ec="white",
-    #     zorder=4,
-    # )
-    # ax.arrow(
-    #     T_0_A[0],
-    #     T_0_A[1],
-    #     (iterate_0[4] - T_0_A[0]) * GAP,
-    #     (iterate_0[5] - T_0_A[1]) * GAP,
-    #     width=WIDTH,
-    #     head_width=HEADWIDTH,
-    #     head_length=HEADLENGTH,
-    #     length_includes_head=True,
-    #     fc="white",
-    #     ec="white",
-    #     zorder=4,
-    # )
-
-    # # Draw $t=20$ at T_20_A and draw an arrow to iterate_20
-    # iterate_20 = iterates[-1, :]
-    # T_20_A = [-0.5, 0.15]
-    # ax.text(
-    #     T_20_A[0],
-    #     T_20_A[1],
-    #     f"$t=20$",
-    #     fontsize=FONTSIZE,
-    #     color="white",
-    #     ha="right",
-    #     va="bottom",
-    # )
-    # ax.arrow(
-    #     T_20_A[0],
-    #     T_20_A[1],
-    #     (iterate_20[4] - T_20_A[0]) * GAP,
-    #     (iterate_20[5] - T_20_A[1]) * GAP,
-    #     width=WIDTH,
-    #     head_width=HEADWIDTH,
-    #     head_length=HEADLENGTH,
-    #     length_includes_head=True,
-    #     fc="white",
-    #     ec="white",
-    #     zorder=4,
-    # )
-
-    # # Draw $t=20$ at T_20_B and draw an arrow to iterate_20
-    # T_20_B = [-0.5, -0.5]
-    # ax.text(
-    #     T_20_B[0],
-    #     T_20_B[1],
-    #     f"$t=20$",
-    #     fontsize=FONTSIZE,
-    #     color="white",
-    #     ha="right",
-    #     va="top",
-    # )
-    # ax.arrow(
-    #     T_20_B[0],
-    #     T_20_B[1],
-    #     (iterate_20[6] - T_20_B[0]) * GAP,
-    #     (iterate_20[7] - T_20_B[1]) * GAP,
-    #     width=WIDTH,
-    #     head_width=HEADWIDTH,
-    #     head_length=HEADLENGTH,
-    #     length_includes_head=True,
-    #     fc="white",
-    #     ec="white",
-    #     zorder=4,
-    # )
-
-    # # Draw $t=20$ at T_20_C and draw two arrows to iterate_20
-    # T_20_C = [0.6, 0.1]
-    # ax.text(
-    #     T_20_C[0],
-    #     T_20_C[1],
-    #     f"$t=20$",
-    #     fontsize=FONTSIZE,
-    #     color="white",
-    #     ha="left",
-    #     va="bottom",
-    # )
-    # ax.arrow(
-    #     T_20_C[0],
-    #     T_20_C[1],
-    #     (iterate_20[0] - T_20_C[0]) * GAP,
-    #     (iterate_20[1] - T_20_C[1]) * GAP,
-    #     width=WIDTH,
-    #     head_width=HEADWIDTH,
-    #     head_length=HEADLENGTH,
-    #     length_includes_head=True,
-    #     fc="white",
-    #     ec="white",
-    #     zorder=4,
-    # )
-    # ax.arrow(
-    #     T_20_C[0],
-    #     T_20_C[1],
-    #     (iterate_20[2] - T_20_C[0]) * GAP,
-    #     (iterate_20[3] - T_20_C[1]) * GAP,
-    #     width=WIDTH,
-    #     head_width=HEADWIDTH,
-    #     head_length=HEADLENGTH,
-    #     length_includes_head=True,
-    #     fc="white",
-    #     ec="white",
-    #     zorder=4,
-    # )
-    # Plot the iterates
     n_q = iterates.shape[1] // 2
     for j in range(n_q):
         # plot arrows for iterates
         plt.plot(
-            iterates[:, 2 * j], iterates[:, 2 * j + 1], "o-", color="red", markersize=4
+            iterates[:, 2 * j],
+            iterates[:, 2 * j + 1],
+            "o-",
+            color="mediumseagreen",
+            markersize=4,
         )
+
+    # Set xticks to [-1, 0, 1]
+    ax.set_xticks([-1, 0, 1])
+    ax.set_yticks([-1, 0, 1])
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_3)
+
+    make_scaled_colorbar(im, ax, fontsize=TICKSIZE_3)
 
     fp = os.path.join(plots_dir, "iterates.svg")
     logging.info("plot_iterates: Saving iterates plot to %s", fp)
@@ -313,21 +184,26 @@ def plot_iterates(iterates: jnp.array, plots_dir: str, q_evals: jnp.array) -> No
 
 
 def plot_residuals(residuals: jnp.array, plots_dir: str) -> None:
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(FIGSIZE_3, FIGSIZE_3))
+
+    sqrt_residuals = jnp.sqrt(residuals)
 
     c = get_discrete_cmap(3, "parula")
-    plt.plot(residuals, color=c[0])
+    plt.plot(sqrt_residuals, color=c[0])
 
     plt.yscale("log")
-    plt.xlabel("Iteration $t$", fontsize=20)
+    plt.xlabel("Iteration $t$", fontsize=FONTSIZE_3)
     plt.ylabel(
-        "$ \\| \\mathcal{F}[\\theta^*] - \\mathcal{F}[\\theta_t] \\|_2^2$", fontsize=20
+        "$ \\| \\mathcal{F}[\\theta^*] - \\mathcal{F}[\\theta_t] \\|_2$",
+        fontsize=FONTSIZE_3,
     )
     # Make the x-ticks integers [0, 5, 10, 15]
     plt.xticks(np.arange(0, 20, 5))
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_3)
     # Turn off the top and right spines
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["right"].set_visible(False)
+    plt.grid()
 
     plt.savefig(os.path.join(plots_dir, "residuals.svg"), bbox_inches="tight")
     plt.clf()

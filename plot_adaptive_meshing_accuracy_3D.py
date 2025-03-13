@@ -13,7 +13,13 @@ logging.getLogger("matplotlib.font_manager").disabled = True
 logging.getLogger("jax").setLevel(logging.WARNING)
 
 from hps.src.logging_utils import FMT, TIMEFMT, DATESTR
-from hps.src.plotting import get_discrete_cmap, plot_func_with_grid
+from hps.src.plotting import (
+    get_discrete_cmap,
+    plot_func_with_grid,
+    FIGSIZE_2,
+    FONTSIZE_2,
+    TICKSIZE_2,
+)
 from hps.accuracy_checks.test_cases_3D import (
     d_xx_adaptive_meshing_data_fn,
     d_yy_adaptive_meshing_data_fn,
@@ -27,8 +33,6 @@ K_MESH_TIMES = "mesh_times"
 K_LOCAL_SOLVE_TIMES = "local_solve_times"
 K_BUILD_TIMES = "build_times"
 K_DOWN_PASS_TIMES = "down_pass_times"
-
-LABELSIZE = 20
 
 
 def setup_args() -> argparse.Namespace:
@@ -88,9 +92,9 @@ def runtime_bar_chart(
     # set ylim 1, 10^3
     ax.set_ylim(1, 10**2)
     ax.set_yscale("log")
-    ax.set_xlabel("Tolerance", fontsize=LABELSIZE)
-    ax.set_ylabel("Time (s)", fontsize=LABELSIZE)
-    ax.set_title("Runtime Breakdown", fontsize=LABELSIZE)
+    ax.set_xlabel("Tolerance", fontsize=FONTSIZE_2)
+    ax.set_ylabel("Time (s)", fontsize=FONTSIZE_2)
+    ax.set_title("Runtime Breakdown", fontsize=FONTSIZE_2)
     ax.legend()
     ax.grid()
     fig.tight_layout()
@@ -118,8 +122,8 @@ def plot_tol_vs_error(
         ax.plot(tol_vals[i], tol_vals[i], "--", color="black")
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Tolerance", fontsize=LABELSIZE)
-    ax.set_ylabel(f"Relative {nrm_str} Error", fontsize=LABELSIZE)
+    ax.set_xlabel("Tolerance", fontsize=FONTSIZE_2)
+    ax.set_ylabel(f"Relative {nrm_str} Error", fontsize=FONTSIZE_2)
 
     # Set top and right spines invisible
     ax.spines["top"].set_visible(False)
@@ -155,7 +159,7 @@ def plot_different_meshing_strats(
         plot_dir (str): _description_
     """
 
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(FIGSIZE_2, FIGSIZE_2))
 
     # Get cmap
     cmap = get_discrete_cmap(len(p_vals_adaptive), "parula")
@@ -187,12 +191,14 @@ def plot_different_meshing_strats(
     ax.set_xscale("log")
     ax.set_yscale("log")
 
-    ax.set_ylabel(f"Relative {nrm_str} Error", fontsize=LABELSIZE)
-    ax.set_xlabel("Runtime (s)", fontsize=LABELSIZE)
+    ax.set_ylabel(f"Relative {nrm_str} Error", fontsize=FONTSIZE_2)
+    ax.set_xlabel("Runtime (s)", fontsize=FONTSIZE_2)
+
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_2)
 
     # Set top and right spines invisible
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["right"].set_visible(False)
 
     ax.grid()
     ax.legend()
@@ -319,19 +325,46 @@ def main(args: argparse.Namespace) -> None:
     logging.debug("corners_x shape: %s", corners_x.shape)
     fp_x = os.path.join(args.plot_dir, "source_with_grid_x.svg")
     plot_func_with_grid(
-        eval_pts_x, corners_x, "$x_2$", "$x_3$", fp_x, source_fn, bwr_cmap=False
+        eval_pts_x,
+        corners_x,
+        "$x_2$",
+        "$x_3$",
+        fp_x,
+        source_fn,
+        bwr_cmap=False,
+        figsize=FIGSIZE_2,
+        fontsize=FONTSIZE_2,
+        ticksize=TICKSIZE_2,
     )
 
     corners_y = mesh_dd["y_leaf_corners"][:, :, [0, 2]]
     fp_y = os.path.join(args.plot_dir, "source_with_grid_y.svg")
     plot_func_with_grid(
-        eval_pts_y, corners_y, "$x_1$", "$x_3$", fp_y, source_fn, bwr_cmap=False
+        eval_pts_y,
+        corners_y,
+        "$x_1$",
+        "$x_3$",
+        fp_y,
+        source_fn,
+        bwr_cmap=False,
+        figsize=FIGSIZE_2,
+        fontsize=FONTSIZE_2,
+        ticksize=TICKSIZE_2,
     )
 
     corners_z = mesh_dd["z_leaf_corners"][:, :, [0, 1]]
     fp_z = os.path.join(args.plot_dir, "source_with_grid_z.svg")
     plot_func_with_grid(
-        eval_pts_z, corners_z, "$x_1$", "$x_2$", fp_z, source_fn, bwr_cmap=False
+        eval_pts_z,
+        corners_z,
+        "$x_1$",
+        "$x_2$",
+        fp_z,
+        source_fn,
+        bwr_cmap=False,
+        figsize=FIGSIZE_2,
+        fontsize=FONTSIZE_2,
+        ticksize=TICKSIZE_2,
     )
 
     logging.info("Finished")

@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import jax.numpy as jnp
 from matplotlib import cm, colors
 from scipy.interpolate import LinearNDInterpolator
@@ -14,6 +15,16 @@ plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern Roman"
 
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
+# Size in inches of figures that end up three-across and two-across in the paper. They will be scaled down in the paper.
+FIGSIZE_3 = 5
+FIGSIZE_2 = 5
+
+FONTSIZE_3 = 16
+FONTSIZE_2 = 17
+
+TICKSIZE_3 = 15
+TICKSIZE_2 = 11
+
 
 def plot_func_with_grid(
     eval_pts: jnp.array,
@@ -23,6 +34,10 @@ def plot_func_with_grid(
     plot_fp: str,
     f: Callable[[jnp.array], jnp.array],
     bwr_cmap: bool = False,
+    line_color: str = "white",
+    figsize: float = FIGSIZE_3,
+    fontsize: float = FONTSIZE_3,
+    ticksize: float = TICKSIZE_3,
 ) -> None:
     """
     Plot the function with the adaptive grid overlaid.
@@ -38,7 +53,7 @@ def plot_func_with_grid(
     f_vals = f(eval_pts)
 
     # Plot the function
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(figsize, figsize))
 
     if corners is None:
         xmin = -1.0
@@ -46,12 +61,19 @@ def plot_func_with_grid(
         ymin = -1.0
         ymax = 1.0
         extent = [xmin, xmax, ymin, ymax]
+        ax.set_xticks([-1, 0, 1])
+        ax.set_yticks([-1, 0, 1])
     else:
         xmin = corners[:, 0, 0].min()
         xmax = corners[:, 1, 0].max()
         ymin = corners[:, 0, 1].min()
         ymax = corners[:, 1, 1].max()
         extent = [xmin, xmax, ymin, ymax]
+        xmid = (xmin + xmax) / 2
+        ymid = (ymin + ymax) / 2
+        ax.set_xticks([xmin, xmid, xmax])
+        ax.set_yticks([ymin, ymid, ymax])
+    ax.tick_params(axis="both", which="major", labelsize=ticksize)
 
     if bwr_cmap:
         min_val = f_vals.min()
@@ -61,9 +83,8 @@ def plot_func_with_grid(
         im = ax.imshow(f_vals, extent=extent, origin="lower", cmap="bwr", norm=norm)
         line_color = "black"
     else:
-        im = ax.imshow(f_vals, extent=extent, origin="lower", cmap=parula_cmap)
-        line_color = "black"
-    fig.colorbar(im, ax=ax)
+        im = ax.imshow(f_vals, extent=extent, origin="lower", cmap="plasma")
+    make_scaled_colorbar(im, ax, fontsize=ticksize)
 
     # Plot the grid
     if corners is not None:
@@ -77,8 +98,8 @@ def plot_func_with_grid(
             ax.plot(x, y, "-", color=line_color, linewidth=LINEWIDTH)
 
     # Set the labels
-    ax.set_xlabel(plt_xlabel, fontsize=LABELSIZE)
-    ax.set_ylabel(plt_ylabel, fontsize=LABELSIZE)
+    ax.set_xlabel(plt_xlabel, fontsize=fontsize)
+    ax.set_ylabel(plt_ylabel, fontsize=fontsize)
 
     # Save the figure
     plt.savefig(plot_fp, bbox_inches="tight")
@@ -371,6 +392,9 @@ def plot_field_for_wave_scattering_experiment(
     title: str = None,
     save_fp: str = None,
     ax: plt.Axes = None,
+    figsize: float = FIGSIZE_3,
+    fontsize: float = FONTSIZE_3,
+    ticksize: float = TICKSIZE_3,
 ) -> None:
     """
     Expect field to have shape (n,n) and target_pts to have shape (n, n, 2).
@@ -378,7 +402,7 @@ def plot_field_for_wave_scattering_experiment(
     bool_create_ax = ax is None
 
     if bool_create_ax:
-        fig, ax = plt.subplots(figsize=(5, 5))
+        fig, ax = plt.subplots(figsize=(figsize, figsize))
 
     extent = [
         target_pts[0, 0, 0],
@@ -394,7 +418,7 @@ def plot_field_for_wave_scattering_experiment(
     )
 
     if use_bwr_cmap:
-        max_val = jnp.max(jnp.abs(field))
+        max_val = 3.65  # Max val of the fields we plot in the paper
 
         im = ax.imshow(
             field,
@@ -413,11 +437,33 @@ def plot_field_for_wave_scattering_experiment(
             vmin=-3.65,  # Min val of the fields we plot in the paper
             vmax=3.65,
         )
-    plt.colorbar(im, ax=ax)
+
+    # Set ticks to [-1, 0, 1]
+    ax.set_xticks([-1, 0, 1])
+    ax.set_yticks([-1, 0, 1])
+    ax.tick_params(axis="both", which="major", labelsize=ticksize)
+
+    # Sizing brought to you by https://stackoverflow.com/questions/18195758/set-matplotlib-colorbar-size-to-match-graph
+    make_scaled_colorbar(im, ax, fontsize=ticksize)
 
     if title is not None:
         ax.set_title(title)
 
     if bool_create_ax:
         if save_fp is not None:
+            fig.tight_layout()
             plt.savefig(save_fp, bbox_inches="tight")
+
+
+CMAP_PAD = 0.1
+
+
+def make_scaled_colorbar(im, ax, fontsize: float = None) -> None:
+    """
+    Make a colorbar that is the same size as the plot.
+    """
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=CMAP_PAD)
+    cbar = plt.colorbar(im, cax=cax)
+    if fontsize is not None:
+        cbar.ax.tick_params(labelsize=fontsize)

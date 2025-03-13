@@ -16,7 +16,7 @@ logging.getLogger("matplotlib.font_manager").disabled = True
 logging.getLogger("jax").setLevel(logging.WARNING)
 
 from hps.src.logging_utils import FMT, TIMEFMT, DATESTR
-from hps.src.plotting import plot_func_with_grid
+from hps.src.plotting import plot_func_with_grid, FIGSIZE_3, FONTSIZE_3, TICKSIZE_3
 from hps.src.quadrature.trees import Node, get_all_leaves
 from hps.src.poisson_boltzmann_eqn_helpers import rho, permittivity, vdw_permittivity
 
@@ -160,28 +160,94 @@ def main(args: argparse.Namespace) -> None:
     corners_x = mesh_dd["x_leaf_corners"][:, :, [1, 2]]
     logging.debug("corners_x shape: %s", corners_x.shape)
     fp_x = os.path.join(args.plot_dir, "rho_with_grid_x.svg")
-    plot_func_with_grid(eval_pts_x, None, "$x_2$", "$x_3$", fp_x, rho)
+    plot_func_with_grid(
+        eval_pts_x,
+        None,
+        "$x_2$",
+        "$x_3$",
+        fp_x,
+        rho,
+        line_color="grey",
+        figsize=FIGSIZE_3,
+        fontsize=FONTSIZE_3,
+        ticksize=TICKSIZE_3,
+    )
 
     eval_pts_y = data_dd["eval_pts_y"]
     corners_y = mesh_dd["y_leaf_corners"][:, :, [0, 2]]
     fp_y = os.path.join(args.plot_dir, "rho_with_grid_y.svg")
-    plot_func_with_grid(eval_pts_y, None, "$x_1$", "$x_3$", fp_y, rho)
+    plot_func_with_grid(
+        eval_pts_y,
+        None,
+        "$x_1$",
+        "$x_3$",
+        fp_y,
+        rho,
+        line_color="grey",
+        figsize=FIGSIZE_3,
+        fontsize=FONTSIZE_3,
+        ticksize=TICKSIZE_3,
+    )
 
     eval_pts_z = data_dd["eval_pts_z"]
     corners_z = mesh_dd["z_leaf_corners"][:, :, [0, 1]]
     fp_z = os.path.join(args.plot_dir, "rho_with_grid_z.svg")
-    plot_func_with_grid(eval_pts_z, None, "$x_1$", "$x_2$", fp_z, rho)
+    plot_func_with_grid(
+        eval_pts_z,
+        None,
+        "$x_1$",
+        "$x_2$",
+        fp_z,
+        rho,
+        line_color="grey",
+        figsize=FIGSIZE_3,
+        fontsize=FONTSIZE_3,
+        ticksize=TICKSIZE_3,
+    )
 
     # Plot permittivity with grid
     logging.info("Plotting permittivity with grid")
     fp_x = os.path.join(args.plot_dir, "perm_with_grid_x.svg")
-    plot_func_with_grid(eval_pts_x, corners_x, "$x_2$", "$x_3$", fp_x, perm_fn)
+    plot_func_with_grid(
+        eval_pts_x,
+        corners_x,
+        "$x_2$",
+        "$x_3$",
+        fp_x,
+        perm_fn,
+        line_color="grey",
+        figsize=FIGSIZE_3,
+        fontsize=FONTSIZE_3,
+        ticksize=TICKSIZE_3,
+    )
 
     fp_y = os.path.join(args.plot_dir, "perm_with_grid_y.svg")
-    plot_func_with_grid(eval_pts_y, corners_y, "$x_1$", "z", fp_y, perm_fn)
+    plot_func_with_grid(
+        eval_pts_y,
+        corners_y,
+        "$x_1$",
+        "$x_3$",
+        fp_y,
+        perm_fn,
+        line_color="grey",
+        figsize=FIGSIZE_3,
+        fontsize=FONTSIZE_3,
+        ticksize=TICKSIZE_3,
+    )
 
     fp_z = os.path.join(args.plot_dir, "perm_with_grid_z.svg")
-    plot_func_with_grid(eval_pts_z, corners_z, "$x_1$", "$x_2$", fp_z, perm_fn)
+    plot_func_with_grid(
+        eval_pts_z,
+        corners_z,
+        "$x_1$",
+        "$x_2$",
+        fp_z,
+        perm_fn,
+        line_color="grey",
+        figsize=FIGSIZE_3,
+        fontsize=FONTSIZE_3,
+        ticksize=TICKSIZE_3,
+    )
 
     # Make a dataframe of the data
     logging.info("Making a dataframe of the data")

@@ -13,7 +13,7 @@ from scipy.io import loadmat
 import pandas as pd
 
 from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.plotting import get_discrete_cmap
+from hps.src.plotting import get_discrete_cmap, FONTSIZE_2, FIGSIZE_2, TICKSIZE_2
 
 
 # Disable matplotlib logging
@@ -82,7 +82,7 @@ def main(args: argparse.Namespace) -> None:
     method_names_lst = [
         # ("laptop", "Laptop"),
         ("multicore_cpu", "Multicore CPU"),
-        ("gpu_no_recomp", "1 GPU; Naive Implementation"),
+        ("gpu_no_recomp", '1 H100 GPU; Na\\"ive Implementation'),
         ("gpu_baseline_recomp", "1 H100 GPU; Baseline Recomputation"),
         ("gpu_our_recomp", "1 H100 GPU; Our Recomputation"),
     ]
@@ -97,7 +97,7 @@ def main(args: argparse.Namespace) -> None:
         df_lst.append(out_df)
 
     # Make the plot
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(FIGSIZE_2, FIGSIZE_2))
     c = get_discrete_cmap(len(method_names_lst), "parula")
 
     for i, (method_name, label) in enumerate(method_names_lst):
@@ -117,16 +117,20 @@ def main(args: argparse.Namespace) -> None:
             label=label,
             color=c[i],
         )
+    # a, b = ax.get_xlim()
+    # logging.info("a = %s, b = %s", a, b)
+    # ax.set_xlim(4 * 10**4, 10**9)
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.grid()
     # Set top and right spines to be invisible
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["right"].set_visible(False)
     # Legend location lower right
-    ax.legend(loc="lower right")
-    ax.set_xlabel("\\# Discretization Points", fontsize=20)
-    ax.set_ylabel("Runtime (seconds)", fontsize=20)
+    ax.legend(loc="lower right", bbox_to_anchor=(1.25, 0.0))
+    ax.set_xlabel("$N$", fontsize=FONTSIZE_2)
+    ax.set_ylabel("Runtime (s)", fontsize=FONTSIZE_2)
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_2)
 
     fp_out = os.path.join(args.plots_dir, "timing.svg")
     logging.info("Saving timing plot to %s", fp_out)
