@@ -812,6 +812,7 @@ def _uniform_quad_merge_ItI(
          ]
     )
     S = S[r]
+    g_tilde_int = g_tilde_int[r]
 
 
     return S, T, h_ext_out, g_tilde_int
