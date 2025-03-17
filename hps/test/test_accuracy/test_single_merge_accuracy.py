@@ -150,12 +150,29 @@ def check_merge_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> N
     ]
     down_pass(solver, bdry_data_lst)
     ##########################################################
-    # Check the accuracy of the DtN matrix
-    # TODO: Add an option to save the DtN matrix.
+    # Check the accuracy of the ItI matrix
+
+    T = solver.interior_node_R_maps[-1]
+    logging.debug("check_merge_accuracy_2D_ItI_uniform: T = %s", T.shape)
+
+    expected_outgoing_imp_data = boundary_g_normals - 1j * solver.eta * boundary_g_evals
+    computed_outgoing_imp_data = T @ incoming_imp_data
+    logging.debug(
+        "check_merge_accuracy_2D_ItI_uniform: computed_outgoing_imp_data = %s",
+        computed_outgoing_imp_data.shape,
+    )
+    logging.debug(
+        "check_merge_accuracy_2D_ItI_uniform: expected_outgoing_imp_data = %s",
+        expected_outgoing_imp_data.shape,
+    )
+    assert jnp.allclose(
+        computed_outgoing_imp_data, expected_outgoing_imp_data, atol=ATOL, rtol=RTOL)
 
     ##########################################################
     # Check the accuracy of the computed solution
     homog_soln = test_case[K_HOMOG_SOLN](solver.leaf_cheby_points)
+    # Part soln function is written to return a third dimension for different sources. This verison of the code
+    # does not support multiple sources, so we reshape the part_soln to not have that third axis.
     part_soln = test_case[K_PART_SOLN](solver.leaf_cheby_points).reshape(solver.leaf_cheby_points.shape[:2])
 
     logging.debug(
@@ -173,6 +190,16 @@ def check_merge_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> N
     logging.debug(
         "check_merge_accuracy_2D_ItI_uniform: expected_soln = %s", expected_soln.shape
     )
+
+    # Uncomment this if you want to plot the solution for debugging.
+
+    # plot_soln_from_cheby_nodes(
+    #     cheby_nodes=solver.leaf_cheby_points.reshape(-1, 2),
+    #     computed_soln=computed_soln.reshape(-1).real,
+    #     expected_soln=expected_soln.reshape(-1).real,
+    #     corners=None,
+
+    # )
     assert jnp.allclose(computed_soln, expected_soln, atol=ATOL, rtol=RTOL)
 
 
