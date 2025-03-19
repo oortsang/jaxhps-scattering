@@ -13,7 +13,11 @@ from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D_ItI,
 )
 from hps.test.test_accuracy.cases import (
-    ROOT,
+    XMIN,
+    XMAX,
+    YMIN,
+    YMAX,
+    ETA,
     TEST_CASE_POLY_PART_HOMOG,
     TEST_CASE_POLY_ZERO_SOURCE,
     K_DIRICHLET,
@@ -32,10 +36,13 @@ from hps.test.test_accuracy.cases import (
 ATOL = 1e-12
 RTOL = 0.0
 
-SOLVER_LOCAL_SOLVE_DTN = create_solver_obj_2D(p=6, q=4, root=ROOT)
+ROOT_DTN = Node(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
+ROOT_ITI = Node(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
+
+SOLVER_LOCAL_SOLVE_DTN = create_solver_obj_2D(p=6, q=4, root=ROOT_DTN)
 
 SOLVER_LOCAL_SOLVE_ITI = create_solver_obj_2D(
-    p=6, q=4, root=ROOT, use_ItI=True, eta=1.0
+    p=6, q=4, root=ROOT_ITI, use_ItI=True, eta=ETA
 )
 
 

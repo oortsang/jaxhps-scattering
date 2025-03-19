@@ -28,8 +28,12 @@ K_PART_SOLN_DUDZ = "d_dz_part_soln_fn"
 
 
 ######################################################################
-# Define the root node that all test cases will use
-ROOT = Node(xmin=-jnp.pi / 2, xmax=jnp.pi / 2, ymin=-jnp.pi / 2, ymax=jnp.pi / 2)
+# Define the domains
+XMIN = -jnp.pi / 2
+XMAX = jnp.pi / 2
+YMIN = -jnp.pi / 2
+YMAX = jnp.pi / 2
+ETA = 1.0
 
 
 ######################################################################

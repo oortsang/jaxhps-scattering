@@ -15,7 +15,11 @@ from hps.src.solver_obj import (
 from hps.src.quadrature.trees import Node
 from hps.src.up_down_passes import local_solve_stage, build_stage, down_pass
 from hps.test.test_accuracy.cases import (
-    ROOT,
+    XMIN,
+    XMAX,
+    YMIN,
+    YMAX,
+    ETA,
     TEST_CASE_POLY_PART_HOMOG,
     TEST_CASE_POLY_ZERO_SOURCE,
     K_DIRICHLET,
@@ -31,16 +35,19 @@ from hps.test.test_accuracy.cases import (
 )
 from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
-
 ATOL = 1e-12
 RTOL = 0.0
 
+
+ROOT_DTN = Node(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
+ROOT_ITI = Node(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
+
 SOLVER_LOCAL_SOLVE_DTN = create_solver_obj_2D(
-    p=6, q=4, root=ROOT, uniform_levels=1, fill_tree=False
+    p=6, q=4, root=ROOT_DTN, uniform_levels=1, fill_tree=False
 )
 
 SOLVER_LOCAL_SOLVE_ITI = create_solver_obj_2D(
-    p=6, q=4, root=ROOT, uniform_levels=1, use_ItI=True, eta=1.0
+    p=6, q=4, root=ROOT_ITI, uniform_levels=1, use_ItI=True, eta=ETA
 )
 
 
@@ -166,14 +173,17 @@ def check_merge_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> N
         expected_outgoing_imp_data.shape,
     )
     assert jnp.allclose(
-        computed_outgoing_imp_data, expected_outgoing_imp_data, atol=ATOL, rtol=RTOL)
+        computed_outgoing_imp_data, expected_outgoing_imp_data, atol=ATOL, rtol=RTOL
+    )
 
     ##########################################################
     # Check the accuracy of the computed solution
     homog_soln = test_case[K_HOMOG_SOLN](solver.leaf_cheby_points)
     # Part soln function is written to return a third dimension for different sources. This verison of the code
     # does not support multiple sources, so we reshape the part_soln to not have that third axis.
-    part_soln = test_case[K_PART_SOLN](solver.leaf_cheby_points).reshape(solver.leaf_cheby_points.shape[:2])
+    part_soln = test_case[K_PART_SOLN](solver.leaf_cheby_points).reshape(
+        solver.leaf_cheby_points.shape[:2]
+    )
 
     logging.debug(
         "check_merge_accuracy_2D_ItI_uniform: part_soln = %s", part_soln.shape
