@@ -10,6 +10,7 @@ from hps.src.solver_obj import SolverObj, create_solver_obj_2D
 from hps.src.quadrature.trees import Node
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
+    _local_solutions_2D_DtN_uniform,
     _local_solve_stage_2D_ItI,
 )
 from hps.test.test_accuracy.cases import (
@@ -44,6 +45,61 @@ SOLVER_LOCAL_SOLVE_DTN = create_solver_obj_2D(p=6, q=4, root=ROOT_DTN)
 SOLVER_LOCAL_SOLVE_ITI = create_solver_obj_2D(
     p=6, q=4, root=ROOT_ITI, use_ItI=True, eta=ETA
 )
+
+
+def check_solution_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
+    d_xx_coeffs = test_case[K_XX_COEFF](solver.leaf_cheby_points)
+    d_yy_coeffs = test_case[K_YY_COEFF](solver.leaf_cheby_points)
+    source = test_case[K_SOURCE](solver.leaf_cheby_points).squeeze(2)
+    boundary_g = jnp.expand_dims(test_case[K_DIRICHLET](solver.root_boundary_points), 0)
+
+    logging.debug(
+        "check_solution_accuracy_DtN: d_xx_coeffs shape: %s", d_xx_coeffs.shape
+    )
+    logging.debug(
+        "check_solution_accuracy_DtN: d_yy_coeffs shape: %s", d_yy_coeffs.shape
+    )
+    logging.debug("check_solution_accuracy_DtN: source shape: %s", source.shape)
+
+    ##############################################################
+    # Solve the local problem
+    computed_soln = _local_solutions_2D_DtN_uniform(
+        D_xx=solver.D_xx,
+        D_yy=solver.D_yy,
+        D_xy=solver.D_xy,
+        D_x=solver.D_x,
+        D_y=solver.D_y,
+        P=solver.P,
+        Q_D=solver.Q_D,
+        p=solver.p,
+        source_term=source,
+        D_xx_coeffs=d_xx_coeffs,
+        D_yy_coeffs=d_yy_coeffs,
+        bdry_data=boundary_g,
+    )
+    logging.debug(
+        "check_solution_accuracy_DtN: computed_soln shape: %s", computed_soln.shape
+    )
+
+    ##############################################################
+    # Check the accuracy of the homogeneous solution
+    # Construct computed homogeneous solution
+    expected_homogeneous_soln = test_case[K_HOMOG_SOLN](
+        solver.leaf_cheby_points
+    ).flatten()
+
+    logging.debug(
+        "check_leaf_accuracy_DtN: expected_homogeneous_soln shape: %s",
+        expected_homogeneous_soln.shape,
+    )
+    expected_part_soln = test_case[K_PART_SOLN](solver.leaf_cheby_points).flatten()
+
+    logging.debug(
+        "check_leaf_accuracy_DtN: expected_part_soln shape: %s",
+        expected_part_soln.shape,
+    )
+    expected_soln = expected_homogeneous_soln + expected_part_soln
+    assert jnp.allclose(computed_soln, expected_soln, atol=ATOL, rtol=RTOL)
 
 
 def check_leaf_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
@@ -359,6 +415,32 @@ class Test_accuracy_local_solve_stage_2D_DtN:
         solver = SOLVER_LOCAL_SOLVE_DTN
 
         check_leaf_accuracy_DtN(solver, test_case)
+
+
+class Test_accuracy_local_solutions_2D_DtN_uniform:
+    def test_0(self, caplog) -> None:
+        """
+        Uses TEST_CASE_POLY_ZERO_SOURCE. Tests the accuracy of the outputs.
+        """
+        caplog.set_level(logging.DEBUG)
+        ##############################################################
+        # Set up the test case
+        test_case = TEST_CASE_POLY_ZERO_SOURCE
+        solver = SOLVER_LOCAL_SOLVE_DTN
+
+        check_solution_accuracy_DtN(solver, test_case)
+
+    def test_1(self, caplog) -> None:
+        """
+        Uses TEST_CASE_POLY_PART_HOMOG. Tests the accuracy of the outputs.
+        """
+        caplog.set_level(logging.DEBUG)
+        ##############################################################
+        # Set up the test case
+        test_case = TEST_CASE_POLY_PART_HOMOG
+        solver = SOLVER_LOCAL_SOLVE_DTN
+
+        check_solution_accuracy_DtN(solver, test_case)
 
 
 if __name__ == "__main__":

@@ -124,7 +124,7 @@ def _uniform_build_stage_2D_DtN(
     l: int,
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
-    return_fused_info: bool = False,
+    subtree_recomp: bool = False,
 ) -> Tuple[List[jnp.array], List[jnp.array], List[jnp.array]]:
     """
     Implements the build stage of the HPS algorithm for 2D problems. Given a list of
@@ -208,15 +208,15 @@ def _uniform_build_stage_2D_DtN(
         DtN_arr = DtN_arr_new
         v_prime_arr = v_prime_arr_new
 
-    if return_fused_info:
+    if subtree_recomp:
         T_last = DtN_arr
         v_prime_last = v_prime_arr
         logging.debug("_uniform_build_stage_2D_DtN: returning fused info")
         return (
             jax.device_put(T_last, host_device),
             jax.device_put(v_prime_last, host_device),
-            S_lst,
-            v_int_lst,
+            # S_lst,
+            # v_int_lst,
         )
 
     S_last, T_last, v_prime_last, v_int_last = _uniform_quad_merge(
@@ -243,7 +243,7 @@ def _uniform_build_stage_2D_DtN(
     v_prime_last.delete()
 
     # logging.debug("_build_stage: done with merging.")
-    return S_lst, DtN_lst, v_int_lst
+    return S_lst,  v_int_lst
 
 
 def _uniform_build_stage_2D_ItI(

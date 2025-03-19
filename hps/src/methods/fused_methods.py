@@ -9,6 +9,7 @@ from hps.src.solver_obj import SolverObj, create_solver_obj_2D
 
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
+    _local_solutions_2D_DtN_uniform,
     _local_solve_stage_2D_ItI,
     _local_solve_stage_2D_chunked,
     _local_solve_stage_3D,
@@ -71,14 +72,7 @@ def _fused_local_solve_and_build_2D(
         # Figure out chunksize for bdry_data
         bdry_data_chunksize = bdry_data.shape[0] // n_chunks
         n_bdry_data = bdry_data.shape[0]
-        # print("_fused_local_solve_and_build_2D: bdry_data.shape = ", bdry_data.shape)
-        # print(
-        #     "_fused_local_solve_and_build_2D: bdry_data_chunksize = ",
-        #     bdry_data_chunksize,
-        # )
-        # print("_fused_local_solve_and_build_2D: n_chunks = ", n_chunks)
-        # print("_fused_local_solve_and_build_2D: chunksize = ", chunksize)
-        # print("_fused_local_solve_and_build_2D: n_leaves = ", n_leaves)
+
     # Loop over chunks
     for i in range(0, n_chunks):
         chunk_start_idx = i * chunksize
@@ -157,6 +151,7 @@ def _fused_local_solve_and_build_2D(
             host_device=DEVICE_ARR[0],
             return_fused_info=True,
         )
+        logging.debug("_fused_local_solve_and_build_2D: DtN_arr_last device: %s", DtN_arr_last.devices())
 
         # Either compute the solution or append the data
         # to the output lists
@@ -951,7 +946,7 @@ def _baseline_recomputation_downward_pass(
         chunk_end_idx = min((i + 1) * chunksize, n_leaves)
         # Split the input data into a chunk
         source_term_chunk = source_term[chunk_start_idx:chunk_end_idx]
-        sidelens_chunk = sidelens[chunk_start_idx:chunk_end_idx]
+        # sidelens_chunk = sidelens[chunk_start_idx:chunk_end_idx]
 
         leaf_bdry_data_chunk = leaf_bdry_data[chunk_start_idx:chunk_end_idx]
         leaf_bdry_data_chunk = jax.device_put(leaf_bdry_data_chunk, DEVICE_ARR[0])
@@ -983,7 +978,9 @@ def _baseline_recomputation_downward_pass(
         I_coeffs_chunk = (
             I_coeffs[chunk_start_idx:chunk_end_idx] if I_coeffs is not None else None
         )
-        Y_arr_chunk, DtN_arr_chunk, v_chunk, v_prime_chunk = _local_solve_stage_2D(
+
+        # this does a linear system solve rather than recomputing the entire T and Y matrices.
+        soln_chunk = _local_solutions_2D_DtN_uniform(
             D_xx=D_xx,
             D_xy=D_xy,
             D_yy=D_yy,
@@ -991,8 +988,8 @@ def _baseline_recomputation_downward_pass(
             D_y=D_y,
             P=P,
             Q_D=Q_D,
-            sidelens=sidelens_chunk,
             p=p,
+            bdry_data=leaf_bdry_data_chunk,
             source_term=source_term_chunk,
             D_xx_coeffs=D_xx_coeffs_chunk,
             D_xy_coeffs=D_xy_coeffs_chunk,
@@ -1001,15 +998,8 @@ def _baseline_recomputation_downward_pass(
             D_y_coeffs=D_y_coeffs_chunk,
             I_coeffs=I_coeffs_chunk,
             host_device=DEVICE_ARR[0],
-            uniform_grid=True,
         )
-        logging.debug(
-            "_baseline_recomputation_downward_pass: Y_arr_chunk.devices(): %s, leaf_bdry_data_chunk.devices(): %s",
-            Y_arr_chunk.devices(),
-            leaf_bdry_data_chunk.devices(),
-        )
-        h_soln_chunk = jnp.einsum("ijk,ik->ij", Y_arr_chunk, leaf_bdry_data_chunk)
-        soln_chunk = h_soln_chunk + v_chunk
+
         soln_lst.append(jax.device_put(soln_chunk, host_device))
     soln = jnp.concatenate(soln_lst, axis=0)
     return soln

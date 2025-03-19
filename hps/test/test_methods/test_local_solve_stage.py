@@ -1,3 +1,4 @@
+import logging
 import pytest
 import jax.numpy as jnp
 import numpy as np
@@ -5,6 +6,7 @@ from matplotlib import pyplot as plt
 
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
+    _local_solutions_2D_DtN_uniform,
     _local_solve_stage_2D_ItI,
     _local_solve_stage_3D,
     _gather_coeffs,
@@ -14,6 +16,7 @@ from hps.src.methods.local_solve_stage import (
     vmapped_prep_nonuniform_refinement_diff_operators_2D,
     get_DtN,
     get_ItI,
+    get_soln_DtN,
 )
 
 from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
@@ -254,7 +257,9 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
 
 class Test__local_solve_stage_2D:
     def test_0(self) -> None:
-        """Tests the solve_stage function returns without error and returns the correct shape when boundary data are not passed to the function."""
+        """Tests the solve_stage function returns without error and returns the correct shape
+        when boundary data are not passed to the function.
+        """
 
         p = 16
         q = 14
@@ -337,6 +342,51 @@ class Test__local_solve_stage_2D:
         assert DtN_arr.shape == (n_leaves, 4 * q, 4 * q)
         assert v_arr.shape == (n_leaves, p**2)
         assert v_prime_arr.shape == (n_leaves, 4 * q)
+
+
+class Test__local_solutions_2D_DtN_uniform:
+    def test_0(self, caplog) -> None:
+        """Tests the solve_stage function returns without error and returns the correct shape
+        when boundary data are not passed to the function.
+        """
+        caplog.set_level(logging.DEBUG)
+
+        p = 16
+        q = 14
+        l = 1
+        n_leaves = 4**l
+
+        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
+
+        t = create_solver_obj_2D(p, q, root, uniform_levels=l)
+
+        # This could be np.random.normal(size=(n_leaves, p**2))
+        d_xx_coeffs = TEST_CASE_POLY_PART_HOMOG["d_xx_coeff_fn"](t.leaf_cheby_points)
+        d_yy_coeffs = TEST_CASE_POLY_PART_HOMOG["d_yy_coeff_fn"](t.leaf_cheby_points)
+        source_term = TEST_CASE_POLY_PART_HOMOG["source_fn"](t.leaf_cheby_points)
+        sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
+
+        bdry_data = np.random.normal(size=(n_leaves, 4 * q))
+
+        logging.debug("test_0: n_leaves = %s", n_leaves)
+        logging.debug("test_0: n_gauss_bdry = %s", 4 * q)
+
+        leaf_solns = _local_solutions_2D_DtN_uniform(
+            D_xx=t.D_xx,
+            D_xy=t.D_xy,
+            D_yy=t.D_yy,
+            D_x=t.D_x,
+            D_y=t.D_y,
+            P=t.P,
+            Q_D=t.Q_D,
+            p=p,
+            source_term=source_term,
+            bdry_data=bdry_data,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
+        )
+
+        assert leaf_solns.shape == (n_leaves, p**2)
 
 
 class Test__local_solve_stage_2D_ItI:
@@ -490,6 +540,26 @@ class Test_get_DtN:
         assert DtN.shape == (4 * q, 4 * q)
         assert v.shape == (p**2,)
         assert v_prime.shape == (4 * q,)
+
+
+class Test_get_soln_DtN:
+    def test_0(self) -> None:
+        """Asserts that everything returns without error."""
+        p = 16
+        q = 14
+        p = 16
+        q = 14
+        n_cheby_bdry = 4 * (p - 1)
+
+        diff_operator = np.random.normal(size=(p**2, p**2)).astype(np.float64)
+        P = np.random.normal(size=(n_cheby_bdry, 4 * q)).astype(np.float64)
+        Q_D = np.random.normal(size=(4 * q, p**2)).astype(np.float64)
+        source_term = np.random.normal(size=(p**2,)).astype(np.float64)
+        bdry_data = np.random.normal(size=(4 * q)).astype(np.float64)
+
+        solns = get_soln_DtN(source_term, diff_operator, bdry_data, Q_D, P)
+
+        assert solns.shape == (p**2,)
 
 
 class Test_vmapped_prep_nonuniform_refinement_diff_operators_2D:

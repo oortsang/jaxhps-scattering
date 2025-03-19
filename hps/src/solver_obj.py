@@ -158,20 +158,26 @@ def create_solver_obj_2D(
 
     t = SolverObj()
     all_leaves = get_all_leaves(root)
-    if len(all_leaves) == 1 and uniform_levels is not None:
+    nleaves = len(all_leaves)
+    if nleaves == 1 and uniform_levels is not None:
         t.uniform_grid = True
         t.l = uniform_levels
         if fill_tree:
-            add_uniform_levels(root=root, l=uniform_levels)
-        else:
+        #     add_uniform_levels(root=root, l=uniform_levels)
+        # else:
             root.children = get_all_uniform_leaves_2D(root, uniform_levels)
+        t.sidelens = jnp.ones(nleaves)
+        
 
-    elif len(all_leaves) == 1 and uniform_levels is None:
+    elif nleaves == 1 and uniform_levels is None:
         # Edge case for no refinement
         t.uniform_grid = True
         t.l = 0
+        t.sidelens = jnp.ones(nleaves)
     else:
         t.uniform_grid = False
+        t.sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
+
 
     t.root = root
     t.p = p
@@ -199,7 +205,6 @@ def create_solver_obj_2D(
 
     t.leaf_cheby_points = leaf_cheby_points
     t.root_boundary_points = root_gauss_points
-    t.sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
     # Compute the differentiation operators.
     if use_ItI or t.uniform_grid:

@@ -218,18 +218,22 @@ def _local_solve_stage_2D(
         P (jnp.ndarray): Precomputed interpolation operator with shape (4(p-1), 4q).
             Maps data on the boundary Gauss nodes to data on the boundary Chebyshev nodes.
             Used when computing DtN maps.
-        Q_D (jnp.ndarray): Precomputed interpolation + differentiation operator with shape (4q, p**2).
-            Maps the solution on the Chebyshev nodes to the normal derivatives on the boundary Gauss nodes.
-            Used when computing DtN maps.
         p (int): Shape parameter. Number of Chebyshev nodes along one dimension in a leaf.
         source_term (jnp.ndarray): Has shape (n_leaves, p**2). The right-hand side of the PDE.
+        sidelens (jnp.ndarray): Has shape (n_leaves,). Gives the side length of each leaf. Used for scaling differential operators.
         D_xx_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
         D_xy_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
         D_yy_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
         D_x_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
         D_y_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
         I_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-
+        device (jax.Device, optional): Device where computation should be executed.
+        host_device (jax.Device, optional): Device where results should be returned.
+        uniform_grid (bool, optional): If True, uses an optimized version of the local solve stage which assumes all of the
+            leaves have the same size. If False (default), does a bit of extra computation which depends on sidelens.
+        Q_D (jnp.ndarray): Precomputed interpolation + differentiation operator with shape (4q, p**2).
+            Maps the solution on the Chebyshev nodes to the normal derivatives on the boundary Gauss nodes.
+            Used when computing DtN maps. Only used if uniform_grid == True.
     Returns:
          Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
             Y_arr, DtN_arr, v, v_prime.
@@ -320,158 +324,150 @@ def _local_solve_stage_2D(
     return Y_arr_host, DtN_arr_host, v_host, v_prime_host
 
 
-# def _local_solve_stage_3D_chunked(
-#     D_xx: jnp.ndarray,
-#     D_xy: jnp.ndarray,
-#     D_yy: jnp.ndarray,
-#     D_xz: jnp.ndarray,
-#     D_yz: jnp.ndarray,
-#     D_zz: jnp.ndarray,
-#     D_x: jnp.ndarray,
-#     D_y: jnp.ndarray,
-#     D_z: jnp.ndarray,
-#     P: jnp.ndarray,
-#     Q_D: jnp.ndarray,
-#     p: int,
-#     source_term: jnp.ndarray,
-#     D_xx_coeffs: jnp.ndarray | None = None,
-#     D_xy_coeffs: jnp.ndarray | None = None,
-#     D_yy_coeffs: jnp.ndarray | None = None,
-#     D_xz_coeffs: jnp.ndarray | None = None,
-#     D_yz_coeffs: jnp.ndarray | None = None,
-#     D_zz_coeffs: jnp.ndarray | None = None,
-#     D_x_coeffs: jnp.ndarray | None = None,
-#     D_y_coeffs: jnp.ndarray | None = None,
-#     D_z_coeffs: jnp.ndarray | None = None,
-#     I_coeffs: jnp.ndarray | None = None,
-# ) -> Tuple[jnp.ndarray, jnp.ndarray]:
-#     """
-#     See the docstring for _local_solve_stage_3D. This function takes the same inputs; just chunks over
-#     the n_leaves dimension.
-#     """
-#     n_leaves = source_term.shape[0]
-#     max_chunksizes = get_solve_stage_max_chunksize(
-#         p=p, dtype=source_term.dtype, problem_dim=3
-#     )
+def _local_solutions_2D_DtN_uniform(
+    D_xx: jnp.ndarray,
+    D_xy: jnp.ndarray,
+    D_yy: jnp.ndarray,
+    D_x: jnp.ndarray,
+    D_y: jnp.ndarray,
+    P: jnp.ndarray,
+    Q_D: jnp.ndarray,
+    p: int,
+    source_term: jnp.ndarray,
+    bdry_data: jax.Array,
+    D_xx_coeffs: jnp.ndarray | None = None,
+    D_xy_coeffs: jnp.ndarray | None = None,
+    D_yy_coeffs: jnp.ndarray | None = None,
+    D_x_coeffs: jnp.ndarray | None = None,
+    D_y_coeffs: jnp.ndarray | None = None,
+    I_coeffs: jnp.ndarray | None = None,
+    device: jax.Device = DEVICE_ARR[0],
+    host_device: jax.Device = HOST_DEVICE,
+) -> jax.Array:
+    """This function returns the local solutions on each leaf. It DOES NOT compute the entire solution operators, like Y and T.
 
-#     logging.debug(
-#         "_local_solve_stage_3D_chunked: p = %s, max_chunksizes = %s, and n_leaves = %s",
-#         p,
-#         max_chunksizes,
-#         n_leaves,
-#     )
-#     chunk_start_idx = 0
+    Args:
+        D_xx (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
+        D_xy (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
+        D_yy (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
+        D_x (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
+        D_y (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
+        P (jnp.ndarray): Precomputed interpolation operator with shape (4(p-1), 4q).
+            Maps data on the boundary Gauss nodes to data on the boundary Chebyshev nodes.
+            Used when computing DtN maps.
+        Q_D (jnp.ndarray): Precomputed interpolation + differentiation operator with shape (4q, p**2).
+            Maps the solution on the Chebyshev nodes to the normal derivatives on the boundary Gauss nodes.
+            Used when computing DtN maps.
+        p (int): Shape parameter. Number of Chebyshev nodes along one dimension in a leaf.
+        source_term (jnp.ndarray): Has shape (n_leaves, p**2). The right-hand side of the PDE.
+        bdry_data (jnp.ndarray): Has shape (n_leaves, 4q). Is the incoming boundary data for each leaf.
+        D_xx_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
+        D_xy_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
+        D_yy_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
+        D_x_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
+        D_y_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
+        I_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
+        device (jax.Device, optional): Device where computation should be executed.
+        host_device (jax.Device, optional): Device where results should be returned.
 
-#     # Containers for the output data
-#     Y_arr = []
-#     DtN_arr = []
-#     v_arr = []
-#     v_prime_arr = []
+    Returns:
+         jax.Array: Local solutions of shape (n_leaves, p**2)
+    """
+    logging.debug("_local_solutions_2D_DtN_uniform: started")
 
-#     while chunk_start_idx < n_leaves:
+    # Gather the coefficients into a single array.
+    coeffs_gathered, which_coeffs = _gather_coeffs(
+        D_xx_coeffs=D_xx_coeffs,
+        D_xy_coeffs=D_xy_coeffs,
+        D_yy_coeffs=D_yy_coeffs,
+        D_x_coeffs=D_x_coeffs,
+        D_y_coeffs=D_y_coeffs,
+        I_coeffs=I_coeffs,
+    )
+    logging.debug(
+        "_local_solutions_2D_DtN_uniform: input source_term devices = %s",
+        source_term.devices(),
+    )
+    source_term = jax.device_put(
+        source_term,
+        device,
+    )
+    # stack the precomputed differential operators into a single array
+    diff_ops = jnp.stack(
+        [
+            D_xx,
+            D_xy,
+            D_yy,
+            D_x,
+            D_y,
+            jnp.eye(D_xx.shape[0], dtype=jnp.float64),
+        ]
+    )
 
-#         # Loop over all available devices
-#         for device_idx, device in enumerate(DEVICE_ARR):
-#             logging.debug("_local_solve_stage_3D_chunked: device_idx = %s", device_idx)
-#             chunk_end_idx = min(chunk_start_idx + max_chunksizes[device_idx], n_leaves)
-#             logging.debug(
-#                 "_local_solve_stage_3D_chunked: chunk_start_idx = %s, chunk_end_idx = %s",
-#                 chunk_start_idx,
-#                 chunk_end_idx,
-#             )
+    # Put the input data on the device
+    coeffs_gathered = jax.device_put(
+        coeffs_gathered,
+        device,
+    )
+    # Get the differential operator for each leaf
+    diff_operators = vmapped_assemble_diff_operator(
+        coeffs_gathered, which_coeffs, diff_ops
+    )
+    logging.debug(
+        "_local_solutions_2D_DtN_uniform: source_term shape: %s", source_term.shape
+    )
+    logging.debug(
+        "_local_solutions_2D_DtN_uniform: diff_operators shape: %s",
+        diff_operators.shape,
+    )
+    logging.debug(
+        "_local_solutions_2D_DtN_uniform: bdry_data shape: %s", bdry_data.shape
+    )
 
-#             # Index along the n_leaves dimension
-#             source_term_chunk = source_term[chunk_start_idx:chunk_end_idx]
-#             D_xx_coeffs_chunk = (
-#                 D_xx_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_xx_coeffs is not None
-#                 else None
-#             )
-#             D_xy_coeffs_chunk = (
-#                 D_xy_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_xy_coeffs is not None
-#                 else None
-#             )
-#             D_yy_coeffs_chunk = (
-#                 D_yy_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_yy_coeffs is not None
-#                 else None
-#             )
-#             D_xz_coeffs_chunk = (
-#                 D_xz_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_xz_coeffs is not None
-#                 else None
-#             )
-#             D_yz_coeffs_chunk = (
-#                 D_yz_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_yz_coeffs is not None
-#                 else None
-#             )
-#             D_zz_coeffs_chunk = (
-#                 D_zz_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_zz_coeffs is not None
-#                 else None
-#             )
-#             D_x_coeffs_chunk = (
-#                 D_x_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_x_coeffs is not None
-#                 else None
-#             )
-#             D_y_coeffs_chunk = (
-#                 D_y_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_y_coeffs is not None
-#                 else None
-#             )
-#             D_z_coeffs_chunk = (
-#                 D_z_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if D_z_coeffs is not None
-#                 else None
-#             )
-#             I_coeffs_chunk = (
-#                 I_coeffs[chunk_start_idx:chunk_end_idx]
-#                 if I_coeffs is not None
-#                 else None
-#             )
+    leaf_solns = vmapped_get_soln_DtN_uniform(
+        source_term, diff_operators, bdry_data, Q_D, P
+    )
+    return jax.device_put(leaf_solns, host_device)
+    # return leaf_solns
+    # Y_arr, DtN_arr, v, v_prime = vmapped_get_DtN_uniform(
+    #     source_term, diff_operators, Q_D, P
+    # )
+    # else:
+    #     # Have to generate Q_D matrices for each leaf
+    #     sidelens = jax.device_put(sidelens, device)
+    #     n_cheby_bdry_pts = 4 * (p - 1)
+    #     q = P.shape[1] // 4
 
-#             # Call the local solve stage
-#             Y_arr_chunk, DtN_arr_chunk, v_chunk, v_prime_chunk = _local_solve_stage_3D(
-#                 D_xx=D_xx,
-#                 D_xy=D_xy,
-#                 D_yy=D_yy,
-#                 D_xz=D_xz,
-#                 D_yz=D_yz,
-#                 D_zz=D_zz,
-#                 D_x=D_x,
-#                 D_y=D_y,
-#                 D_z=D_z,
-#                 P=P,
-#                 Q_D=Q_D,
-#                 p=p,
-#                 source_term=source_term_chunk,
-#                 D_xx_coeffs=D_xx_coeffs_chunk,
-#                 D_xy_coeffs=D_xy_coeffs_chunk,
-#                 D_yy_coeffs=D_yy_coeffs_chunk,
-#                 D_xz_coeffs=D_xz_coeffs_chunk,
-#                 D_yz_coeffs=D_yz_coeffs_chunk,
-#                 D_zz_coeffs=D_zz_coeffs_chunk,
-#                 D_x_coeffs=D_x_coeffs_chunk,
-#                 D_y_coeffs=D_y_coeffs_chunk,
-#                 D_z_coeffs=D_z_coeffs_chunk,
-#                 I_coeffs=I_coeffs_chunk,
-#                 device=device,
-#             )
+    #     all_diff_operators, Q_Ds = vmapped_prep_nonuniform_refinement_diff_operators_2D(
+    #         sidelens, coeffs_gathered, which_coeffs, diff_ops, p, q
+    #     )
+    #     Y_arr, DtN_arr, v, v_prime = vmapped_get_DtN(
+    #         source_term, all_diff_operators, Q_Ds, P
+    #     )
 
-#             Y_arr.append(Y_arr_chunk)
-#             DtN_arr.append(DtN_arr_chunk)
-#             v_arr.append(v_chunk)
-#             v_prime_arr.append(v_prime_chunk)
+    # # logging.debug(
+    # #     "_local_solve_stage_2D: source_term devices = %s", source_term.devices()
+    # # )
+    # # logging.debug("_local_solve_stage_2D: source_term shape = %s", source_term.shape)
 
-#     # Concatenate all of the chunks
-#     Y_arr = jnp.concatenate(Y_arr, axis=0)
-#     DtN_arr = jnp.concatenate(DtN_arr, axis=0)
-#     v_arr = jnp.concatenate(v_arr, axis=0)
-#     v_prime_arr = jnp.concatenate(v_prime_arr, axis=0)
-#     return Y_arr, DtN_arr, v_arr, v_prime_arr
+    # # logging.debug(
+    # #     "_local_solve_stage_2D: all_diff_operators shape = %s", all_diff_operators.shape
+    # # )
+
+    # # Return data to the CPU
+    # DtN_arr_host = jax.device_put(DtN_arr, host_device)
+    # del DtN_arr
+    # v_host = jax.device_put(v, host_device)
+    # del v
+    # v_prime_host = jax.device_put(v_prime, host_device)
+    # del v_prime
+    # Y_arr_host = jax.device_put(Y_arr, host_device)
+    # del Y_arr
+
+    # # Return the DtN arrays, particular solutions, particular
+    # # solution fluxes, and the solution operators. The solution
+    # # operators are not moved to the host.
+    # return Y_arr_host, DtN_arr_host, v_host, v_prime_host
 
 
 def _local_solve_stage_2D_ItI(
@@ -1176,6 +1172,56 @@ vmapped_get_DtN_uniform = jax.vmap(
     in_axes=(0, 0, None, None),
     out_axes=(0, 0, 0, 0),
 )
+
+
+@jax.jit
+def get_soln_DtN(
+    source_term: jnp.ndarray,
+    diff_operator: jnp.ndarray,
+    bdry_data: jax.Array,
+    Q_D: jnp.ndarray,
+    P: jnp.ndarray,
+) -> jax.Array:
+    """
+    Let X_int be the indices for the Cheby points which are interior to the domain.
+    Let X_bdr be the indices for the Cheby points which are on the boundary.
+
+    Solves the system
+
+    -----
+    |  I_{n_bdry}  | u = P @ g
+    |  A(X_int, :)  |     f(X_int)
+    ------
+
+    Args:
+        source_term (jnp.ndarray): Array of size (p**2,) containing the source term.
+        diff_operator (jnp.ndarray): Array of size (p**2, p**2) containing the local differential operator defined on the
+                    Cheby grid.
+        bdry_data (jax.Array): Array of size (4q,). Contains the incoming boundary data.
+        Q_D (jnp.ndarray): Array of size (4q, p**2) containing the matrix interpolating from a soln on the interior
+                    to that soln's boundary fluxes on the Gauss boundary.
+        P (jnp.ndarray): Array of size (4(p-1), 4q) containing the matrix interpolating from the Gauss to the Cheby boundary.
+        n_cheby_bdry (int): The number of Chebyshev nodes on the boundary.
+
+    Returns:
+        jax.Array: Leaf solutions with shape (p**2)
+    """
+    n_cheby_bdry = P.shape[0]
+
+    rhs = jnp.concatenate([P @ bdry_data, source_term[n_cheby_bdry:]])
+
+    A = jnp.zeros_like(diff_operator)
+
+    A = A.at[:n_cheby_bdry, :n_cheby_bdry].set(jnp.eye(n_cheby_bdry))
+
+    L_i = diff_operator[n_cheby_bdry:]
+    A = A.at[n_cheby_bdry:].set(L_i)
+
+    return jnp.linalg.solve(A, rhs)
+
+
+vmapped_get_soln_DtN_uniform = jax.vmap(get_soln_DtN, in_axes=(0, 0, 0, None, None))
+
 
 # @partial(jax.jit, static_argnums=(6,))
 # @jax.jit

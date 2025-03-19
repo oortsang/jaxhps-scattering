@@ -25,6 +25,7 @@ from hps.src.up_down_passes import (
     local_solve_stage,
     fused_pde_solve_2D,
     fused_pde_solve_2D_ItI,
+    baseline_pde_solve_2D,
 )
 from hps.src.config import DEVICE_ARR
 
@@ -446,6 +447,31 @@ class Test_fused_pde_solve_2D:
         source = jnp.array(np.random.normal(size=(4**l, p**2)))
         bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
         fused_pde_solve_2D(
+            t=t,
+            boundary_data=bdry_data,
+            source_term=source,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
+        )
+
+        assert t.interior_solns.shape == (4**l, p**2)
+
+
+class Test_baseline_pde_solve_2D:
+    def test_0(self, caplog) -> None:
+        caplog.set_level(logging.DEBUG)
+        p = 7
+        q = 5
+        l = 4
+
+        root = Node(xmin=0, xmax=1, ymin=0, ymax=1)
+        t = create_solver_obj_2D(p, q, root, uniform_levels=l)
+
+        d_xx_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
+        d_yy_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
+        source = jnp.array(np.random.normal(size=(4**l, p**2)))
+        bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
+        baseline_pde_solve_2D(
             t=t,
             boundary_data=bdry_data,
             source_term=source,
