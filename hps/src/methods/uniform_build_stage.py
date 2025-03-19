@@ -27,7 +27,7 @@ from hps.src.quadrature.quad_3D.uniform_merge_indexing import (
 from hps.src.methods.schur_complement import (
     _oct_merge_from_submatrices,
     assemble_merge_outputs_DtN,
-    assemble_merge_outputs_ItI
+    assemble_merge_outputs_ItI,
 )
 from hps.src.config import DEVICE_ARR, HOST_DEVICE, GPU_AVAILABLE
 from hps.src.quadrature.trees import Node, get_nodes_at_level, get_depth
@@ -711,7 +711,7 @@ def _uniform_quad_merge_ItI(
     B = jnp.block(
         [
             [
-                R_a_15, 
+                R_a_15,
                 R_a_18,
                 zero_block_ei,
                 zero_block_ei,
@@ -719,7 +719,6 @@ def _uniform_quad_merge_ItI(
                 zero_block_ei,
                 zero_block_ei,
                 zero_block_ei,
-
             ],
             [
                 zero_block_ei,
@@ -729,7 +728,7 @@ def _uniform_quad_merge_ItI(
                 R_b_25,
                 R_b_26,
                 zero_block_ei,
-                zero_block_ei
+                zero_block_ei,
             ],
             [
                 zero_block_ei,
@@ -739,7 +738,7 @@ def _uniform_quad_merge_ItI(
                 zero_block_ei,
                 zero_block_ei,
                 zero_block_ei,
-                zero_block_ei
+                zero_block_ei,
             ],
             [
                 zero_block_ei,
@@ -749,7 +748,7 @@ def _uniform_quad_merge_ItI(
                 zero_block_ei,
                 zero_block_ei,
                 R_d_47,
-                R_d_48
+                R_d_48,
             ],
         ]
     )
@@ -769,18 +768,21 @@ def _uniform_quad_merge_ItI(
     )
 
     D_12 = jnp.block(
-        [ [R_b_55, R_b_56, zero_block_ii, zero_block_ii],
-         [zero_block_ii, zero_block_ii, R_d_87, R_d_88],
-         [R_b_65, R_b_66, zero_block_ii, zero_block_ii],
-         [zero_block_ii, zero_block_ii, R_d_77, R_d_78],
-        ])
-    
-    D_21 = jnp.block(
-        [[R_a_55, R_a_58, zero_block_ii, zero_block_ii],
-         [zero_block_ii, zero_block_ii, R_c_66, R_c_67],
-         [zero_block_ii, zero_block_ii, R_c_76, R_c_77],
-         [R_a_85, R_a_88, zero_block_ii, zero_block_ii]]
+        [
+            [R_b_55, R_b_56, zero_block_ii, zero_block_ii],
+            [zero_block_ii, zero_block_ii, R_d_87, R_d_88],
+            [R_b_65, R_b_66, zero_block_ii, zero_block_ii],
+            [zero_block_ii, zero_block_ii, R_d_77, R_d_78],
+        ]
+    )
 
+    D_21 = jnp.block(
+        [
+            [R_a_55, R_a_58, zero_block_ii, zero_block_ii],
+            [zero_block_ii, zero_block_ii, R_c_66, R_c_67],
+            [zero_block_ii, zero_block_ii, R_c_76, R_c_77],
+            [R_a_85, R_a_88, zero_block_ii, zero_block_ii],
+        ]
     )
 
     h_int = jnp.concatenate([h_b_5, h_d_8, h_b_6, h_d_7, h_a_5, h_c_6, h_c_7, h_a_8])
@@ -788,8 +790,8 @@ def _uniform_quad_merge_ItI(
     A_lst = [R_a_11, R_b_22, R_c_33, R_d_44]
 
     T, S, h_ext_out, g_tilde_int = assemble_merge_outputs_ItI(
-        A_lst , B, C, D_12, D_21, h_ext, h_int)
-
+        A_lst, B, C, D_12, D_21, h_ext, h_int
+    )
 
     # Roll the exterior by n_int to get the correct ordering
     h_ext_out = jnp.roll(h_ext_out, -n_int, axis=0)
@@ -797,23 +799,23 @@ def _uniform_quad_merge_ItI(
     T = jnp.roll(T, -n_int, axis=1)
     S = jnp.roll(S, -n_int, axis=1)
 
-    # rows of S are ordered like a_5, a_8, c_6, c_7, b_5, b_6, d_7, d_8. 
-    # Want to rearrange them so they are ordered like 
+    # rows of S are ordered like a_5, a_8, c_6, c_7, b_5, b_6, d_7, d_8.
+    # Want to rearrange them so they are ordered like
     # a_5, b_5, b_6, c_6, c_7, d_7, d_8, a_8
     r = jnp.concatenate(
-        [jnp.arange(n_int), #a5
-         jnp.arange(4 * n_int, 5 * n_int), #b5
-         jnp.arange(5 * n_int, 6 * n_int), #b6
-         jnp.arange(2 * n_int, 3 * n_int), #c6
-         jnp.arange(3 * n_int, 4 * n_int), #c7
-         jnp.arange(6 * n_int, 7 * n_int), #d7
-         jnp.arange(7 * n_int, 8 * n_int), #d8
-         jnp.arange(n_int, 2 * n_int) #a8
-         ]
+        [
+            jnp.arange(n_int),  # a5
+            jnp.arange(4 * n_int, 5 * n_int),  # b5
+            jnp.arange(5 * n_int, 6 * n_int),  # b6
+            jnp.arange(2 * n_int, 3 * n_int),  # c6
+            jnp.arange(3 * n_int, 4 * n_int),  # c7
+            jnp.arange(6 * n_int, 7 * n_int),  # d7
+            jnp.arange(7 * n_int, 8 * n_int),  # d8
+            jnp.arange(n_int, 2 * n_int),  # a8
+        ]
     )
     S = S[r]
     g_tilde_int = g_tilde_int[r]
-
 
     return S, T, h_ext_out, g_tilde_int
 

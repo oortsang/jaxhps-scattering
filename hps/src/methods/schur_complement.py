@@ -5,7 +5,6 @@ import jax.numpy as jnp
 from hps.src.config import DEVICE_ARR, HOST_DEVICE
 
 
-
 @jax.jit
 def assemble_merge_outputs_ItI(
     A_lst: List[jnp.array],
@@ -47,7 +46,7 @@ def assemble_merge_outputs_ItI(
 @jax.jit
 def _invert_D_ItI(D_12: jax.Array, D_21: jax.Array) -> jax.Array:
     """
-    In the ItI case, D has this structure: 
+    In the ItI case, D has this structure:
             ------------
     D = I + | 0    D_12 |
             | D_21 0    |
@@ -112,6 +111,7 @@ def assemble_merge_outputs_DtN(
     D_inv = jnp.linalg.inv(D)
     return _assemble_merge_outputs(A_lst, B, C, D_inv, h_ext, h_int)
 
+
 @jax.jit
 def _assemble_merge_outputs(
     A_lst: List[jnp.array],
@@ -136,8 +136,8 @@ def _assemble_merge_outputs(
     [D^{-1}C       I][g_int]   [-D^{-1} h_int]
 
     Args:
-        A_lst (List[jnp.array]): List of square diagonal blocks which make up A 
-        B (jnp.array): 
+        A_lst (List[jnp.array]): List of square diagonal blocks which make up A
+        B (jnp.array):
         C (jnp.array): _description_
         D_inv (jnp.array): _description_
         h_ext (jnp.array): _description_
