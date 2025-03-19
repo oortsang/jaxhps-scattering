@@ -56,7 +56,7 @@ class Test__uniform_build_stage_2D_DtN:
 
         print("test_0: DtN_arr.shape = ", DtN_arr.shape)
         print("test_0: v_prime_arr.shape = ", v_prime_arr.shape)
-        S_arr_lst, DtN_arr_lst, v_arr_lst = _uniform_build_stage_2D_DtN(
+        S_arr_lst, v_arr_lst = _uniform_build_stage_2D_DtN(
             DtN_maps=DtN_arr, v_prime_arr=v_prime_arr, l=l
         )
 
@@ -67,7 +67,6 @@ class Test__uniform_build_stage_2D_DtN:
         # Check to make sure the arrays haven't been deleted
         print("test_0: S_arr_lst sums: ", [S_arr.sum() for S_arr in S_arr_lst])
         print("test_0: v_arr_lst sums: ", [v_arr.sum() for v_arr in v_arr_lst])
-        print("test_0: DtN_arr_lst sums: ", [DtN_arr.sum() for DtN_arr in DtN_arr_lst])
 
         for i in range(l):
             assert S_arr_lst[i].shape[-2] == v_arr_lst[i].shape[-1]
@@ -279,41 +278,35 @@ class Test__uniform_build_stage_2D_ItI:
         # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
         # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
 
-        S_arr_lst, R_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
+        S_arr_lst,  f_arr_lst = _uniform_build_stage_2D_ItI(
             R_maps=R_arr, h_arr=h_arr, l=l
         )
         print("test_0: S_arr_lst shapes = ", [S_arr.shape for S_arr in S_arr_lst])
 
         assert len(S_arr_lst) == l
-        assert len(R_arr_lst) == l
         assert len(f_arr_lst) == l
 
         for i in range(l):
             print("test_0: i=", i)
             print("test_0: S_arr_lst[i].shape = ", S_arr_lst[i].shape)
             print("test_0: f_arr_lst[i].shape = ", f_arr_lst[i].shape)
-            print("test_0: R_arr_lst[i].shape = ", R_arr_lst[i].shape)
             assert S_arr_lst[i].shape[-2] == f_arr_lst[i].shape[-1]
-            assert S_arr_lst[i].shape[-1] == R_arr_lst[i].shape[-1]
 
         # Check the shapes of the bottom-level output arrays
         n_quads = (num_leaves // 4) // 4
         assert S_arr_lst[0].shape == (4 * n_quads, 8 * q, 8 * q)
-        assert R_arr_lst[0].shape == (n_quads, 4, 8 * q, 8 * q)
         assert f_arr_lst[0].shape == (4 * n_quads, 8 * q)
 
         # Check the shapes of the middle-level output arrays.
         n_bdry = 16 * q
         n_interface = 16 * q
         assert S_arr_lst[1].shape == (4, n_interface, n_bdry)
-        assert R_arr_lst[1].shape == (1, 4, n_bdry, n_bdry)
         assert f_arr_lst[1].shape == (4, n_interface)
 
         # Check the shapes of the top-level output arrays.
         n_root_bdry = t.root_boundary_points.shape[0]
         n_root_interface = n_root_bdry
         assert S_arr_lst[2].shape == (1, n_root_interface, n_root_bdry)
-        assert R_arr_lst[2].shape == (n_root_bdry, n_root_bdry)
         assert f_arr_lst[2].shape == (1, n_root_interface)
 
 

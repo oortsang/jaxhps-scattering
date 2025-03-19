@@ -7,7 +7,6 @@ from hps.src.quadrature.quad_2D.grid_creation import (
     chebyshev_points,
     bounds_to_cheby_points_lst,
     vmapped_corners,
-    _corners_for_quad_subdivision,
     vmapped_bounds_to_cheby_points_lst,
     get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,
@@ -19,6 +18,8 @@ from hps.src.quadrature.trees import (
     add_four_children,
     find_node_at_corner,
     get_all_leaves,
+    _corners_for_quad_subdivision,
+
 )
 from hps.src.test_utils import check_arrays_close
 

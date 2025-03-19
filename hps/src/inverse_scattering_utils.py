@@ -5,7 +5,11 @@ import jax.numpy as jnp
 import jax
 import numpy as np
 from hps.src.solver_obj import create_solver_obj_2D
-from hps.src.up_down_passes import local_solve_stage, build_stage, down_pass
+# from hps.src.up_down_passes import local_solve_stage, build_stage, down_pass
+# from hps.src.methods.fused_methods import _fused_local_solve_and_build_2D_ItI, _down_pass_from_fused_ItI
+from hps.src.methods.local_solve_stage import _local_solve_stage_2D_ItI
+from hps.src.methods.uniform_build_stage import _uniform_build_stage_2D_ItI
+from hps.src.methods.uniform_down_pass import _uniform_down_pass_2D_ItI
 from hps.src.wave_scattering_utils import (
     get_uin,
     get_uin_and_normals,
@@ -35,6 +39,10 @@ YMAX = 1
 SIGMA = 0.15
 SOURCE_DIRS = jnp.array([0.0])
 SD_MATRIX_FP = f"data/wave_scattering/SD_matrices/SD_k{K}_n{P-2}_nside{2**L}_dom1.mat"
+S, D = load_SD_matrices(SD_MATRIX_FP)
+
+S = jax.device_put(S, DEVICE_ARR[0])
+D = jax.device_put(D, DEVICE_ARR[0])
 SAMPLE_ROOT = Node(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
 SAMPLE_TREE = create_solver_obj_2D(
     p=P,
@@ -121,28 +129,43 @@ def source_locations_to_scattered_field(source_locations: jnp.array) -> jnp.arra
     source_term = source_term = -1 * (K**2) * q_evals * uin_evals
 
     # Compute the local solve and build stages
-    local_solve_stage(
-        tree,
-        source_term=source_term,
-        D_xx_coeffs=d_xx_coeffs,
-        D_yy_coeffs=d_yy_coeffs,
-        I_coeffs=i_term,
-        device=DEVICE_ARR[0],
-        host_device=DEVICE_ARR[0],
-    )
-    build_stage(
-        tree,
-        device=DEVICE_ARR[0],
-        host_device=DEVICE_ARR[0],
-    )
+    # local_solve_stage(
+    #     tree,
+    #     source_term=source_term,
+    #     D_xx_coeffs=d_xx_coeffs,
+    #     D_yy_coeffs=d_yy_coeffs,
+    #     I_coeffs=i_term,
+    #     device=DEVICE_ARR[0],
+    #     host_device=DEVICE_ARR[0],
+    # )
+    # build_stage(
+    #     tree,
+    #     device=DEVICE_ARR[0],
+    #     host_device=DEVICE_ARR[0],
+    # )
+    T_arr, Y_arr, h_arr, v_arr = _local_solve_stage_2D_ItI(
+            D_xx=tree.D_xx,
+            D_xy=tree.D_xy,
+            D_yy=tree.D_yy,
+            D_x=tree.D_x,
+            D_y=tree.D_y,
+            I_P_0=tree.I_P_0,
+            Q_I=tree.Q_I,
+            F=tree.F,
+            G=tree.G,
+            p=tree.p,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
+            I_coeffs=i_term,
+            source_term=source_term,
+            host_device=DEVICE_ARR[0],
+        )
+    S_arr_lst, f_arr_lst, R = _uniform_build_stage_2D_ItI(
+            R_maps=T_arr, h_arr=h_arr, l=tree.l, host_device=DEVICE_ARR[0], return_ItI=True
+        )
     # R is the top-level ItI matrix
-    R = tree.interior_node_R_maps[-1]
-    # logging.debug("source_locations_to_scattered_field: R devices: %s", R.devices())
 
-    S, D = load_SD_matrices(SD_MATRIX_FP)
 
-    S = jax.device_put(S, DEVICE_ARR[0])
-    D = jax.device_put(D, DEVICE_ARR[0])
 
     T = get_DtN_from_ItI(R, tree.eta)
 
@@ -155,20 +178,41 @@ def source_locations_to_scattered_field(source_locations: jnp.array) -> jnp.arra
         k=K,
         eta=K,
     )
-    n_per_side = T.shape[0] // 4
-    # Break incoming_imp_data into 4 sides
-    incoming_imp_data = [
-        incoming_imp_data[i * n_per_side : (i + 1) * n_per_side] for i in range(4)
-    ]
+    # n_per_side = T.shape[0] // 4
+    # # Break incoming_imp_data into 4 sides
+    # incoming_imp_data = [
+    #     incoming_imp_data[i * n_per_side : (i + 1) * n_per_side] for i in range(4)
+    # ]
 
-    down_pass(
-        tree,
-        incoming_imp_data,
-        device=DEVICE_ARR[0],
-        host_device=HOST_DEVICE,
-    )
+    # Propagate the resulting impedance data down to the leaves
+    # interior_solns = _down_pass_from_fused_ItI(
+    #     bdry_data=incoming_imp_data,
+    #     S_arr_lst=S_arr_lst,
+    #     f_lst=f_arr_lst,
+    #     D_xx=tree.D_xx,
+    #     D_xy=tree.D_xy,
+    #     D_yy=tree.D_yy,
+    #     D_x=tree.D_x,
+    #     D_y=tree.D_y,
+    #     I_P_0=tree.I_P_0,
+    #     Q_I=tree.Q_I,
+    #     F=tree.F,
+    #     G=tree.G,
+    #     p=tree.p,
+    #     l=tree.l,
+    #     source_term=source_term,
+    #     D_xx_coeffs=d_xx_coeffs,
+    #     D_yy_coeffs=d_yy_coeffs,
+    #     I_coeffs=i_term,
+    # )
+    interior_solns = _uniform_down_pass_2D_ItI(boundary_imp_data=incoming_imp_data, 
+                                                   S_maps_lst=S_arr_lst, 
+                                                   f_lst=f_arr_lst, 
+                                                   leaf_Y_maps=Y_arr, 
+                                                   v_array=v_arr,
+                                                   host_device=DEVICE_ARR[0])
 
-    uscat_evals = tree.interior_solns
+    uscat_evals = interior_solns
 
     return uscat_evals, tree.leaf_cheby_points
 

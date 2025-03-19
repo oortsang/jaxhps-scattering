@@ -307,11 +307,7 @@ class Test_build_stage:
         )
         build_stage(t)
 
-        assert len(t.interior_node_R_maps) == l
-        assert t.interior_node_R_maps[-1].shape == (
-            t.root_boundary_points.shape[0],
-            t.root_boundary_points.shape[0],
-        )
+
         assert len(t.interior_node_S_maps) == l
         # l = 2 so we expect the root node to have 8q boundary points
         n_interface_pts = t.root_boundary_points.shape[0]

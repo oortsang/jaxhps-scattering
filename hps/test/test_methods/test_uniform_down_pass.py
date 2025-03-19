@@ -56,7 +56,7 @@ class Test__uniform_down_pass_2D_DtN:
 
         print("test_0: DtN_arr.shape = ", DtN_arr.shape)
         print("test_0: v_prime_arr.shape = ", v_prime_arr.shape)
-        S_arr_lst, DtN_arr_lst, v_int_lst = _uniform_build_stage_2D_DtN(
+        S_arr_lst,  v_int_lst = _uniform_build_stage_2D_DtN(
             DtN_maps=DtN_arr, v_prime_arr=v_prime_arr, l=l
         )
 
@@ -110,7 +110,7 @@ class Test__uniform_down_pass_2D_ItI:
         # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
         # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
 
-        S_arr_lst, R_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
+        S_arr_lst,  f_arr_lst = _uniform_build_stage_2D_ItI(
             R_maps=R_arr, h_arr=g_arr, l=l
         )
 

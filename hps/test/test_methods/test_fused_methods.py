@@ -44,7 +44,7 @@ class Test_fused_local_solve_and_build:
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
         sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
-        S_arr_lst, DtN_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D(
+        S_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -90,7 +90,7 @@ class Test_fused_local_solve_and_build_ItI:
 
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
 
-        S_arr_lst, DtN_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D_ItI(
+        S_arr_lst,  v_arr_lst = _fused_local_solve_and_build_2D_ItI(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -145,7 +145,7 @@ class Test_down_pass_from_fused:
 
         sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
-        S_arr_lst, DtN_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D(
+        S_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -165,7 +165,6 @@ class Test_down_pass_from_fused:
         # Print out the shapes of the arrays.
         print("test_0: S_arr_lst shape: ", [S.shape for S in S_arr_lst])
         print("test_0: v_arr_lst shape: ", [v.shape for v in v_arr_lst])
-        print("test_0: DtN_arr_lst shape: ", [DtN.shape for DtN in DtN_arr_lst])
 
         soln = _down_pass_from_fused(
             S_arr_lst=S_arr_lst,
@@ -312,7 +311,7 @@ class Test_down_pass_from_fused_ItI:
 
         bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
 
-        S_arr_lst, DtN_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D_ItI(
+        S_arr_lst,  v_arr_lst = _fused_local_solve_and_build_2D_ItI(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -333,7 +332,6 @@ class Test_down_pass_from_fused_ItI:
         # Print out the shapes of the arrays.
         print("test_0: S_arr_lst shape: ", [S.shape for S in S_arr_lst])
         print("test_0: v_arr_lst shape: ", [v.shape for v in v_arr_lst])
-        print("test_0: DtN_arr_lst shape: ", [DtN.shape for DtN in DtN_arr_lst])
 
         soln = _down_pass_from_fused_ItI(
             S_arr_lst=S_arr_lst,

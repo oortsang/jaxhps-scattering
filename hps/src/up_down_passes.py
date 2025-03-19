@@ -112,7 +112,7 @@ def fused_pde_solve_2D(
         )
 
     else:
-        S_arr_lst, DtN_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D(
+        S_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -210,7 +210,7 @@ def fused_pde_solve_2D_ItI(
         )
 
     else:
-        S_arr_lst, ItI_arr_lst, f_lst = _fused_local_solve_and_build_2D_ItI(
+        S_arr_lst,  f_lst = _fused_local_solve_and_build_2D_ItI(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -582,18 +582,17 @@ def build_stage(
     else:
         if solver_obj.I_P_0 is not None:
             # 2D ItI case
-            S_arr_lst, R_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
+            S_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
                 solver_obj.interior_node_R_maps[0],
                 solver_obj.leaf_node_h_vecs,
                 solver_obj.l,
                 device=device,
                 host_device=host_device,
             )
-            logging.debug("build_stage: R_arr_lst len: %s", len(R_arr_lst))
         else:
             if solver_obj.uniform_grid:
                 # 2D DtN case
-                S_arr_lst, DtN_arr_lst, v_arr_lst = _uniform_build_stage_2D_DtN(
+                S_arr_lst,  v_arr_lst = _uniform_build_stage_2D_DtN(
                     solver_obj.interior_node_DtN_maps[0],
                     solver_obj.leaf_node_v_prime_vecs,
                     solver_obj.l,
@@ -606,11 +605,9 @@ def build_stage(
     # Set the appropriate attributes in the solver_obj object.
     if solver_obj.I_P_0 is not None:
         solver_obj.interior_node_S_maps = S_arr_lst
-        solver_obj.interior_node_R_maps = R_arr_lst
         solver_obj.interior_node_f_vecs = f_arr_lst
     elif solver_obj.uniform_grid:
         solver_obj.interior_node_S_maps = S_arr_lst
-        solver_obj.interior_node_DtN_maps = DtN_arr_lst
         solver_obj.interior_node_v_int_vecs = v_arr_lst
 
 

@@ -157,6 +157,12 @@ def create_solver_obj_2D(
         raise ValueError("Must specify eta to use ItI version.")
 
     t = SolverObj()
+
+    t.root = root
+    t.p = p
+    t.q = q
+
+
     all_leaves = get_all_leaves(root)
     nleaves = len(all_leaves)
     if nleaves == 1 and uniform_levels is not None:
@@ -179,12 +185,10 @@ def create_solver_obj_2D(
         t.sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
 
-    t.root = root
-    t.p = p
-    t.q = q
 
     # Only initialize the Cheby points on the leaf nodes and the Gauss points on the boundary of the root node.
-    if fill_tree:
+    # Call different code depending on how much we fill out the tree.
+    if not uniform_levels:
         leaf_cheby_points = get_all_leaf_2d_cheby_points(p, t.root)
         root_gauss_points = get_all_boundary_gauss_legendre_points(q, t.root)
     else:

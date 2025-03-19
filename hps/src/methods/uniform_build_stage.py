@@ -125,6 +125,7 @@ def _uniform_build_stage_2D_DtN(
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
     subtree_recomp: bool = False,
+    return_DtN: bool = False
 ) -> Tuple[List[jnp.array], List[jnp.array], List[jnp.array]]:
     """
     Implements the build stage of the HPS algorithm for 2D problems. Given a list of
@@ -167,59 +168,45 @@ def _uniform_build_stage_2D_DtN(
         DtN_arr = DtN_arr.reshape(n_leaves // 4, 4, n_ext, n_ext)
         v_prime_arr = v_prime_arr.reshape(n_leaves // 4, 4, n_ext)
 
-    # Start lists to store S, DtN, and v_int arrays
-    S_lst = []
-    DtN_lst = []
-    v_int_lst = []
+    if not subtree_recomp:
+        # Start lists to store S and g_tilde arrays
+        S_lst = []
+        g_tilde_lst = []
 
     # Working on merging the merge pairs at level i
     for i in range(l - 1):
-        logging.debug("_build_stage_2D: i: %i", i)
-
+        logging.debug("_uniform_build_stage_2D_DtN: i: %i", i)
         (
             S_arr,
             DtN_arr_new,
             v_prime_arr_new,
-            v_int_arr,
+            g_tilde_arr,
         ) = vmapped_uniform_quad_merge(DtN_arr, v_prime_arr)
         DtN_arr.delete()
         v_prime_arr.delete()
-        # Only do these copies and GPU -> CPU moves if necessary
+        # Only do these copies and GPU -> CPU moves if necessary.
+        # Necessary when we are not doing subtree recomp and we want 
+        # the data on the CPU.
         if host_device != device:
-            logging.debug("_build_stage_2D: Moving data to CPU")
-            # print("_build_stage_2D: Moving data to CPU")
-            # print("_build_stage_2D: S_arr.device: ", S_arr.devices())
-            S_host = jax.device_put(S_arr, host_device)
-            # print("_build_stage_2D: S_host.device: ", S_host.devices())
-            S_lst.append(S_host)
-            v_int_host = jax.device_put(v_int_arr, host_device)
-            v_int_lst.append(v_int_host)
-            # DtN_host = jax.device_put(DtN_arr_new, host_device)
-            # DtN_lst.append(DtN_host)
+            if not subtree_recomp:
+                logging.debug("_build_stage_2D: Moving data to CPU")
+                S_host = jax.device_put(S_arr, host_device)
+                S_lst.append(S_host)
+
+                g_tilde_host = jax.device_put(g_tilde_arr, host_device)
+                g_tilde_lst.append(g_tilde_host)
 
             S_arr.delete()
-            v_int_arr.delete()
-            DtN_arr.delete()
-        else:
+            g_tilde_arr.delete()
+        elif not subtree_recomp:
             S_lst.append(S_arr)
-            v_int_lst.append(v_int_arr)
-            # DtN_lst.append(DtN_arr_new)
+            g_tilde_lst.append(g_tilde_arr)
 
         DtN_arr = DtN_arr_new
         v_prime_arr = v_prime_arr_new
 
-    if subtree_recomp:
-        T_last = DtN_arr
-        v_prime_last = v_prime_arr
-        logging.debug("_uniform_build_stage_2D_DtN: returning fused info")
-        return (
-            jax.device_put(T_last, host_device),
-            jax.device_put(v_prime_last, host_device),
-            # S_lst,
-            # v_int_lst,
-        )
 
-    S_last, T_last, v_prime_last, v_int_last = _uniform_quad_merge(
+    S_last, T_last, h_last, g_tilde_last = _uniform_quad_merge(
         DtN_arr[0, 0],
         DtN_arr[0, 1],
         DtN_arr[0, 2],
@@ -229,21 +216,34 @@ def _uniform_build_stage_2D_DtN(
         v_prime_arr[0, 2],
         v_prime_arr[0, 3],
     )
-    # print("_build_stage: T_last shape: ", T_last.shape)
-    # print("_build_stage: v_int_last shape: ", v_int_last.shape)
 
-    # DtN_lst.append(jax.device_put(T_last, HOST_DEVICE))
-    S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
-    v_int_lst.append(jax.device_put(jnp.expand_dims(v_int_last, axis=0), host_device))
-    # DtN_lst.append(jax.device_put(jnp.expand_dims(T_last, axis=0), host_device))
+    if subtree_recomp:
+        # In this branch, we only return T_last and h_last
+        S_last.delete()
+        g_tilde_last.delete()
 
-    S_last.delete()
-    T_last.delete()
-    v_int_last.delete()
-    v_prime_last.delete()
+        # Expand the dimensions of T_last and h_last so they stack nicely
+        T_last = jnp.expand_dims(T_last, 0)
+        h_last = jnp.expand_dims(h_last, 0)
 
-    # logging.debug("_build_stage: done with merging.")
-    return S_lst,  v_int_lst
+
+        # Move the data to the requested device
+        T_last_out = jax.device_put(T_last, host_device)
+        h_last_out = jax.device_put(h_last, host_device)
+
+        return (T_last_out, h_last_out)
+
+    else:
+        # In this branch, we are returning S_lst, g_tilde_lst, and optionally 
+        # T_last
+        S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
+        g_tilde_lst.append(jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device))
+        
+        if return_DtN:
+            T_last_out = jax.device_put(T_last, host_device)
+            return S_lst, g_tilde_lst, T_last_out
+        else:
+            return S_lst, g_tilde_lst
 
 
 def _uniform_build_stage_2D_ItI(
@@ -252,7 +252,8 @@ def _uniform_build_stage_2D_ItI(
     l: int,
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
-    return_fused_info: bool = False,
+    subtree_recomp: bool = False,
+    return_ItI: bool = False,
 ) -> Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]:
     """Implements the upward pass for merging ItI maps
 
@@ -266,75 +267,91 @@ def _uniform_build_stage_2D_ItI(
             R_arr is a list of arrays containing the ItI maps for each level.
             f_arr is a list of arrays containing the interface particular soln incoming impedance data for each level.
     """
-    logging.debug("_build_stage_2D_ItI: started")
+    logging.debug("_build_stage_2D_ItI: started. l=%s", l)
     # logging.debug("_build_stage_2D_ItI: input R_maps.device %s", R_maps.devices())
 
-    R_arr = R_maps
+    T_arr = R_maps
 
-    # Start lists to store S, R, and f arrays
-    S_lst = []
-    R_lst = []
-    f_lst = []
+    if not subtree_recomp:
+        # Start lists to output data
+        S_lst = []
+        g_tilde_lst = []
 
-    R_arr = jax.device_put(R_arr, device)
+    T_arr = jax.device_put(T_arr, device)
     h_arr = jax.device_put(h_arr, device)
+
+    if len(T_arr.shape) < 4:
+        n_leaves, n_ext, _ = T_arr.shape
+        T_arr = T_arr.reshape(n_leaves // 4, 4, n_ext, n_ext)
+        h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext)
 
     # Working on merging the merge pairs at level i
     for i in range(l - 1):
         # print("up_pass: merge_EW = ", merge_EW)
         # logging.debug("_build_stage_2D_ItI: starting with level %i", i)
-        # logging.debug("_build_stage_2D_ItI: R_arr.shape = %s", R_arr.shape)
+        # logging.debug("_build_stage_2D_ItI: T_arr.shape = %s", T_arr.shape)
         # logging.debug("_build_stage_2D_ItI: h_arr.shape = %s", h_arr.shape)
 
-        S_arr, R_arr, h_arr, f_arr = vmapped_uniform_quad_merge_ItI(R_arr, h_arr)
+        S_arr, T_arr_new, h_arr_new, g_tilde_arr = vmapped_uniform_quad_merge_ItI(T_arr, h_arr)
+        # T_arr.delete()
+        # h_arr.delete()
         if host_device != device:
-            logging.debug("_build_stage_2D_ItI: Moving data to host")
-            S_host = jax.device_put(S_arr, host_device)
-            S_lst.append(S_host)
-            R_host = jax.device_put(R_arr, host_device)
-            R_lst.append(R_host)
-            f_host = jax.device_put(f_arr, host_device)
-            f_lst.append(f_host)
+            if not subtree_recomp:
+                logging.debug("_build_stage_2D_ItI: Moving data to host")
+                S_host = jax.device_put(S_arr, host_device)
+                S_lst.append(S_host)
+                g_tilde_host = jax.device_put(g_tilde_arr, host_device)
+                g_tilde_lst.append(g_tilde_host)
 
             S_arr.delete()
-            f_arr.delete()
-        else:
-            R_lst.append(R_arr)
+            g_tilde_arr.delete()
+        elif not subtree_recomp:
             S_lst.append(S_arr)
-            f_lst.append(f_arr)
+            g_tilde_lst.append(g_tilde_arr)
+        
+        T_arr = T_arr_new
+        h_arr = h_arr_new
 
-    if return_fused_info:
-        # Early exit and only return the final merge info
-        R_last = R_arr
-        h_last = h_arr
-        return (
-            jax.device_put(R_last, host_device),
-            jax.device_put(h_last, host_device),
-            S_lst,
-            f_lst,
-        )
 
-    S_last, R_last, h_last, f_last = _uniform_quad_merge_ItI(
-        R_arr[0, 0],
-        R_arr[0, 1],
-        R_arr[0, 2],
-        R_arr[0, 3],
+    S_last, T_last, h_last, g_tilde_last = _uniform_quad_merge_ItI(
+        T_arr[0, 0],
+        T_arr[0, 1],
+        T_arr[0, 2],
+        T_arr[0, 3],
         h_arr[0, 0],
         h_arr[0, 1],
         h_arr[0, 2],
         h_arr[0, 3],
     )
 
-    # h_last = jnp.expand_dims(h_last, axis=-1)
-    # print("_build_stage: T_last shape: ", T_last.shape)
-    # print("_build_stage: v_int_last shape: ", v_int_last.shape)
 
-    R_lst.append(jax.device_put(R_last, host_device))
-    S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
-    f_lst.append(jax.device_put(jnp.expand_dims(f_last, axis=0), host_device))
+    if subtree_recomp:
+        # In this branch, we only return T_last and h_last
+        S_last.delete()
+        g_tilde_last.delete()
 
-    # logging.debug("_build_stage: done with merging.")
-    return S_lst, R_lst, f_lst
+        # Expand the dimensions of T_last and h_last so they stack nicely
+        T_last = jnp.expand_dims(T_last, 0)
+        h_last = jnp.expand_dims(h_last, 0)
+
+
+        # Move the data to the requested device
+        T_last_out = jax.device_put(T_last, host_device)
+        h_last_out = jax.device_put(h_last, host_device)
+
+        return (T_last_out, h_last_out)
+
+    else:
+        # In this branch, we are returning S_lst, g_tilde_lst, and optionally 
+        # T_last
+        S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
+        g_tilde_lst.append(jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device))
+        
+        if return_ItI:
+            T_last_out = jax.device_put(T_last, host_device)
+            return S_lst, g_tilde_lst, T_last_out
+        else:
+            return S_lst, g_tilde_lst
 
 
 @jax.jit

@@ -22,7 +22,6 @@ from hps.src.quadrature.quad_2D.indexing import (
 )
 from hps.src.quadrature.quad_2D.grid_creation import (
     get_all_leaf_2d_cheby_points_uniform_refinement,
-    _corners_for_quad_subdivision,
 )
 
 from hps.src.quadrature.trees import (
@@ -34,6 +33,8 @@ from hps.src.quadrature.trees import (
     get_nodes_at_level,
     tree_equal,
     node_at,
+    _corners_for_quad_subdivision,
+
 )
 
 

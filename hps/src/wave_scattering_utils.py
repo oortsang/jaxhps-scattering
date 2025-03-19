@@ -19,7 +19,10 @@ from hps.src.methods.fused_methods import (
     _fused_local_solve_and_build_2D_ItI,
     _down_pass_from_fused_ItI,
 )
-from hps.src.config import DEVICE_ARR
+from hps.src.methods.local_solve_stage import _local_solve_stage_2D_ItI
+from hps.src.methods.uniform_build_stage import _uniform_build_stage_2D_ItI
+from hps.src.methods.uniform_down_pass import _uniform_down_pass_2D_ItI
+from hps.src.config import DEVICE_ARR, get_fused_chunksize_2D
 from hps.src.quadrature.quad_2D.interpolation import (
     interp_from_nonuniform_hps_to_regular_grid,
 )
@@ -260,7 +263,7 @@ def solve_scattering_problem(
     root = Node(xmin=float(xmin), xmax=float(xmax), ymin=float(ymin), ymax=float(ymax))
 
     t = create_solver_obj_2D(
-        p=p, q=p - 2, root=root, uniform_levels=l, use_ItI=True, eta=k, fill_tree=False
+        p=p, q=p - 2, root=root, uniform_levels=l, use_ItI=True, eta=k, fill_tree=True
     )
 
     t_0 = default_timer()
@@ -278,26 +281,53 @@ def solve_scattering_problem(
 
     logging.debug("solve_scattering_problem: S device: %s", S.devices())
 
-    S_arr_lst, ItI_arr_lst, f_arr_lst = _fused_local_solve_and_build_2D_ItI(
-        D_xx=t.D_xx,
-        D_xy=t.D_xy,
-        D_yy=t.D_yy,
-        D_x=t.D_x,
-        D_y=t.D_y,
-        I_P_0=t.I_P_0,
-        Q_I=t.Q_I,
-        F=t.F,
-        G=t.G,
-        p=p,
-        l=l,
-        source_term=source_term,
-        D_xx_coeffs=d_xx_coeffs,
-        D_yy_coeffs=d_yy_coeffs,
-        I_coeffs=i_term,
-        host_device=DEVICE_ARR[0],
-    )
+    # Determine whether we need to use fused functions or can fit everything on the 
+    n_leaves = t.leaf_cheby_points.shape[0]
+    _, n_levels = get_fused_chunksize_2D(p, jnp.complex128, n_leaves)
+    bool_use_recomp = n_levels < l
 
-    R = ItI_arr_lst[-1]
+    if bool_use_recomp:
+        S_arr_lst, f_arr_lst, R = _fused_local_solve_and_build_2D_ItI(
+            D_xx=t.D_xx,
+            D_xy=t.D_xy,
+            D_yy=t.D_yy,
+            D_x=t.D_x,
+            D_y=t.D_y,
+            I_P_0=t.I_P_0,
+            Q_I=t.Q_I,
+            F=t.F,
+            G=t.G,
+            p=p,
+            l=l,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
+            I_coeffs=i_term,
+            host_device=DEVICE_ARR[0],
+            return_top_T=True
+        )
+    else:
+        T_arr, Y_arr, h_arr, v_arr = _local_solve_stage_2D_ItI(
+            D_xx=t.D_xx,
+            D_xy=t.D_xy,
+            D_yy=t.D_yy,
+            D_x=t.D_x,
+            D_y=t.D_y,
+            I_P_0=t.I_P_0,
+            Q_I=t.Q_I,
+            F=t.F,
+            G=t.G,
+            p=p,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
+            I_coeffs=i_term,
+            source_term=source_term,
+            host_device=DEVICE_ARR[0],
+        )
+        S_arr_lst, f_arr_lst, R = _uniform_build_stage_2D_ItI(
+            R_maps=T_arr, h_arr=h_arr, l=l, host_device=DEVICE_ARR[0], return_ItI=True
+        )
+
 
     T = get_DtN_from_ItI(R, t.eta)
 
@@ -326,27 +356,35 @@ def solve_scattering_problem(
         S.delete()
         D.delete()
 
-    # Propagate the resulting impedance data down to the leaves
-    interior_solns = _down_pass_from_fused_ItI(
-        bdry_data=incoming_imp_data,
-        S_arr_lst=S_arr_lst,
-        f_lst=f_arr_lst,
-        D_xx=t.D_xx,
-        D_xy=t.D_xy,
-        D_yy=t.D_yy,
-        D_x=t.D_x,
-        D_y=t.D_y,
-        I_P_0=t.I_P_0,
-        Q_I=t.Q_I,
-        F=t.F,
-        G=t.G,
-        p=p,
-        l=l,
-        source_term=source_term,
-        D_xx_coeffs=d_xx_coeffs,
-        D_yy_coeffs=d_yy_coeffs,
-        I_coeffs=i_term,
-    )
+    if bool_use_recomp:
+        # Propagate the resulting impedance data down to the leaves
+        interior_solns = _down_pass_from_fused_ItI(
+            bdry_data=incoming_imp_data,
+            S_arr_lst=S_arr_lst,
+            f_lst=f_arr_lst,
+            D_xx=t.D_xx,
+            D_xy=t.D_xy,
+            D_yy=t.D_yy,
+            D_x=t.D_x,
+            D_y=t.D_y,
+            I_P_0=t.I_P_0,
+            Q_I=t.Q_I,
+            F=t.F,
+            G=t.G,
+            p=p,
+            l=l,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
+            I_coeffs=i_term,
+        )
+    else:
+        interior_solns = _uniform_down_pass_2D_ItI(boundary_imp_data=incoming_imp_data, 
+                                                   S_maps_lst=S_arr_lst, 
+                                                   f_lst=f_arr_lst, 
+                                                   leaf_Y_maps=Y_arr, 
+                                                   v_array=v_arr,
+                                                   host_device=DEVICE_ARR[0])
     uscat_soln = interior_solns
 
     # Measure consistency with the PDE

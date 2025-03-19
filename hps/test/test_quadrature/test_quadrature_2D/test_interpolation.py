@@ -24,13 +24,14 @@ from hps.src.quadrature.trees import (
     get_all_leaves_jitted,
     add_four_children,
     add_uniform_levels,
+    # _corners_for_quad_subdivision,
 )
 from hps.src.utils import meshgrid_to_lst_of_pts
 from hps.src.quadrature.quad_2D.grid_creation import (
     chebyshev_points,
     corners_to_cheby_points_lst,
     vmapped_corners,
-    _corners_for_quad_subdivision,
+    
     vmapped_corners_to_cheby_points_lst,
     get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,

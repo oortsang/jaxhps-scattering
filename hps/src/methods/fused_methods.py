@@ -71,7 +71,14 @@ def _fused_local_solve_and_build_2D(
     if get_all_operators:
         # Figure out chunksize for bdry_data
         bdry_data_chunksize = bdry_data.shape[0] // n_chunks
-        n_bdry_data = bdry_data.shape[0]
+
+        # These are options that will be passed to build stage.
+        bool_subtree_recomp = False
+        lowlevel_merge_host_device = DEVICE_ARR[0]
+    else:
+        # These are options that will be passed to build stage.
+        bool_subtree_recomp = True
+        lowlevel_merge_host_device = DEVICE_ARR[0]
 
     # Loop over chunks
     for i in range(0, n_chunks):
@@ -129,39 +136,26 @@ def _fused_local_solve_and_build_2D(
             uniform_grid=True,
             Q_D=Q_D,
         )
-        # Delete the input data. Not so sure this is necessary because these
-        # arrays are on the CPU.
-        # source_term_chunk.delete()
-        # if D_xx_coeffs_chunk is not None:
-        #     D_xx_coeffs_chunk.delete()
-        # if D_xy_coeffs_chunk is not None:
-        #     D_xy_coeffs_chunk.delete()
-        # if D_yy_coeffs_chunk is not None:
-        #     D_yy_coeffs_chunk.delete()
-        # if D_x_coeffs_chunk is not None:
-        #     D_x_coeffs_chunk.delete()
-        # if D_y_coeffs_chunk is not None:
-        #     D_y_coeffs_chunk.delete()
 
         # Merge the chunk as far as we can
-        DtN_arr_last, v_prime_arr_last, S_lst, v_int_lst = _uniform_build_stage_2D_DtN(
+        build_stage_out = _uniform_build_stage_2D_DtN(
             DtN_arr_chunk,
             v_prime_chunk,
             n_levels_fused,
-            host_device=DEVICE_ARR[0],
-            return_fused_info=True,
+            host_device=lowlevel_merge_host_device,
+            subtree_recomp=bool_subtree_recomp,
         )
-        logging.debug("_fused_local_solve_and_build_2D: DtN_arr_last device: %s", DtN_arr_last.devices())
 
         # Either compute the solution or append the data
         # to the output lists
         if get_all_operators:
+            S_lst, g_tilde_lst = build_stage_out
+            
             # In this branch, we need Y_arr_chunk, S_lst, v_int_lst, and v_chunk
             # Safe to delete DtN_arr_chunk, v_prime_chunk, and DtN_arr_last
             DtN_arr_chunk.delete()
             v_prime_chunk.delete()
-            DtN_arr_last.delete()
-            v_prime_arr_last.delete()
+
             # Do the down pass
             # idxes_i = jnp.arange(n_bdry_data) % n_chunks == i
             # bdry_data_i = bdry_data[idxes_i]
@@ -173,7 +167,7 @@ def _fused_local_solve_and_build_2D(
             bdry_data_o = _partial_down_pass(
                 bdry_data_i,
                 S_lst,
-                v_int_lst,
+                g_tilde_lst,
                 device=DEVICE_ARR[0],
                 host_device=DEVICE_ARR[0],
             )
@@ -191,17 +185,15 @@ def _fused_local_solve_and_build_2D(
             # Append the solution to the output list
             soln_lst.append(jax.device_put(soln_chunk, host_device))
         else:
+            T_last, h_last = build_stage_out
             # In this branch, we need DtN_arr_last and v_prime_arr_last.
             # Can delete Y_arr_chunk, S_lst, v_int_lst, and v_chunk
             Y_arr_chunk.delete()
             v_chunk.delete()
-            for S in S_lst:
-                S.delete()
-            for v_int in v_int_lst:
-                v_int.delete()
+
             # Append only DtN and v_prime vectors to the output lists.
-            DtN_arr_lst.append(DtN_arr_last)
-            v_prime_arr_lst.append(v_prime_arr_last)
+            DtN_arr_lst.append(T_last)
+            v_prime_arr_lst.append(h_last)
 
     if get_all_operators:
         # Compute the down pass
@@ -214,14 +206,15 @@ def _fused_local_solve_and_build_2D(
         for DtN in DtN_arr_lst:
             DtN.delete()
         v_prime_arr = jnp.concatenate(v_prime_arr_lst, axis=0)
+        logging.debug("_fused_local_solve_and_build_2D: v_prime_arr shape: %s", v_prime_arr.shape)
         for v_prime in v_prime_arr_lst:
             v_prime.delete()
         logging.debug("_fused_local_solve_and_build_2D: starting final merge")
         # Final call to build_stage to get top-level information
-        S_arr_lst, DtN_arr_lst, v_arr_lst = _uniform_build_stage_2D_DtN(
-            DtN_arr, v_prime_arr, l - n_levels_fused + 1, host_device=DEVICE_ARR[0]
+        S_arr_lst, g_tilde_lst = _uniform_build_stage_2D_DtN(
+            DtN_arr, v_prime_arr, l - n_levels_fused , host_device=DEVICE_ARR[0], subtree_recomp=False, return_DtN=False
         )
-        return S_arr_lst, DtN_arr_lst, v_arr_lst
+        return S_arr_lst, g_tilde_lst
 
 
 def _fused_local_solve_and_build_2D_ItI(
@@ -246,6 +239,7 @@ def _fused_local_solve_and_build_2D_ItI(
     bdry_data: jax.Array | None = None,
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
+    return_top_T: bool = False,
 ):
 
     # Get the fused chunksize
@@ -259,39 +253,61 @@ def _fused_local_solve_and_build_2D_ItI(
         n_chunks,
         n_levels_fused,
     )
-    R_arr_lst = []
+
+    # early exit if n_chunks == 1:
+    if n_chunks == 1:
+        # Do local solve stage
+        R_arr, Y_arr, h_arr, v_arr = _local_solve_stage_2D_ItI(
+        D_xx=D_xx,
+        D_xy=D_xy,
+        D_yy=D_yy,
+        D_x=D_x,
+        D_y=D_y,
+        I_P_0=I_P_0,
+        Q_I=Q_I,
+        F=F,
+        G=G,
+        p=p,
+        D_xx_coeffs=D_xx_coeffs,
+        D_yy_coeffs=D_yy_coeffs,
+        D_xy_coeffs=D_xy_coeffs,
+        D_x_coeffs=D_x_coeffs,
+        D_y_coeffs=D_y_coeffs,
+        I_coeffs=I_coeffs,
+        source_term=source_term,
+        host_device=host_device,
+        )
+        # Do build stage
+        return  _uniform_build_stage_2D_ItI(
+        R_maps=R_arr, h_arr=h_arr, l=l, host_device=host_device, return_ItI=return_top_T
+        )
+
+    T_arr_lst = []
     h_arr_lst = []
-    f_arr_lst = []
     soln_lst = []
     get_all_operators = bdry_data is not None
     if get_all_operators:
+        logging.debug("_fused_local_solve_and_build_2D_ItI: bdry_data shape = %s", bdry_data.shape)
         # Figure out chunksize for bdry_data
-        # print("_fused_local_solve_and_build_2D_ItI: bdry_data shape: ", bdry_data.shape)
-        # bdry_data_shape = bdry_data.shape
         bdry_data_chunksize = bdry_data.shape[0] // n_chunks
-        logging.debug(
-            "_fused_local_solve_and_build_2D_ItI: bdry_data_chunksize = %i",
-            bdry_data_chunksize,
-        )
-        logging.debug(
-            "_fused_local_solve_and_build_2D_ItI: bdry_data shape: %s", bdry_data.shape
-        )
-        # bdry_data = jnp.reshape(bdry_data, (4, -1, bdry_data_shape[1], 1))
-        # print(
-        #     "_fused_local_solve_and_build_2D_ItI: after reshape,  bdry_data shape: ",
-        #     bdry_data.shape,
-        # )
+        # These are options that will be passed to build stage.
+        bool_subtree_recomp = False
+        lowlevel_merge_host_device = DEVICE_ARR[0]
+    else:
+        # These are options that will be passed to build stage.
+        bool_subtree_recomp = True
+        lowlevel_merge_host_device = DEVICE_ARR[0]
 
     # Loop over chunks
     for i in range(0, n_chunks):
         chunk_start_idx = i * chunksize
         chunk_end_idx = min((i + 1) * chunksize, n_leaves)
-        logging.debug(
-            "_fused_local_solve_and_build_2D_ItI: chunk_start_idx = %i", chunk_start_idx
-        )
-        logging.debug(
-            "_fused_local_solve_and_build_2D_ItI: chunk_end_idx = %i", chunk_end_idx
-        )
+        # logging.debug(
+        #     "_fused_local_solve_and_build_2D_ItI: chunk_start_idx = %i", chunk_start_idx
+        # )
+        # logging.debug(
+        #     "_fused_local_solve_and_build_2D_ItI: chunk_end_idx = %i", chunk_end_idx
+        # )
         # Split the input data into a chunk
         source_term_chunk = source_term[chunk_start_idx:chunk_end_idx]
         D_xx_coeffs_chunk = (
@@ -345,24 +361,20 @@ def _fused_local_solve_and_build_2D_ItI(
         )
 
         # Merge the chunk as far as we can
-        R_arr_last, h_arr_last, S_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
+        build_stage_out = _uniform_build_stage_2D_ItI(
             R_arr_chunk,
             h_arr_chunk,
             n_levels_fused,
-            host_device=host_device,
-            return_fused_info=True,
+            subtree_recomp=bool_subtree_recomp,
+            host_device=lowlevel_merge_host_device,
             device=device,
         )
 
         # Either compute the solution or append the data
         # to the output lists
         if get_all_operators:
-            # In this branch, we need Y, v, S, f
-            # at this point safe to delete R, h
-            R_arr_chunk.delete()
-            h_arr_chunk.delete()
-            R_arr_last[0].delete()
-            h_arr_last[0].delete()
+            S_lst, g_tilde_lst = build_stage_out
+
 
             bdry_data_start = i * bdry_data_chunksize
             bdry_data_end = (i + 1) * bdry_data_chunksize
@@ -373,8 +385,8 @@ def _fused_local_solve_and_build_2D_ItI(
 
             bdry_data_o = _partial_down_pass_ItI(
                 bdry_data_i,
-                S_arr_lst,
-                f_arr_lst,
+                S_lst,
+                g_tilde_lst,
                 device=DEVICE_ARR[0],
             )
             # compute interior solutions with Y matrices
@@ -390,18 +402,14 @@ def _fused_local_solve_and_build_2D_ItI(
             v_chunk.delete()
 
         else:
-            # In this branch, we need the last R array and last h array.
-            R_arr_lst.append(jax.device_put(R_arr_last[0], HOST_DEVICE))
-            h_arr_lst.append(jax.device_put(h_arr_last[0], HOST_DEVICE))
-            # Can delete the rest
-            R_arr_chunk.delete()
+            T_last, h_last = build_stage_out
             Y_arr_chunk.delete()
-            h_arr_chunk.delete()
             v_chunk.delete()
-            for S in S_arr_lst:
-                S.delete()
-            for f in f_arr_lst:
-                f.delete()
+
+            # Append T and h to their lists
+            T_arr_lst.append(T_last)
+            h_arr_lst.append(h_last)
+
 
     # Return the solution or the rest of the merge information
     if get_all_operators:
@@ -412,32 +420,24 @@ def _fused_local_solve_and_build_2D_ItI(
     else:
         # In this branch, the boundary data is not specified, so we need
         # to keep merging and return all of the merge information.
-        R_arr = jnp.concatenate(R_arr_lst, axis=0)
+        T_arr = jnp.concatenate(T_arr_lst, axis=0)
+        # for T in T_arr_lst:
+        #     T.delete()
+
         h_arr = jnp.concatenate(h_arr_lst, axis=0)
+        # for h in h_arr_lst:
+        #     h.delete()
 
-        n_merges, n, _ = R_arr.shape
-
-        R_arr = R_arr.reshape((n_merges // 4, 4, n, n))
-        h_arr = h_arr.reshape((n_merges // 4, 4, n))
-        # print("_fused_local_solve_and_build_2D_ItI: R_arr shape: ", R_arr.shape)
-        # print("_fused_local_solve_and_build_2D_ItI: h_arr shape: ", h_arr.shape)
-
-        if len(R_arr_lst) > 1:
-            # Deleting these to save memory
-            for R in R_arr_lst:
-                R.delete()
-            for h in h_arr_lst:
-                h.delete()
         logging.debug("_fused_local_solve_and_build_2D_ItI: starting final merge")
         # Final call to build_stage to get top-level information
-        S_arr_lst, ItI_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
-            R_arr, h_arr, l - n_levels_fused + 1, device=device, host_device=device
+        return  _uniform_build_stage_2D_ItI(
+            T_arr, h_arr, l - n_levels_fused, device=device, host_device=device, return_ItI=return_top_T
         )
-        logging.debug(
-            "_fused_local_solve_and_build_2D_ItI: returning S_arr_lst with shapes: %s",
-            [S.shape for S in S_arr_lst],
-        )
-        return S_arr_lst, ItI_arr_lst, f_arr_lst
+        # logging.debug(
+        #     "_fused_local_solve_and_build_2D_ItI: returning S_arr_lst with shapes: %s",
+        #     [S.shape for S in S_arr_lst],
+        # )
+        # return S_arr_lst, g_tilde_lst
 
 
 def _down_pass_from_fused(
@@ -463,6 +463,7 @@ def _down_pass_from_fused(
     I_coeffs: jax.Array | None = None,
     device: jax.Device = DEVICE_ARR[0],
 ) -> jax.Array:
+    
 
     # First do a partial down pass
     bdry_data = _partial_down_pass(
@@ -623,24 +624,27 @@ def _partial_down_pass_ItI(
 ) -> jax.Array:
 
     n_levels = len(S_maps_lst)
-    # if boundary_imp_data.ndim == 1:
-    #     bdry_data = jnp.expand_dims(boundary_imp_data, axis=0)
-    # else:
-    #     bdry_data = boundary_imp_data
-    bdry_data = boundary_imp_data
+    if boundary_imp_data.ndim == 1:
+        bdry_data = boundary_imp_data.reshape((1, -1))
+    else:
+        bdry_data = boundary_imp_data
     # print("_partial_down_pass_ItI: bdry_data shape: ", bdry_data.shape)
 
+    # logging.debug("_partial_down_pass_ItI: input boundary_imp_data shape: %s", boundary_imp_data.shape)
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
-        n_bdry = bdry_data.shape[-1]
+        # n_bdry = bdry_data.shape[-1]
 
-        bdry_data = bdry_data.reshape((-1, n_bdry))
+        # bdry_data = bdry_data.reshape((-1, n_bdry))
 
         S_arr = S_maps_lst[level]
         f = f_lst[level]
 
-        bdry_data = vmapped_propogate_down_quad_ItI(S_arr, bdry_data, f)
+        # logging.debug("_partial_down_pass_ItI: level=%s, S_arr=%s, f=%s, bdry_data=%s", level, S_arr.shape, f.shape, bdry_data.shape)
 
+        bdry_data = vmapped_propogate_down_quad_ItI(S_arr, bdry_data, f)
+        n_bdry = bdry_data.shape[-1]
+        bdry_data = bdry_data.reshape((-1, n_bdry))
     # Delete data we no longer need
     for S in S_maps_lst:
         S.delete()
@@ -696,7 +700,7 @@ def _fused_all_single_chunk(
     bdry_data = jax.device_put(bdry_data, DEVICE_ARR[0])
 
     # Do build stage
-    S_arr_lst, DtN_arr_lst, v_arr_lst = _uniform_build_stage_2D_DtN(
+    S_arr_lst, v_arr_lst = _uniform_build_stage_2D_DtN(
         DtN_maps=DtN_arr, v_prime_arr=v_prime_arr, l=l, host_device=host_device
     )
 
@@ -757,7 +761,7 @@ def _fused_all_single_chunk_ItI(
     bdry_data = jax.device_put(bdry_data, DEVICE_ARR[0])
 
     # Do build stage
-    S_arr_lst, R_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
+    S_arr_lst,  f_arr_lst = _uniform_build_stage_2D_ItI(
         R_maps=R_arr, h_arr=h_arr, l=l, host_device=host_device
     )
 
@@ -882,7 +886,7 @@ def _baseline_recomputation_upward_pass(
         v_prime.delete()
     logging.debug("_baseline_recomputation_upward_pass: starting final merges")
     # Final call to build_stage to get top-level information
-    S_arr_lst, DtN_arr_lst, v_arr_lst = _uniform_build_stage_2D_DtN(
+    S_arr_lst,  v_arr_lst = _uniform_build_stage_2D_DtN(
         DtN_arr, v_prime_arr, l, host_device=HOST_DEVICE
     )
 

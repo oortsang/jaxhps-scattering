@@ -9,7 +9,6 @@ from hps.src.quadrature.quad_2D.grid_creation import (
     chebyshev_points,
     corners_to_cheby_points_lst,
     vmapped_corners,
-    _corners_for_quad_subdivision,
     vmapped_corners_to_cheby_points_lst,
     get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,
@@ -27,7 +26,7 @@ from hps.src.quadrature.quad_2D.differentiation import (
     precompute_G_matrix,
     precompute_F_matrix,
 )
-from hps.src.quadrature.trees import Node
+from hps.src.quadrature.trees import Node, _corners_for_quad_subdivision
 
 
 class Test_precompute_N_matrix:
