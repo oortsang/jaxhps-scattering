@@ -82,9 +82,9 @@ def main(args: argparse.Namespace) -> None:
     method_names_lst = [
         # ("laptop", "Laptop"),
         ("multicore_cpu", "Multicore CPU"),
-        ("gpu_no_recomp", '1 H100 GPU; Na\\"ive Implementation'),
-        ("gpu_baseline_recomp", "1 H100 GPU; Baseline Recomputation"),
-        ("gpu_our_recomp", "1 H100 GPU; Our Recomputation"),
+        ("gpu_no_recomp", "1 H100 GPU; No Recomputation"),
+        ("gpu_baseline_recomp", "1 H100 GPU; Leaf Recomputation"),
+        ("gpu_our_recomp", "1 H100 GPU; Subtree Recomputation (Ours)"),
     ]
 
     # Load the data
@@ -102,6 +102,7 @@ def main(args: argparse.Namespace) -> None:
 
     for i, (method_name, label) in enumerate(method_names_lst):
         df_i = df_lst[i]
+        logging.info("Method name = %s, df_i = %s", method_name, df_i)
         if "cpu" in method_name:
             marker = "x"
         else:
@@ -127,7 +128,7 @@ def main(args: argparse.Namespace) -> None:
     # ax.spines["top"].set_visible(False)
     # ax.spines["right"].set_visible(False)
     # Legend location lower right
-    ax.legend(loc="lower right", bbox_to_anchor=(1.25, 0.0))
+    ax.legend(loc="lower right", bbox_to_anchor=(1.27, 0.0))
     ax.set_xlabel("$N$", fontsize=FONTSIZE_2)
     ax.set_ylabel("Runtime (s)", fontsize=FONTSIZE_2)
     ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_2)
