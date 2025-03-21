@@ -36,7 +36,9 @@ def setup_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--scattering_potential", default="gauss_bumps", help="Scattering potential to use.",
+        "--scattering_potential",
+        default="gauss_bumps",
+        help="Scattering potential to use.",
         choices=[
             "luneburg",
             "vertically_graded",

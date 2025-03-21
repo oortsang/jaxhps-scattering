@@ -171,3 +171,4 @@ cpp/sctl_intro/SCTL/
 cpp/llvm*
 assets/accuracy_checks/*.png
 assets/accuracy_checks/
+.vscode/
