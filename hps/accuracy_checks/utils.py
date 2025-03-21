@@ -19,7 +19,13 @@ def setup_tree_quad_merge(p: int, eta: float = None, use_ItI: bool = False):
     east = jnp.pi / 2
     west = -jnp.pi / 2
     root = Node(
-        xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+        xmin=west,
+        xmax=east,
+        ymin=south,
+        ymax=north,
+        depth=0,
+        zmin=None,
+        zmax=None,
     )
     # corners = [(west, south), (east, south), (east, north), (west, north)]
     q = p - 2
@@ -41,7 +47,8 @@ def _distance_around_boundary(node) -> jnp.ndarray:
     distance_around_boundary = jnp.concatenate(
         [
             jnp.abs(node.quad_obj.boundary_points_dd["S"][:, 0] - west),
-            ew_len + jnp.abs(node.quad_obj.boundary_points_dd["E"][:, 1] - south),
+            ew_len
+            + jnp.abs(node.quad_obj.boundary_points_dd["E"][:, 1] - south),
             ns_len
             + ew_len
             + jnp.abs(node.quad_obj.boundary_points_dd["N"][:, 0] - east),
@@ -68,11 +75,16 @@ def _distance_around_boundary_nonode(
     distance_around_boundary = jnp.concatenate(
         [
             jnp.abs(boundary_points[:n_per_side, 0] - west),
-            ew_len + jnp.abs(boundary_points[n_per_side : 2 * n_per_side, 1] - south),
+            ew_len
+            + jnp.abs(boundary_points[n_per_side : 2 * n_per_side, 1] - south),
             ns_len
             + ew_len
-            + jnp.abs(boundary_points[2 * n_per_side : 3 * n_per_side, 0] - east),
-            ns_len + 2 * ew_len + jnp.abs(boundary_points[3 * n_per_side :, 1] - north),
+            + jnp.abs(
+                boundary_points[2 * n_per_side : 3 * n_per_side, 0] - east
+            ),
+            ns_len
+            + 2 * ew_len
+            + jnp.abs(boundary_points[3 * n_per_side :, 1] - north),
         ]
     )
     return distance_around_boundary
@@ -140,15 +152,21 @@ def plot_soln_from_cheby_nodes(
     """
 
     print("plot_soln_from_cheby_nodes: cheby_nodes.shape", cheby_nodes.shape)
-    print("plot_soln_from_cheby_nodes: expected_soln.shape", expected_soln.shape)
-    print("plot_soln_from_cheby_nodes: computed_soln.shape", computed_soln.shape)
+    print(
+        "plot_soln_from_cheby_nodes: expected_soln.shape", expected_soln.shape
+    )
+    print(
+        "plot_soln_from_cheby_nodes: computed_soln.shape", computed_soln.shape
+    )
 
     if corners is None:
         xmin = cheby_nodes[:, 0].min()
         xmax = cheby_nodes[:, 0].max()
         ymin = cheby_nodes[:, 1].min()
         ymax = cheby_nodes[:, 1].max()
-        corners = jnp.array([(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)])
+        corners = jnp.array(
+            [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
+        )
 
     print("plot_soln_from_cheby_nodes: corners", corners)
 

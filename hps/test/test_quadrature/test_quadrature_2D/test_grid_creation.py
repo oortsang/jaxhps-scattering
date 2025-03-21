@@ -25,7 +25,13 @@ class Test_get_all_boundary_gauss_legendre_points:
         # p = 16
         q = 14
         root = Node(
-            xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=-1.0,
+            xmax=1.0,
+            ymin=-1.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
 
         add_four_children(root)
@@ -44,7 +50,13 @@ class Test_get_all_boundary_gauss_legendre_points:
         west, south = corners[0]
         east, north = corners[2]
         root = Node(
-            xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+            xmin=west,
+            xmax=east,
+            ymin=south,
+            ymax=north,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(root)
         for c in root.children:
@@ -81,7 +93,13 @@ class Test_get_all_leaf_2d_cheby_points:
         east = 1
         north = 1
         root = Node(
-            xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+            xmin=west,
+            xmax=east,
+            ymin=south,
+            ymax=north,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(root)
         for c in root.children:
@@ -105,7 +123,13 @@ class Test_get_all_leaf_2d_cheby_points:
         p = 8
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
         add_four_children(root)
         add_four_children(root.children[0])
@@ -124,7 +148,13 @@ class Test_bounds_to_cheby_points_lst:
         p = 16
         # q = 14
         node = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
         bounds = jnp.array([node.xmin, node.xmax, node.ymin, node.ymax])
 
@@ -197,5 +227,4 @@ class Test__get_next_S_boundary_node:
 
 
 if __name__ == "__main__":
-
     pytest.main()

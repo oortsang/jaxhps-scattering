@@ -4,7 +4,9 @@ import jax.numpy as jnp
 
 
 @jax.jit
-def get_quadmerge_blocks_a(T: jnp.ndarray, v_prime: jnp.ndarray) -> Tuple[jnp.ndarray]:
+def get_quadmerge_blocks_a(
+    T: jnp.ndarray, v_prime: jnp.ndarray
+) -> Tuple[jnp.ndarray]:
     n_per_side = T.shape[0] // 4
     idxes = jnp.arange(T.shape[0])
 
@@ -16,7 +18,9 @@ def get_quadmerge_blocks_a(T: jnp.ndarray, v_prime: jnp.ndarray) -> Tuple[jnp.nd
 
 
 @jax.jit
-def get_quadmerge_blocks_b(T: jnp.ndarray, v_prime: jnp.ndarray) -> Tuple[jnp.ndarray]:
+def get_quadmerge_blocks_b(
+    T: jnp.ndarray, v_prime: jnp.ndarray
+) -> Tuple[jnp.ndarray]:
     n_per_side = T.shape[0] // 4
     idxes = jnp.arange(T.shape[0])
 
@@ -28,7 +32,9 @@ def get_quadmerge_blocks_b(T: jnp.ndarray, v_prime: jnp.ndarray) -> Tuple[jnp.nd
 
 
 @jax.jit
-def get_quadmerge_blocks_c(T: jnp.ndarray, v_prime: jnp.ndarray) -> Tuple[jnp.ndarray]:
+def get_quadmerge_blocks_c(
+    T: jnp.ndarray, v_prime: jnp.ndarray
+) -> Tuple[jnp.ndarray]:
     n_per_side = T.shape[0] // 4
     idxes = jnp.arange(T.shape[0])
 
@@ -40,7 +46,9 @@ def get_quadmerge_blocks_c(T: jnp.ndarray, v_prime: jnp.ndarray) -> Tuple[jnp.nd
 
 
 @jax.jit
-def get_quadmerge_blocks_d(T: jnp.ndarray, v_prime: jnp.ndarray) -> Tuple[jnp.ndarray]:
+def get_quadmerge_blocks_d(
+    T: jnp.ndarray, v_prime: jnp.ndarray
+) -> Tuple[jnp.ndarray]:
     n_per_side = T.shape[0] // 4
     idxes = jnp.arange(T.shape[0])
 
@@ -59,7 +67,6 @@ def _get_submatrices(
     idxes_1: jnp.ndarray,
     idxes_2: jnp.ndarray,
 ) -> Tuple[jnp.ndarray]:
-
     v_prime_0 = v_prime[idxes_0]
     v_prime_1 = v_prime[idxes_1]
     v_prime_2 = v_prime[idxes_2]

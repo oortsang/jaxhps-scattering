@@ -41,7 +41,9 @@ def _evaluate_arrays_close(
     # Compute relative difference
     x = a.flatten()
     y = b.flatten()
-    difference_count = np.logical_not(np.isclose(x, y, atol=atol, rtol=rtol)).sum()
+    difference_count = np.logical_not(
+        np.isclose(x, y, atol=atol, rtol=rtol)
+    ).sum()
 
     bool_arr = np.abs(x) >= 1e-15
     rel_diffs = np.abs((x[bool_arr] - y[bool_arr]) / x[bool_arr])
@@ -59,10 +61,18 @@ def _evaluate_arrays_close(
 
 
 def check_scalars_close(
-    a, b, a_name: str = "a", b_name: str = "b", msg: str = "", atol=1e-08, rtol=1e-05
+    a,
+    b,
+    a_name: str = "a",
+    b_name: str = "b",
+    msg: str = "",
+    atol=1e-08,
+    rtol=1e-05,
 ):
     max_diff = np.max(np.abs(a - b))
-    s = msg + "Max diff: {:.8f}, {}: {}, {}: {}".format(max_diff, a_name, a, b_name, b)
+    s = msg + "Max diff: {:.8f}, {}: {}, {}: {}".format(
+        max_diff, a_name, a, b_name, b
+    )
     allclose_bool = np.allclose(a, b, atol=atol, rtol=rtol)
     assert allclose_bool, s
 

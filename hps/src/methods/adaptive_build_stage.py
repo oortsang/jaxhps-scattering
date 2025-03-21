@@ -116,10 +116,14 @@ def _build_stage_3D(
         nodes_this_level = get_nodes_at_level(root, i)
 
         # Filter out the nodes which are leaves.
-        nodes_this_level = [node for node in nodes_this_level if len(node.children)]
+        nodes_this_level = [
+            node for node in nodes_this_level if len(node.children)
+        ]
 
         # Filter out the nodes which have DtN arrays already set
-        nodes_this_level = [node for node in nodes_this_level if node.DtN is None]
+        nodes_this_level = [
+            node for node in nodes_this_level if node.DtN is None
+        ]
 
         # The leaves in need of refinement are those who have more children than the min number
         # of children among siblings
@@ -155,7 +159,6 @@ def _build_stage_2D(
     # and continue until the root.
     # For comments, suppose the for loop is in iteration j.
     for j, i in enumerate(range(depth, 0, -1)):
-
         # Get the inputs to the merge operation from the tree.
         nodes_this_level = get_nodes_at_level(root, i)
         DtN_this_level = [n.DtN for n in nodes_this_level]
@@ -183,7 +186,9 @@ def _build_stage_2D(
         # print("_build_stage_2D: nodes_next_level len = ", len(nodes_next_level))
 
         # Filter out the nodes which are leaves.
-        nodes_next_level = [node for node in nodes_next_level if len(node.children)]
+        nodes_next_level = [
+            node for node in nodes_next_level if len(node.children)
+        ]
         # print("_build_stage_2D: nodes_next_level len = ", len(nodes_next_level))
         for k, node in enumerate(nodes_next_level):
             node.DtN = DtN_arr_lst[k]
@@ -355,10 +360,18 @@ def _quad_merge(
     assert T_b_25.shape == (n_2, n_5)
     assert T_b_26.shape == (n_2, n_6)
 
-    B_0 = jnp.block([T_a_15, jnp.zeros((n_1, n_6)), jnp.zeros((n_1, n_7)), T_a_18])
-    B_1 = jnp.block([T_b_25, T_b_26, jnp.zeros((n_2, n_7)), jnp.zeros((n_2, n_8))])
-    B_2 = jnp.block([jnp.zeros((n_3, n_5)), T_c_36, T_c_37, jnp.zeros((n_3, n_8))])
-    B_3 = jnp.block([jnp.zeros((n_4, n_5)), jnp.zeros((n_4, n_6)), T_d_47, T_d_48])
+    B_0 = jnp.block(
+        [T_a_15, jnp.zeros((n_1, n_6)), jnp.zeros((n_1, n_7)), T_a_18]
+    )
+    B_1 = jnp.block(
+        [T_b_25, T_b_26, jnp.zeros((n_2, n_7)), jnp.zeros((n_2, n_8))]
+    )
+    B_2 = jnp.block(
+        [jnp.zeros((n_3, n_5)), T_c_36, T_c_37, jnp.zeros((n_3, n_8))]
+    )
+    B_3 = jnp.block(
+        [jnp.zeros((n_4, n_5)), jnp.zeros((n_4, n_6)), T_d_47, T_d_48]
+    )
     # print("_quad_merge: B_0.shape = ", B_0.shape)
     # print("_quad_merge: B_1.shape = ", B_1.shape)
     # print("_quad_merge: B_2.shape = ", B_2.shape)
@@ -392,7 +405,9 @@ def _quad_merge(
             v_prime_d_8 + v_prime_a_8,
         ]
     )
-    v_prime_ext = jnp.concatenate([v_prime_a_1, v_prime_b_2, v_prime_c_3, v_prime_d_4])
+    v_prime_ext = jnp.concatenate(
+        [v_prime_a_1, v_prime_b_2, v_prime_c_3, v_prime_d_4]
+    )
 
     # use the Schur complement code to compute the Schur complement
     T, S, v_prime_ext_out, v_int = assemble_merge_outputs_DtN(
@@ -479,7 +494,9 @@ def quad_merge_nonuniform_whole_level(
             dtype=jnp.int32,
         )
 
-        need_interp_lsts = find_compression_lists_2D(node_a, node_b, node_c, node_d)
+        need_interp_lsts = find_compression_lists_2D(
+            node_a, node_b, node_c, node_d
+        )
         # print(
         #     "quad_merge_nonuniform_whole_level: need_interp_lsts = ", need_interp_lsts
         # )
@@ -546,7 +563,6 @@ def _oct_merge(
     side_lens_g: jnp.array,
     side_lens_h: jnp.array,
 ) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
-
     a_submatrices_subvecs = get_a_submatrices(
         T_a,
         v_prime_a,
@@ -809,31 +825,89 @@ def node_to_oct_merge_outputs(
     """
 
     # Print index and type of each entry in data_lst
-    node_a, node_b, node_c, node_d, node_e, node_f, node_g, node_h = node.children
+    node_a, node_b, node_c, node_d, node_e, node_f, node_g, node_h = (
+        node.children
+    )
 
     side_lens_a = jnp.array(
-        [node_a.n_0, node_a.n_1, node_a.n_2, node_a.n_3, node_a.n_4, node_a.n_5]
+        [
+            node_a.n_0,
+            node_a.n_1,
+            node_a.n_2,
+            node_a.n_3,
+            node_a.n_4,
+            node_a.n_5,
+        ]
     )
     side_lens_b = jnp.array(
-        [node_b.n_0, node_b.n_1, node_b.n_2, node_b.n_3, node_b.n_4, node_b.n_5]
+        [
+            node_b.n_0,
+            node_b.n_1,
+            node_b.n_2,
+            node_b.n_3,
+            node_b.n_4,
+            node_b.n_5,
+        ]
     )
     side_lens_c = jnp.array(
-        [node_c.n_0, node_c.n_1, node_c.n_2, node_c.n_3, node_c.n_4, node_c.n_5]
+        [
+            node_c.n_0,
+            node_c.n_1,
+            node_c.n_2,
+            node_c.n_3,
+            node_c.n_4,
+            node_c.n_5,
+        ]
     )
     side_lens_d = jnp.array(
-        [node_d.n_0, node_d.n_1, node_d.n_2, node_d.n_3, node_d.n_4, node_d.n_5]
+        [
+            node_d.n_0,
+            node_d.n_1,
+            node_d.n_2,
+            node_d.n_3,
+            node_d.n_4,
+            node_d.n_5,
+        ]
     )
     side_lens_e = jnp.array(
-        [node_e.n_0, node_e.n_1, node_e.n_2, node_e.n_3, node_e.n_4, node_e.n_5]
+        [
+            node_e.n_0,
+            node_e.n_1,
+            node_e.n_2,
+            node_e.n_3,
+            node_e.n_4,
+            node_e.n_5,
+        ]
     )
     side_lens_f = jnp.array(
-        [node_f.n_0, node_f.n_1, node_f.n_2, node_f.n_3, node_f.n_4, node_f.n_5]
+        [
+            node_f.n_0,
+            node_f.n_1,
+            node_f.n_2,
+            node_f.n_3,
+            node_f.n_4,
+            node_f.n_5,
+        ]
     )
     side_lens_g = jnp.array(
-        [node_g.n_0, node_g.n_1, node_g.n_2, node_g.n_3, node_g.n_4, node_g.n_5]
+        [
+            node_g.n_0,
+            node_g.n_1,
+            node_g.n_2,
+            node_g.n_3,
+            node_g.n_4,
+            node_g.n_5,
+        ]
     )
     side_lens_h = jnp.array(
-        [node_h.n_0, node_h.n_1, node_h.n_2, node_h.n_3, node_h.n_4, node_h.n_5]
+        [
+            node_h.n_0,
+            node_h.n_1,
+            node_h.n_2,
+            node_h.n_3,
+            node_h.n_4,
+            node_h.n_5,
+        ]
     )
     need_compression_lsts = find_compression_lists_3D(
         node_a, node_b, node_c, node_d, node_e, node_f, node_g, node_h

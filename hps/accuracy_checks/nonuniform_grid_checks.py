@@ -1,4 +1,4 @@
-"""This file has a collection of checks that are meant to make sure the 
+"""This file has a collection of checks that are meant to make sure the
 non-uniform merging and down pass are working correctly.
 The checks are designed to run against problems with polynomial data and solutions,
 so the convergence will be obvious once the choice of polynomial basis is correct.
@@ -50,7 +50,13 @@ def setup_tree_wavefront_example(p: int, tol: float) -> SolverObj:
     west = 0.0
 
     root = Node(
-        xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+        xmin=west,
+        xmax=east,
+        ymin=south,
+        ymax=north,
+        depth=0,
+        zmin=None,
+        zmax=None,
     )
     interp = refinement_operator(p)
     generate_adaptive_mesh_linf(
@@ -74,7 +80,13 @@ def setup_tree_nonuniform(p: int, max_depth: int, child_idx: int) -> SolverObj:
     east = jnp.pi / 2
     west = -jnp.pi / 2
     root = Node(
-        xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+        xmin=west,
+        xmax=east,
+        ymin=south,
+        ymax=north,
+        depth=0,
+        zmin=None,
+        zmax=None,
     )
     # corners = [(west, south), (east, south), (east, north), (west, north)]
     q = p - 2
@@ -104,7 +116,6 @@ def check_l_inf_error_convergence_nonuniform_merge(
     dudx_fn: Callable[[jnp.ndarray], jnp.ndarray] = None,
     dudy_fn: Callable[[jnp.ndarray], jnp.ndarray] = None,
 ) -> None:
-
     child_idxes = [0, 1, 2, 3]
 
     n_p_vals = p_values.shape[0]
@@ -113,10 +124,11 @@ def check_l_inf_error_convergence_nonuniform_merge(
 
     # Loop over the child_idxes to check the convergence of the error
     for child_idx in child_idxes:
-
         for i, p in enumerate(p_values):
             p = int(p)
-            t = setup_tree_nonuniform(p=p, max_depth=max_depth, child_idx=child_idx)
+            t = setup_tree_nonuniform(
+                p=p, max_depth=max_depth, child_idx=child_idx
+            )
 
             # Assemble differential operator coeffs for the Laplacian
             d_xx_coeffs = d_xx_coeff_fn(t.leaf_cheby_points)
@@ -125,24 +137,32 @@ def check_l_inf_error_convergence_nonuniform_merge(
 
             # Local solve stage
             local_solve_stage(
-                t, source_term=source, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+                t,
+                source_term=source,
+                D_xx_coeffs=d_xx_coeffs,
+                D_yy_coeffs=d_yy_coeffs,
             )
 
             build_stage(t)
 
             root_bdry_points = t.root_boundary_points
-            boundary_data_lst = get_bdry_data_evals_lst_2D(t, dirichlet_data_fn)
+            boundary_data_lst = get_bdry_data_evals_lst_2D(
+                t, dirichlet_data_fn
+            )
 
             if check_dtn:
                 # Evaluate the accuracy of the DtN map
                 expected_soln = jnp.concatenate(
                     [
                         -1 * dudy_fn(root_bdry_points[: t.root.n_0]),
-                        dudx_fn(root_bdry_points[t.root.n_0 : t.root.n_0 + t.root.n_1]),
+                        dudx_fn(
+                            root_bdry_points[
+                                t.root.n_0 : t.root.n_0 + t.root.n_1
+                            ]
+                        ),
                         dudy_fn(
                             root_bdry_points[
-                                t.root.n_0
-                                + t.root.n_1 : t.root.n_0
+                                t.root.n_0 + t.root.n_1 : t.root.n_0
                                 + t.root.n_1
                                 + t.root.n_2
                             ]
@@ -152,10 +172,11 @@ def check_l_inf_error_convergence_nonuniform_merge(
                 )
                 map_DtN = t.root.DtN
 
-                computed_soln_values = map_DtN @ jnp.concatenate(boundary_data_lst)
+                computed_soln_values = map_DtN @ jnp.concatenate(
+                    boundary_data_lst
+                )
 
             else:
-
                 down_pass(t, boundary_data_lst)
 
                 all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 2))
@@ -163,7 +184,9 @@ def check_l_inf_error_convergence_nonuniform_merge(
 
                 expected_soln = dirichlet_data_fn(all_cheby_points)
 
-            l_inf_error = jnp.max(jnp.abs(computed_soln_values - expected_soln))
+            l_inf_error = jnp.max(
+                jnp.abs(computed_soln_values - expected_soln)
+            )
             error_vals = error_vals.at[child_idx, i].set(l_inf_error)
 
         logging.info(
@@ -189,7 +212,12 @@ def check_l_inf_error_convergence_nonuniform_merge(
     ax.set_xlabel("p = # Chebyshev nodes")
     ax.set_ylabel("L_inf error at Chebyshev nodes")
     for child_idx in child_idxes:
-        ax.plot(p_values, error_vals[child_idx], "o-", label=f"Child idx = {child_idx}")
+        ax.plot(
+            p_values,
+            error_vals[child_idx],
+            "o-",
+            label=f"Child idx = {child_idx}",
+        )
     # ax.plot(p_values, error_vals, "o-")
     ax.set_yscale("log")
     ax.grid()
@@ -246,11 +274,12 @@ def check_l_inf_error_convergence_wavefront_example(
             expected_soln = jnp.concatenate(
                 [
                     -1 * dudy_fn(root_bdry_points[: t.root.n_0]),
-                    dudx_fn(root_bdry_points[t.root.n_0 : t.root.n_0 + t.root.n_1]),
+                    dudx_fn(
+                        root_bdry_points[t.root.n_0 : t.root.n_0 + t.root.n_1]
+                    ),
                     dudy_fn(
                         root_bdry_points[
-                            t.root.n_0
-                            + t.root.n_1 : t.root.n_0
+                            t.root.n_0 + t.root.n_1 : t.root.n_0
                             + t.root.n_1
                             + t.root.n_2
                         ]
@@ -271,7 +300,6 @@ def check_l_inf_error_convergence_wavefront_example(
             # plt.show()
 
         else:
-
             down_pass(t, boundary_data_lst)
 
             all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 2))

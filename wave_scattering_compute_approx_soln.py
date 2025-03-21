@@ -8,7 +8,10 @@ from scipy.io import savemat
 from scipy.io import loadmat
 
 from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.wave_scattering_utils import solve_scattering_problem, load_SD_matrices
+from hps.src.wave_scattering_utils import (
+    solve_scattering_problem,
+    load_SD_matrices,
+)
 from hps.src.plotting import plot_field_for_wave_scattering_experiment
 from hps.src.scattering_potentials import (
     q_luneburg,
@@ -47,7 +50,9 @@ def setup_args() -> argparse.Namespace:
         help="Chebyshev polynomial order.",
     )
     parser.add_argument("--n_time_samples", default=5, type=int)
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging."
+    )
     parser.add_argument(
         "--SD_matrix_prefix",
         default="data/wave_scattering/SD_matrices",
@@ -70,13 +75,14 @@ def setup_args() -> argparse.Namespace:
 
 
 def compute_linf_error(computed_soln: jnp.array, ref_fp: str) -> float:
-
     ref_soln = loadmat(ref_fp)["uscat"]
 
     diffs = computed_soln - ref_soln
 
     logging.debug("compute_linf_error: ref_soln shape: %s", ref_soln.shape)
-    logging.debug("compute_linf_error: computed_soln shape: %s", computed_soln.shape)
+    logging.debug(
+        "compute_linf_error: computed_soln shape: %s", computed_soln.shape
+    )
 
     linf_error = jnp.max(jnp.abs(diffs))
     rel_linf_error = linf_error / jnp.max(jnp.abs(ref_soln))
@@ -111,14 +117,18 @@ def main(args: argparse.Namespace) -> None:
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "vertically_graded":
-        args.data_dir = f"data/wave_scattering/vertically_graded_k_{int(args.k)}"
+        args.data_dir = (
+            f"data/wave_scattering/vertically_graded_k_{int(args.k)}"
+        )
         q_fn_handle = q_vertically_graded
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "horizontally_graded":
-        args.data_dir = f"data/wave_scattering/horizontally_graded_k_{int(args.k)}"
+        args.data_dir = (
+            f"data/wave_scattering/horizontally_graded_k_{int(args.k)}"
+        )
         q_fn_handle = q_horizontally_graded
         xmin = -1.0
         xmax = 1.0
@@ -145,11 +155,13 @@ def main(args: argparse.Namespace) -> None:
     args.n = 500
 
     # Make sure data dir exists
-    assert os.path.isdir(
-        args.data_dir
-    ), f"{args.data_dir} must be created by running wave_scattering_compute_reference_soln.py"
+    assert os.path.isdir(args.data_dir), (
+        f"{args.data_dir} must be created by running wave_scattering_compute_reference_soln.py"
+    )
 
-    output_dir = os.path.join(args.data_dir, f"approx_soln_p_{args.p}_l_{args.l}")
+    output_dir = os.path.join(
+        args.data_dir, f"approx_soln_p_{args.p}_l_{args.l}"
+    )
     logging.info("Outputs will be saved to %s", output_dir)
     os.makedirs(output_dir, exist_ok=True)
     reference_fp = os.path.join(args.data_dir, "reference_solution.mat")
@@ -162,9 +174,13 @@ def main(args: argparse.Namespace) -> None:
         args.SD_matrix_prefix, f"SD_k{k_str}_n{q}_nside{nside}_dom1.mat"
     )
 
-    assert os.path.exists(S_D_matrices_fp), f"Can't find file: {S_D_matrices_fp}"
+    assert os.path.exists(S_D_matrices_fp), (
+        f"Can't find file: {S_D_matrices_fp}"
+    )
 
-    domain_corners = jnp.array([[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]])
+    domain_corners = jnp.array(
+        [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]]
+    )
     source_dirs = jnp.array(
         [
             0.0,
@@ -207,7 +223,10 @@ def main(args: argparse.Namespace) -> None:
         )
         times = times.at[i].set(solve_time)
         logging.info(
-            "Time sample %i / %i was %f seconds", i + 1, args.n_time_samples, solve_time
+            "Time sample %i / %i was %f seconds",
+            i + 1,
+            args.n_time_samples,
+            solve_time,
         )
 
     mean_total = jnp.mean(times)
@@ -234,7 +253,10 @@ def main(args: argparse.Namespace) -> None:
     # plot q
     q_vals = q_fn_handle(target_pts)
     plot_field_for_wave_scattering_experiment(
-        q_vals, target_pts, title="q(x)", save_fp=os.path.join(output_dir, "q.png")
+        q_vals,
+        target_pts,
+        title="q(x)",
+        save_fp=os.path.join(output_dir, "q.png"),
     )
 
     # plot real part of uscat

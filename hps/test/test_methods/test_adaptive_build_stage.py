@@ -44,7 +44,13 @@ class Test__build_stage_2D:
         num_leaves = 4**l
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_uniform_levels(root=root, l=l, q=q)
         print("test_0: root.n_0: ", root.n_0)
@@ -53,7 +59,9 @@ class Test__build_stage_2D:
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
 
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
 
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
@@ -112,7 +120,13 @@ class Test__build_stage_2D:
         num_leaves = 7
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(root, root=root, q=q)
         add_four_children(root.children[0], root=root, q=q)
@@ -121,7 +135,9 @@ class Test__build_stage_2D:
         t = create_solver_obj_2D(p, q, root)
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -176,7 +192,13 @@ class Test__build_stage_2D:
         q = 2
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_uniform_levels(root, 2, q=q)
 
@@ -191,7 +213,9 @@ class Test__build_stage_2D:
         t = create_solver_obj_2D(p, q, root)
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -255,7 +279,13 @@ class Test__build_stage_2D:
         print("test_3: q = ", q)
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         add_four_children(add_to=root.children[0], root=root, q=q)
@@ -267,7 +297,9 @@ class Test__build_stage_2D:
         t = create_solver_obj_2D(p, q, root)
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -308,7 +340,13 @@ class Test__build_stage_2D:
         print("test_3: q = ", q)
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         add_four_children(add_to=root.children[1], root=root, q=q)
@@ -321,7 +359,9 @@ class Test__build_stage_2D:
         t = create_solver_obj_2D(p, q, root)
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -362,7 +402,13 @@ class Test__build_stage_2D:
         print("test_3: q = ", q)
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         for child in root.children:
@@ -376,7 +422,9 @@ class Test__build_stage_2D:
         t = create_solver_obj_2D(p, q, root)
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -475,7 +523,9 @@ class Test__build_stage_3D:
             q = 2
             print("test_1: q = ", q)
             print("test_1: q**2 = ", q**2)
-            root = Node(xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0)
+            root = Node(
+                xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0
+            )
             add_eight_children(root, root=root, q=q)
             add_eight_children(root.children[child_idx], root=root, q=q)
             add_eight_children(
@@ -870,7 +920,9 @@ class Test__oct_merge:
         n_per_face = q**2
         n_gauss_bdry = 6 * n_per_face
         n_gauss_bdry_refined = 24 * n_per_face
-        T_a = np.random.normal(size=(n_gauss_bdry_refined, n_gauss_bdry_refined))
+        T_a = np.random.normal(
+            size=(n_gauss_bdry_refined, n_gauss_bdry_refined)
+        )
         T_b = np.random.normal(size=(n_gauss_bdry, n_gauss_bdry))
         T_c = np.random.normal(size=(n_gauss_bdry, n_gauss_bdry))
         T_d = np.random.normal(size=(n_gauss_bdry, n_gauss_bdry))
@@ -938,7 +990,6 @@ class Test__oct_merge:
 
 
 class Test_quad_merge_nonuniform_whole_level:
-
     def test_0(self) -> None:
         """Make sure things work and return the correct shapes."""
 
@@ -947,14 +998,25 @@ class Test_quad_merge_nonuniform_whole_level:
         # n_bdry_int = 2 * q
         n_out_quads = 1
         n_leaves_input = n_out_quads * 4
-        T_in = [np.random.normal(size=(n_bdry, n_bdry)) for _ in range(n_leaves_input)]
-        v_prime_in = [np.random.normal(size=(n_bdry,)) for _ in range(n_leaves_input)]
+        T_in = [
+            np.random.normal(size=(n_bdry, n_bdry))
+            for _ in range(n_leaves_input)
+        ]
+        v_prime_in = [
+            np.random.normal(size=(n_bdry,)) for _ in range(n_leaves_input)
+        ]
 
         L_2f1 = np.random.normal(size=(2 * q, q))
         L_1f2 = np.random.normal(size=(q, 2 * q))
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
         add_uniform_levels(root, l=2, q=q)
         nodes_this_level = [
@@ -991,7 +1053,9 @@ class Test_quad_merge_nonuniform_whole_level:
 class Test_node_to_oct_merge_outputs:
     def test_0(self) -> None:
         q = 2
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         n_per_panel = q**2
         add_eight_children(root, root, q)
 
@@ -1003,7 +1067,9 @@ class Test_node_to_oct_merge_outputs:
 
         for child in root.children:
             # Set DtN and v_prime attributes.
-            child.DtN = np.random.normal(size=(6 * n_per_panel, 6 * n_per_panel))
+            child.DtN = np.random.normal(
+                size=(6 * n_per_panel, 6 * n_per_panel)
+            )
             child.v_prime = np.random.normal(size=(6 * n_per_panel,))
             # child.L_2f1 = L_2f1
             # child.L_1f2 = L_1f2
@@ -1018,9 +1084,10 @@ class Test_node_to_oct_merge_outputs:
 
 class Test_oct_merge_nonuniform_whole_level:
     def test_0(self) -> None:
-
         q = 2
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         n_per_panel = q**2
         add_eight_children(root, root, q)
         for child in root.children:
@@ -1046,7 +1113,9 @@ class Test_oct_merge_nonuniform_whole_level:
 
 class Test_is_node_type:
     def test_0(self) -> None:
-        x = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        x = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         x.DtN = np.random.normal(size=(10, 10))
 
         assert is_node_type(x)

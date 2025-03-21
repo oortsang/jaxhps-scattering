@@ -1,28 +1,26 @@
+import argparse
 import logging
 import os
-import argparse
 from typing import List
 
-
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.io import loadmat
-import pandas as pd
 import jax.numpy as jnp
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy.io import loadmat
 
 from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src.plotting import (
-    get_discrete_cmap,
-    plot_field_for_wave_scattering_experiment,
-    make_scaled_colorbar,
+    FIGSIZE_2,
+    FIGSIZE_3,
     FONTSIZE_2,
     TICKSIZE_2,
     TICKSIZE_3,
-    FIGSIZE_2,
-    FIGSIZE_3,
+    get_discrete_cmap,
+    make_scaled_colorbar,
+    plot_field_for_wave_scattering_experiment,
 )
 from hps.src.wave_scattering_utils import get_uin
-
 
 # Disable matplotlib logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -33,7 +31,9 @@ def setup_args() -> argparse.Namespace:
         description="Plot results for wave scattering convergence study."
     )
 
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging."
+    )
 
     parser.add_argument(
         "--scattering_potential",
@@ -47,11 +47,15 @@ def setup_args() -> argparse.Namespace:
             "GBM_1",
         ],
     )
-    parser.add_argument("-k", default="20", type=str, help="Wave number for plotting.")
+    parser.add_argument(
+        "-k", default="20", type=str, help="Wave number for plotting."
+    )
     return parser.parse_args()
 
 
-def find_lst_of_dirs(input_dir: str, prefix: str = "approx_soln_") -> List[str]:
+def find_lst_of_dirs(
+    input_dir: str, prefix: str = "approx_soln_"
+) -> List[str]:
     """
     Returns a list of all sub-directories of `input_dir` that contain the prefix `prefix`.
     """
@@ -112,7 +116,6 @@ def lst_of_dirs_to_df(input_dir: str, lst_of_dirs: List[str]) -> pd.DataFrame:
 
 
 def plot_convergence(df: pd.DataFrame, output_fp: str, k_str: str) -> None:
-
     fig, ax = plt.subplots(1, 1, figsize=(FIGSIZE_2, FIGSIZE_2))
     CAPSIZE = 7
     MARKERSIZE = 5
@@ -208,7 +211,6 @@ def plot_scattering_potential(
 
 
 def main(args: argparse.Namespace) -> None:
-
     # Check the scattering potential argument
     if args.scattering_potential == "luneburg":
         args.data_dir = f"data/wave_scattering/luneburg_k_{int(args.k)}"
@@ -217,13 +219,17 @@ def main(args: argparse.Namespace) -> None:
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "vertically_graded":
-        args.data_dir = f"data/wave_scattering/vertically_graded_k_{int(args.k)}"
+        args.data_dir = (
+            f"data/wave_scattering/vertically_graded_k_{int(args.k)}"
+        )
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "horizontally_graded":
-        args.data_dir = f"data/wave_scattering/horizontally_graded_k_{int(args.k)}"
+        args.data_dir = (
+            f"data/wave_scattering/horizontally_graded_k_{int(args.k)}"
+        )
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
@@ -244,7 +250,9 @@ def main(args: argparse.Namespace) -> None:
         raise ValueError("Invalid scattering potential")
 
     output_dir = args.data_dir
-    assert os.path.isdir(args.data_dir), f"Directory {args.data_dir} does not exist."
+    assert os.path.isdir(args.data_dir), (
+        f"Directory {args.data_dir} does not exist."
+    )
     logging.info("Saving plots to %s", output_dir)
 
     lst_of_dirs = find_lst_of_dirs(args.data_dir)
@@ -277,10 +285,13 @@ def main(args: argparse.Namespace) -> None:
 
     # Plot the scattering potential
     output_fp = os.path.join(
-        output_dir, f"k_{args.k}_{args.scattering_potential}_scattering_potential.svg"
+        output_dir,
+        f"k_{args.k}_{args.scattering_potential}_scattering_potential.svg",
     )
     logging.info("Plotting scattering potential to %s", output_fp)
-    plot_scattering_potential(q_ref, output_fp, float(args.k), xmin, xmax, ymin, ymax)
+    plot_scattering_potential(
+        q_ref, output_fp, float(args.k), xmin, xmax, ymin, ymax
+    )
 
     # Plot the reference solution real part
     output_fp = os.path.join(

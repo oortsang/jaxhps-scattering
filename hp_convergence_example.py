@@ -28,7 +28,9 @@ def setup_args() -> argparse.Namespace:
     parser.add_argument("--plots_dir", type=str, default="data/hp_convergence")
     parser.add_argument("--DtN", action="store_true")
     parser.add_argument("--ItI", action="store_true")
-    parser.add_argument("--p_vals", type=int, nargs="+", default=[8, 12, 16, 20])
+    parser.add_argument(
+        "--p_vals", type=int, nargs="+", default=[8, 12, 16, 20]
+    )
     parser.add_argument("--l_vals", type=int, nargs="+", default=[2, 3, 4, 5])
     parser.add_argument("--debug", action="store_true")
 
@@ -124,7 +126,6 @@ def problem_1_source(x: jnp.array) -> jnp.array:
 
 
 def problem_1(l_vals: int, p_vals: int) -> None:
-
     errors = jnp.zeros((len(l_vals), len(p_vals)), dtype=jnp.float64)
 
     for i, l in enumerate(l_vals):
@@ -204,7 +205,7 @@ def problem_2_I_term(x: jnp.array) -> jnp.array:
 
     I(x,y) = 1 + exp{-||x||^2 * 50}
     """
-    return 1 + jnp.exp(-jnp.linalg.norm(x, axis=-1) ** 2 * 50)
+    return 1 + jnp.exp(-(jnp.linalg.norm(x, axis=-1) ** 2) * 50)
 
 
 def problem_2_source(x: jnp.array) -> jnp.array:
@@ -249,7 +250,6 @@ def problem_2_boundary_data(x: jnp.array, eta: float) -> jnp.array:
 
 
 def problem_2(l_vals: int, p_vals: int) -> None:
-
     eta = 4.0
     errors = jnp.zeros((len(l_vals), len(p_vals)), dtype=jnp.float64)
 
@@ -261,7 +261,12 @@ def problem_2(l_vals: int, p_vals: int) -> None:
             root = Node(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
 
             tree = create_solver_obj_2D(
-                p=p, q=p - 2, root=root, uniform_levels=l, use_ItI=True, eta=eta
+                p=p,
+                q=p - 2,
+                root=root,
+                uniform_levels=l,
+                use_ItI=True,
+                eta=eta,
             )
 
             # Create the right-hand side
@@ -311,7 +316,6 @@ def problem_2(l_vals: int, p_vals: int) -> None:
 def plot_problem(
     err_vals: jnp.array, l_vals: jnp.array, p_vals: jnp.array, ax: plt.Axes
 ) -> None:
-
     # Compute 1 / h values
     n_patches_per_side = 2**l_vals
     h_vals = 2.0 / n_patches_per_side
@@ -319,7 +323,7 @@ def plot_problem(
 
     # For each value of p, plot the error vs 1 / h
     for i, p in enumerate(p_vals):
-        ax.plot(h_inv_vals, err_vals[:, i], label=f"$p={p-1}$")
+        ax.plot(h_inv_vals, err_vals[:, i], label=f"$p={p - 1}$")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -342,7 +346,6 @@ def main(args: argparse.Namespace) -> None:
 
     # Problem 1: DtN
     if args.DtN:
-
         error_vals_DtN = problem_1(l_vals, p_vals)
 
         # Save the error values
@@ -356,7 +359,6 @@ def main(args: argparse.Namespace) -> None:
 
     # Problem 2: ItI
     if args.ItI:
-
         error_vals_ItI = problem_2(l_vals, p_vals)
         fp = os.path.join(args.plots_dir, "error_vals_ItI.mat")
         out_dd = {

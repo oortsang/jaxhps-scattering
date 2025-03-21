@@ -4,7 +4,10 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from hps.src.quadrature.quadrature_utils import chebyshev_points, affine_transform
+from hps.src.quadrature.quadrature_utils import (
+    chebyshev_points,
+    affine_transform,
+)
 from hps.src.utils import meshgrid_to_lst_of_pts
 from hps.src.quadrature.quad_2D.indexing import _rearrange_indices
 from hps.src.quadrature.trees import (
@@ -153,7 +156,9 @@ def get_all_leaf_2d_cheby_points_uniform_refinement(
         corners_iter = vmapped_corners(corners_iter).reshape(-1, 4, 2)
 
     cheby_pts_1d = chebyshev_points(p)[0]
-    all_cheby_points = vmapped_corners_to_cheby_points_lst(corners_iter, cheby_pts_1d)
+    all_cheby_points = vmapped_corners_to_cheby_points_lst(
+        corners_iter, cheby_pts_1d
+    )
     return all_cheby_points
 
 
@@ -186,12 +191,20 @@ def get_all_boundary_gauss_legendre_points_uniform_refinement(
             jnp.column_stack(
                 (we_gauss_nodes, jnp.full(we_gauss_nodes.shape[0], south))
             ),
-            jnp.column_stack((jnp.full(ns_gauss_nodes.shape[0], east), ns_gauss_nodes)),
             jnp.column_stack(
-                (jnp.flipud(we_gauss_nodes), jnp.full(we_gauss_nodes.shape[0], north))
+                (jnp.full(ns_gauss_nodes.shape[0], east), ns_gauss_nodes)
             ),
             jnp.column_stack(
-                (jnp.full(ns_gauss_nodes.shape[0], west), jnp.flipud(ns_gauss_nodes))
+                (
+                    jnp.flipud(we_gauss_nodes),
+                    jnp.full(we_gauss_nodes.shape[0], north),
+                )
+            ),
+            jnp.column_stack(
+                (
+                    jnp.full(ns_gauss_nodes.shape[0], west),
+                    jnp.flipud(ns_gauss_nodes),
+                )
             ),
         ]
     )
@@ -209,27 +222,45 @@ def get_all_boundary_gauss_legendre_points(q: int, root: Node) -> jnp.ndarray:
     north = root.ymax
 
     south_gauss_nodes = jnp.concatenate(
-        [affine_transform(gauss_pts_1d, [node.xmin, node.xmax]) for node in corners[0]]
+        [
+            affine_transform(gauss_pts_1d, [node.xmin, node.xmax])
+            for node in corners[0]
+        ]
     )
     east_gauss_nodes = jnp.concatenate(
-        [affine_transform(gauss_pts_1d, [node.ymin, node.ymax]) for node in corners[1]]
+        [
+            affine_transform(gauss_pts_1d, [node.ymin, node.ymax])
+            for node in corners[1]
+        ]
     )
     north_gauss_nodes = jnp.concatenate(
-        [affine_transform(gauss_pts_1d, [node.xmax, node.xmin]) for node in corners[2]]
+        [
+            affine_transform(gauss_pts_1d, [node.xmax, node.xmin])
+            for node in corners[2]
+        ]
     )
     west_gauss_nodes = jnp.concatenate(
-        [affine_transform(gauss_pts_1d, [node.ymax, node.ymin]) for node in corners[3]]
+        [
+            affine_transform(gauss_pts_1d, [node.ymax, node.ymin])
+            for node in corners[3]
+        ]
     )
     gauss_nodes = jnp.concatenate(
         [
             jnp.column_stack(
-                (south_gauss_nodes, jnp.full(south_gauss_nodes.shape[0], south))
+                (
+                    south_gauss_nodes,
+                    jnp.full(south_gauss_nodes.shape[0], south),
+                )
             ),
             jnp.column_stack(
                 (jnp.full(east_gauss_nodes.shape[0], east), east_gauss_nodes)
             ),
             jnp.column_stack(
-                (north_gauss_nodes, jnp.full(north_gauss_nodes.shape[0], north))
+                (
+                    north_gauss_nodes,
+                    jnp.full(north_gauss_nodes.shape[0], north),
+                )
             ),
             jnp.column_stack(
                 (jnp.full(west_gauss_nodes.shape[0], west), west_gauss_nodes)

@@ -8,7 +8,9 @@ from hps.src.quadrature.quadrature_utils import (
 )
 
 
-def precompute_diff_operators(p: int, half_side_len: float) -> Tuple[jnp.ndarray]:
+def precompute_diff_operators(
+    p: int, half_side_len: float
+) -> Tuple[jnp.ndarray]:
     """
     Returns D_x, D_y, D_xx, D_yy, D_xy
     """
@@ -37,7 +39,9 @@ def precompute_diff_operators(p: int, half_side_len: float) -> Tuple[jnp.ndarray
     )
 
 
-def precompute_N_matrix(du_dx: jnp.array, du_dy: jnp.array, p: int) -> jnp.array:
+def precompute_N_matrix(
+    du_dx: jnp.array, du_dy: jnp.array, p: int
+) -> jnp.array:
     """
     The N matrix is a 4p x p^2 matrix that maps a solution on the
     Cheby points to the outward normal derivatives on the Cheby boundaries.
@@ -68,7 +72,9 @@ def precompute_N_matrix(du_dx: jnp.array, du_dy: jnp.array, p: int) -> jnp.array
     return N_dbl
 
 
-def precompute_N_tilde_matrix(du_dx: jnp.array, du_dy: jnp.array, p: int) -> jnp.array:
+def precompute_N_tilde_matrix(
+    du_dx: jnp.array, du_dy: jnp.array, p: int
+) -> jnp.array:
     """
     Implements an operator mapping from samples on the Chebyshev grid points to normal derivatives at the 4*(p-1) boundary points.
 
@@ -88,7 +94,9 @@ def precompute_N_tilde_matrix(du_dx: jnp.array, du_dy: jnp.array, p: int) -> jnp
     N_tilde = N_tilde.at[2 * (p - 1) : 3 * (p - 1)].set(
         du_dy[2 * (p - 1) : 3 * (p - 1)]
     )
-    N_tilde = N_tilde.at[3 * (p - 1) :].set(-1 * du_dx[3 * (p - 1) : 4 * (p - 1)])
+    N_tilde = N_tilde.at[3 * (p - 1) :].set(
+        -1 * du_dx[3 * (p - 1) : 4 * (p - 1)]
+    )
     return N_tilde
 
 

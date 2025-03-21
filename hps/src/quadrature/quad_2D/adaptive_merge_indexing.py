@@ -296,7 +296,6 @@ def _compress_cols_from_lst(
     out_lst = []
     i = 0
     while i < n:
-
         # Here is some code in case I want  to compile this function one day:
 
         # v = jnp.where(

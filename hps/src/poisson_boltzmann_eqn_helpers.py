@@ -3,7 +3,9 @@ import jax
 
 key = jax.random.key(0)
 N_ATOMS = 50
-ATOM_CENTERS = jax.random.uniform(key, minval=-0.5, maxval=0.5, shape=(N_ATOMS, 3))
+ATOM_CENTERS = jax.random.uniform(
+    key, minval=-0.5, maxval=0.5, shape=(N_ATOMS, 3)
+)
 N_ATOMS_VDW = 1200
 ATOM_CENTERS_VDW = jax.random.uniform(
     key, minval=-0.5, maxval=0.5, shape=(N_ATOMS_VDW, 3)

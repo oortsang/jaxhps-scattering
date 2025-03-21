@@ -21,11 +21,19 @@ class Test__find_compression_list_5:
         """
         # Create a tree with 1 node
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(root)
 
-        out_a, out_b = _find_compression_list_5(root.children[0], root.children[1])
+        out_a, out_b = _find_compression_list_5(
+            root.children[0], root.children[1]
+        )
 
         assert len(out_a) == 1
         assert len(out_b) == 1
@@ -42,7 +50,13 @@ class Test__find_compression_list_5:
         print("test_3: q = ", q)
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         for child in root.children:
@@ -52,7 +66,9 @@ class Test__find_compression_list_5:
 
         # Expect out_a to look like [False, True, True]
         # # and out_b to look like [False, False]
-        out_a, out_b = _find_compression_list_5(root.children[0], root.children[1])
+        out_a, out_b = _find_compression_list_5(
+            root.children[0], root.children[1]
+        )
 
         assert len(out_a) == 3
         assert len(out_b) == 2
@@ -70,7 +86,13 @@ class Test__find_compression_list_5:
         print("test_3: q = ", q)
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         for child in root.children:
@@ -89,7 +111,9 @@ class Test__find_compression_list_5:
             add_to=root.children[0].children[2].children[1], root=root, q=q
         )
 
-        out_a, out_b = _find_compression_list_5(root.children[0], root.children[1])
+        out_a, out_b = _find_compression_list_5(
+            root.children[0], root.children[1]
+        )
 
         expected_out_a = jnp.array([True, True, True, True, True, True, False])
         expected_out_b = jnp.array([False, False, False, False])
@@ -110,7 +134,13 @@ class Test__find_compression_lst_6:
         print("test_3: q = ", q)
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         for child in root.children:
@@ -120,7 +150,9 @@ class Test__find_compression_lst_6:
 
         # Expect out_b to look like [False, True, True]
         # # and out_c to look like [False, False]
-        out_b, out_c = _find_compression_list_6(root.children[1], root.children[2])
+        out_b, out_c = _find_compression_list_6(
+            root.children[1], root.children[2]
+        )
 
         print("test_0: out_b: ", out_b)
         print("test_0: out_c: ", out_c)
@@ -140,14 +172,23 @@ class Test_find_compression_lists_2D:
         # Create a tree with 1 node
         q = 2
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(root, root=root, q=q)
         for child in root.children:
             add_four_children(add_to=child, root=root, q=q)
 
         out_arrs = find_compression_lists_2D(
-            root.children[0], root.children[1], root.children[2], root.children[3]
+            root.children[0],
+            root.children[1],
+            root.children[2],
+            root.children[3],
         )
         expected_arr = jnp.array([False, False])
 

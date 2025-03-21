@@ -18,7 +18,8 @@ from hps.src.quadrature.trees import Node, get_all_leaves
 
 class Test_fused_local_solve_and_build:
     @pytest.mark.skipif(
-        not GPU_AVAILABLE, reason="Can not run fused methods on CPU-only systems."
+        not GPU_AVAILABLE,
+        reason="Can not run fused methods on CPU-only systems.",
     )
     def test_0(self, caplog) -> None:
         """Tests the fused_local_solve_and_build function returns without error when using DtN maps. 2D case."""
@@ -74,7 +75,9 @@ class Test_fused_local_solve_and_build_ItI:
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=4.0)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=4.0
+        )
         print("test_0: l = ", l)
 
         print("test_0: q = ", q)
@@ -112,7 +115,8 @@ class Test_fused_local_solve_and_build_ItI:
 
 class Test_down_pass_from_fused:
     @pytest.mark.skipif(
-        not GPU_AVAILABLE, reason="Can not run fused methods on CPU-only systems."
+        not GPU_AVAILABLE,
+        reason="Can not run fused methods on CPU-only systems.",
     )
     def test_0(self, caplog) -> None:
         """Makes sure things run without error."""
@@ -135,7 +139,9 @@ class Test_down_pass_from_fused:
 
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
 
-        bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
+        bdry_data = jnp.array(
+            np.random.normal(size=t.root_boundary_points.shape[0])
+        )
 
         sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
@@ -206,7 +212,9 @@ class Test_fused_all_single_chunk:
 
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
 
-        bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
+        bdry_data = jnp.array(
+            np.random.normal(size=t.root_boundary_points.shape[0])
+        )
         sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
         soln = _fused_all_single_chunk(
@@ -238,7 +246,9 @@ class Test_fused_all_single_chunk_ItI:
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=4.0)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=4.0
+        )
         print("test_0: l = ", l)
 
         print("test_0: q = ", q)
@@ -286,7 +296,9 @@ class Test_down_pass_from_fused_ItI:
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=4.0)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=4.0
+        )
         print("test_0: l = ", l)
 
         print("test_0: q = ", q)
@@ -298,7 +310,9 @@ class Test_down_pass_from_fused_ItI:
 
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
 
-        bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
+        bdry_data = jnp.array(
+            np.random.normal(size=t.root_boundary_points.shape[0])
+        )
 
         S_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D_ItI(
             D_xx=t.D_xx,

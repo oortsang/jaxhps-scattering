@@ -8,8 +8,17 @@ import matplotlib.pyplot as plt
 from scipy.io import loadmat
 
 from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.plotting import plot_func_with_grid, FIGSIZE_3, FONTSIZE_3, TICKSIZE_3
-from hps.src.poisson_boltzmann_eqn_helpers import rho, permittivity, vdw_permittivity
+from hps.src.plotting import (
+    plot_func_with_grid,
+    FIGSIZE_3,
+    FONTSIZE_3,
+    TICKSIZE_3,
+)
+from hps.src.poisson_boltzmann_eqn_helpers import (
+    rho,
+    permittivity,
+    vdw_permittivity,
+)
 
 # supress matplotlib debug messages
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -29,7 +38,9 @@ K_MESH_TIMES = "mesh_times"
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--plot_dir", type=str, default="data/poisson_boltzmann_3D")
+    parser.add_argument(
+        "--plot_dir", type=str, default="data/poisson_boltzmann_3D"
+    )
     parser.add_argument(
         "--mesh_tol",
         type=float,
@@ -37,7 +48,10 @@ def setup_args() -> argparse.Namespace:
         help="The tolerance at which we will draw the adaptive mesh",
     )
     parser.add_argument(
-        "--mesh_p", type=int, default=12, help="The polynomial degree of the tree"
+        "--mesh_p",
+        type=int,
+        default=12,
+        help="The polynomial degree of the tree",
     )
     return parser.parse_args()
 

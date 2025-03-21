@@ -6,8 +6,9 @@ from hps.src.quadrature.trees import Node, get_all_leaves
 
 
 # @jax.jit
-def _find_compression_list_5(node_a: Node, node_b: Node) -> Tuple[jnp.array, jnp.array]:
-
+def _find_compression_list_5(
+    node_a: Node, node_b: Node
+) -> Tuple[jnp.array, jnp.array]:
     # First, get a list of leaves of a lying along merge interface 5
     leaves_a = get_all_leaves(node_a)
     leaves_a_5 = [leaf for leaf in leaves_a if leaf.xmax == node_a.xmax]
@@ -51,7 +52,9 @@ def _find_compression_list_5(node_a: Node, node_b: Node) -> Tuple[jnp.array, jnp
 
 
 # @jax.jit
-def _find_compression_list_6(node_b: Node, node_c: Node) -> Tuple[jnp.array, jnp.array]:
+def _find_compression_list_6(
+    node_b: Node, node_c: Node
+) -> Tuple[jnp.array, jnp.array]:
     # First, get a list of leaves of b lying along merge interface 6
     leaves_b = get_all_leaves(node_b)
     leaves_b_6 = [leaf for leaf in leaves_b if leaf.ymax == node_b.ymax]
@@ -97,7 +100,9 @@ def _find_compression_list_6(node_b: Node, node_c: Node) -> Tuple[jnp.array, jnp
 
 
 # @jax.jit
-def _find_compression_list_7(node_c: Node, node_d: Node) -> Tuple[jnp.array, jnp.array]:
+def _find_compression_list_7(
+    node_c: Node, node_d: Node
+) -> Tuple[jnp.array, jnp.array]:
     # First, get a list of leaves of c lying along merge interface 7
     leaves_c = get_all_leaves(node_c)
     leaves_c_7 = [leaf for leaf in leaves_c if leaf.xmin == node_c.xmin]
@@ -143,7 +148,9 @@ def _find_compression_list_7(node_c: Node, node_d: Node) -> Tuple[jnp.array, jnp
 
 
 # @jax.jit
-def _find_compression_list_8(node_d: Node, node_a: Node) -> Tuple[jnp.array, jnp.array]:
+def _find_compression_list_8(
+    node_d: Node, node_a: Node
+) -> Tuple[jnp.array, jnp.array]:
     # First, get a list of leaves of d lying along merge interface 8
     leaves_d = get_all_leaves(node_d)
     leaves_d_8 = [leaf for leaf in leaves_d if leaf.ymin == node_d.ymin]
@@ -207,10 +214,18 @@ def find_compression_lists_2D(
         jnp.array: Output has shape shape (n // 4, 12)
     """
 
-    compression_lst_a5, compression_lst_b5 = _find_compression_list_5(node_a, node_b)
-    compression_lst_b6, compression_lst_c6 = _find_compression_list_6(node_b, node_c)
-    compression_lst_c7, compression_lst_d7 = _find_compression_list_7(node_c, node_d)
-    compression_lst_d8, compression_lst_a8 = _find_compression_list_8(node_d, node_a)
+    compression_lst_a5, compression_lst_b5 = _find_compression_list_5(
+        node_a, node_b
+    )
+    compression_lst_b6, compression_lst_c6 = _find_compression_list_6(
+        node_b, node_c
+    )
+    compression_lst_c7, compression_lst_d7 = _find_compression_list_7(
+        node_c, node_d
+    )
+    compression_lst_d8, compression_lst_a8 = _find_compression_list_8(
+        node_d, node_a
+    )
 
     return (
         compression_lst_a5,

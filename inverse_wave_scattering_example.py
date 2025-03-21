@@ -42,7 +42,9 @@ N_BUMPS = 4
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--plots_dir", type=str, default="data/inverse_wave_scattering")
+    parser.add_argument(
+        "--plots_dir", type=str, default="data/inverse_wave_scattering"
+    )
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--plot_objective_fn", action="store_true")
     parser.add_argument("--landweber", action="store_true")
@@ -52,7 +54,9 @@ def setup_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def plot_uscat(uscat_regular: jnp.array, observation_pts: jnp.array, fp: str) -> None:
+def plot_uscat(
+    uscat_regular: jnp.array, observation_pts: jnp.array, fp: str
+) -> None:
     logging.info("plot_uscat: Saving uscat plot to %s", fp)
     plt.imshow(
         uscat_regular,
@@ -80,7 +84,9 @@ def plot_uscat(uscat_regular: jnp.array, observation_pts: jnp.array, fp: str) ->
     # plt.clf()
 
 
-def plot_iterates(iterates: jnp.array, plots_dir: str, q_evals: jnp.array) -> None:
+def plot_iterates(
+    iterates: jnp.array, plots_dir: str, q_evals: jnp.array
+) -> None:
     """
     Make a plot of the evaluations of the ground-truth q and then draw arrows showing the iterates.
     """
@@ -128,8 +134,9 @@ def plot_residuals(residuals: jnp.array, plots_dir: str) -> None:
     plt.clf()
 
 
-def plot_objective_function(plots_dir: str, u_star: str, n_per_side: int) -> None:
-
+def plot_objective_function(
+    plots_dir: str, u_star: str, n_per_side: int
+) -> None:
     xmin = -0.2
     xmax = 0.2
     ymin = -0.4
@@ -150,7 +157,9 @@ def plot_objective_function(plots_dir: str, u_star: str, n_per_side: int) -> Non
             u_t = forward_model(x_t)
             resid_norm = obj_fn(u_star, u_t)
             obj_fn_vals = obj_fn_vals.at[i, j].set(resid_norm)
-        logging.info("plot_objective_function: Finished row %i / %i", i + 1, n_per_side)
+        logging.info(
+            "plot_objective_function: Finished row %i / %i", i + 1, n_per_side
+        )
 
     # Save the values of the objective function
     out_dd = {
@@ -282,7 +291,9 @@ def gauss_newton_iterations(
         delta_t = lsqr_out[0]
         cond = lsqr_out[6]
         cond_vals = cond_vals.at[t].set(cond)
-        logging.info("LSQR returned after %i iters with cond=%s", lsqr_out[2], cond)
+        logging.info(
+            "LSQR returned after %i iters with cond=%s", lsqr_out[2], cond
+        )
 
         logging.info("delta_t = %s", delta_t)
         x_t = x_t + delta_t
@@ -291,14 +302,15 @@ def gauss_newton_iterations(
 
 
 def main(args: argparse.Namespace) -> None:
-
     # Set up plotting directory
     os.makedirs(args.plots_dir, exist_ok=True)
     logging.info("Plots will be saved to %s", args.plots_dir)
 
     # Set up boolean array for observation points
 
-    observation_pts = SAMPLE_TREE.leaf_cheby_points[OBSERVATION_BOOLS].reshape(-1, 2)
+    observation_pts = SAMPLE_TREE.leaf_cheby_points[OBSERVATION_BOOLS].reshape(
+        -1, 2
+    )
     logging.debug("Observation points has shape %s", observation_pts.shape)
 
     # Set up ground-truth scatterer locations and evaluate the scattering potential by
@@ -309,8 +321,12 @@ def main(args: argparse.Namespace) -> None:
     )
 
     logging.info("Ground-truth locations: %s", ground_truth_locations)
-    ground_truth_locations = jax.device_put(ground_truth_locations, DEVICE_ARR[0])
-    q_evals_hps = q_point_sources(SAMPLE_TREE.leaf_cheby_points, ground_truth_locations)
+    ground_truth_locations = jax.device_put(
+        ground_truth_locations, DEVICE_ARR[0]
+    )
+    q_evals_hps = q_point_sources(
+        SAMPLE_TREE.leaf_cheby_points, ground_truth_locations
+    )
     n_X = 200
     q_evals_regular, regular_grid = interp_from_nonuniform_hps_to_regular_grid(
         root=SAMPLE_TREE.root,
@@ -346,7 +362,9 @@ def main(args: argparse.Namespace) -> None:
     # nobs = u_star.shape[0]
 
     if args.plot_objective_fn:
-        plot_objective_function(args.plots_dir, u_star, n_per_side=args.n_per_side)
+        plot_objective_function(
+            args.plots_dir, u_star, n_per_side=args.n_per_side
+        )
         logging.info("Finished")
         exit(0)
 
@@ -354,7 +372,9 @@ def main(args: argparse.Namespace) -> None:
 
     # Initialize the optimization variables randomly
     key = jax.random.key(1)
-    x_t = jax.random.uniform(key, minval=-0.5, maxval=0.5, shape=(N_BUMPS, 2)).flatten()
+    x_t = jax.random.uniform(
+        key, minval=-0.5, maxval=0.5, shape=(N_BUMPS, 2)
+    ).flatten()
 
     if args.landweber:
         iterates, resid_norms = landweber_iterations(
@@ -374,11 +394,13 @@ def main(args: argparse.Namespace) -> None:
     # Get final estimate
     x_t = iterates[-1]
     u_scat_est = source_locations_to_scattered_field(x_t)[0]
-    u_scat_est_regular, regular_grid = interp_from_nonuniform_hps_to_regular_grid(
-        root=SAMPLE_TREE.root,
-        p=P,
-        f_evals=u_scat_est,
-        n_pts=n_X,
+    u_scat_est_regular, regular_grid = (
+        interp_from_nonuniform_hps_to_regular_grid(
+            root=SAMPLE_TREE.root,
+            p=P,
+            f_evals=u_scat_est,
+            n_pts=n_X,
+        )
     )
     fp = os.path.join(args.plots_dir, "uscat_est.png")
     plot_uscat(u_scat_est_regular.real, observation_pts, fp)
@@ -393,7 +415,9 @@ def main(args: argparse.Namespace) -> None:
         "iterates": iterates,
         "resid_norms": resid_norms,
         "u_star": u_star,
-        "ground_truth_locations": jax.device_put(ground_truth_locations, HOST_DEVICE),
+        "ground_truth_locations": jax.device_put(
+            ground_truth_locations, HOST_DEVICE
+        ),
         "cond_vals": cond_vals,
     }
     save_fp = os.path.join(args.plots_dir, "iterates_data.mat")

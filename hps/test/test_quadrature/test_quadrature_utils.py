@@ -204,7 +204,6 @@ class Test_chebyshev_points:
 
 class Test_barycentrix_lagrange_interpolation_matrix:
     def test_0(self) -> None:
-
         from_pts = np.array([-0.5, 0.5])
 
         to_pts = np.array(
@@ -227,7 +226,9 @@ class Test_barycentrix_lagrange_interpolation_matrix:
             # f(x) = x - x^2
             return x - x**2
 
-        interp_mat = barycentric_lagrange_interpolation_matrix(from_pts, to_pts)
+        interp_mat = barycentric_lagrange_interpolation_matrix(
+            from_pts, to_pts
+        )
         assert not jnp.any(jnp.isnan(interp_mat))
         assert not jnp.any(jnp.isinf(interp_mat))
 
@@ -392,8 +393,12 @@ class Test_barycentric_lagrange_3d_interp_matrix:
         )
         # print("test_1: from_pts = ", from_pts)
 
-        to_X, to_Y, to_Z = jnp.meshgrid(gauss_pts, gauss_pts, gauss_pts, indexing="ij")
-        to_pts = jnp.stack((to_X.flatten(), to_Y.flatten(), to_Z.flatten()), axis=-1)
+        to_X, to_Y, to_Z = jnp.meshgrid(
+            gauss_pts, gauss_pts, gauss_pts, indexing="ij"
+        )
+        to_pts = jnp.stack(
+            (to_X.flatten(), to_Y.flatten(), to_Z.flatten()), axis=-1
+        )
         # print("test_1: to_pts = ", to_pts)
 
         def f(x):
@@ -466,5 +471,4 @@ class Test_affine_transform:
 
 
 if __name__ == "__main__":
-
     pytest.main()

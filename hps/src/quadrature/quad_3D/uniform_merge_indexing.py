@@ -23,7 +23,9 @@ def get_a_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_9 = idxes[n_per_face : 2 * n_per_face]
     idxes_12 = idxes[3 * n_per_face : 4 * n_per_face]
     idxes_17 = idxes[4 * n_per_face : 5 * n_per_face]
-    return _return_submatrices_subvecs(T, v, idxes_1, idxes_9, idxes_12, idxes_17)
+    return _return_submatrices_subvecs(
+        T, v, idxes_1, idxes_9, idxes_12, idxes_17
+    )
 
 
 @jax.jit
@@ -39,7 +41,9 @@ def get_b_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_9 = idxes[:n_per_face]
     idxes_10 = idxes[3 * n_per_face : 4 * n_per_face]
     idxes_18 = idxes[4 * n_per_face : 5 * n_per_face]
-    return _return_submatrices_subvecs(T, v, idxes_2, idxes_9, idxes_10, idxes_18)
+    return _return_submatrices_subvecs(
+        T, v, idxes_2, idxes_9, idxes_10, idxes_18
+    )
 
 
 @jax.jit
@@ -56,7 +60,9 @@ def get_c_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_10 = idxes[2 * n_per_face : 3 * n_per_face]
     idxes_11 = idxes[:n_per_face]
     idxes_19 = idxes[4 * n_per_face : 5 * n_per_face]
-    return _return_submatrices_subvecs(T, v, idxes_3, idxes_10, idxes_11, idxes_19)
+    return _return_submatrices_subvecs(
+        T, v, idxes_3, idxes_10, idxes_11, idxes_19
+    )
 
 
 @jax.jit
@@ -73,7 +79,9 @@ def get_d_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_11 = idxes[n_per_face : 2 * n_per_face]
     idxes_12 = idxes[2 * n_per_face : 3 * n_per_face]
     idxes_20 = idxes[4 * n_per_face : 5 * n_per_face]
-    return _return_submatrices_subvecs(T, v, idxes_4, idxes_11, idxes_12, idxes_20)
+    return _return_submatrices_subvecs(
+        T, v, idxes_4, idxes_11, idxes_12, idxes_20
+    )
 
 
 @jax.jit
@@ -90,7 +98,9 @@ def get_e_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_13 = idxes[n_per_face : 2 * n_per_face]
     idxes_16 = idxes[3 * n_per_face : 4 * n_per_face]
     idxes_17 = idxes[5 * n_per_face :]
-    return _return_submatrices_subvecs(T, v, idxes_5, idxes_13, idxes_16, idxes_17)
+    return _return_submatrices_subvecs(
+        T, v, idxes_5, idxes_13, idxes_16, idxes_17
+    )
 
 
 @jax.jit
@@ -98,12 +108,17 @@ def get_f_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     n_per_face = T.shape[0] // 6
     idxes = jnp.arange(T.shape[0])
     idxes_6 = jnp.concatenate(
-        [idxes[n_per_face : 3 * n_per_face], idxes[4 * n_per_face : 5 * n_per_face]]
+        [
+            idxes[n_per_face : 3 * n_per_face],
+            idxes[4 * n_per_face : 5 * n_per_face],
+        ]
     )
     idxes_13 = idxes[:n_per_face]
     idxes_14 = idxes[3 * n_per_face : 4 * n_per_face]
     idxes_18 = idxes[5 * n_per_face :]
-    return _return_submatrices_subvecs(T, v, idxes_6, idxes_13, idxes_14, idxes_18)
+    return _return_submatrices_subvecs(
+        T, v, idxes_6, idxes_13, idxes_14, idxes_18
+    )
 
 
 @jax.jit
@@ -111,12 +126,17 @@ def get_g_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     n_per_face = T.shape[0] // 6
     idxes = jnp.arange(T.shape[0])
     idxes_7 = jnp.concatenate(
-        [idxes[n_per_face : 2 * n_per_face], idxes[3 * n_per_face : 5 * n_per_face]]
+        [
+            idxes[n_per_face : 2 * n_per_face],
+            idxes[3 * n_per_face : 5 * n_per_face],
+        ]
     )
     idxes_14 = idxes[2 * n_per_face : 3 * n_per_face]
     idxes_15 = idxes[:n_per_face]
     idxes_19 = idxes[5 * n_per_face :]
-    return _return_submatrices_subvecs(T, v, idxes_7, idxes_14, idxes_15, idxes_19)
+    return _return_submatrices_subvecs(
+        T, v, idxes_7, idxes_14, idxes_15, idxes_19
+    )
 
 
 @jax.jit
@@ -129,7 +149,9 @@ def get_h_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_15 = idxes[n_per_face : 2 * n_per_face]
     idxes_16 = idxes[2 * n_per_face : 3 * n_per_face]
     idxes_20 = idxes[5 * n_per_face :]
-    return _return_submatrices_subvecs(T, v, idxes_8, idxes_15, idxes_16, idxes_20)
+    return _return_submatrices_subvecs(
+        T, v, idxes_8, idxes_15, idxes_16, idxes_20
+    )
 
 
 @jax.jit
@@ -141,7 +163,6 @@ def _return_submatrices_subvecs(
     idxes_2: jnp.array,
     idxes_3: jnp.array,
 ) -> Tuple[jnp.array]:
-
     T_0_0 = T[idxes_0][:, idxes_0]
     T_0_1 = T[idxes_0][:, idxes_1]
     T_0_2 = T[idxes_0][:, idxes_2]

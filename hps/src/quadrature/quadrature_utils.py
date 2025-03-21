@@ -1,7 +1,7 @@
 """
-This file contains utility functions for quadrature points and weights. It 
+This file contains utility functions for quadrature points and weights. It
 defines Chebyshev and Gauss-Legendre quadrature points and weights.
-It has utilites for interpolation maps between different quadratures, as well 
+It has utilites for interpolation maps between different quadratures, as well
 as 1D differentiation matrices defined over 2D Chebyshev grids.
 """
 
@@ -105,10 +105,11 @@ def chebyshev_weights(n: int, bounds: jnp.array) -> jnp.array:
     a, b = bounds
     interval_len = b - a
 
-    c = 2.0 / jnp.concatenate([jnp.array([1.0]), 1.0 - jnp.arange(2, n, 2) ** 2])
+    c = 2.0 / jnp.concatenate(
+        [jnp.array([1.0]), 1.0 - jnp.arange(2, n, 2) ** 2]
+    )
 
     if n % 2:
-
         # # Mirror for DCT via FFT
         start = n // 2
         c_slice = jnp.flip(c[1:start])
@@ -118,7 +119,9 @@ def chebyshev_weights(n: int, bounds: jnp.array) -> jnp.array:
         w_out = jnp.concatenate([w, jnp.array([w[0] / 2])])
         w_out = w_out.at[0].set(w[0] / 2)
     else:
-        c = 2.0 / jnp.concatenate([jnp.array([1.0]), 1.0 - jnp.arange(2, n, 2) ** 2])
+        c = 2.0 / jnp.concatenate(
+            [jnp.array([1.0]), 1.0 - jnp.arange(2, n, 2) ** 2]
+        )
         # Mirror for DCT via FFT
         start = n // 2 + 1
         c_slice = jnp.flip(c[1:start])
