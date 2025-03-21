@@ -19,8 +19,8 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 # jax.config.update("jax_debug_nans", True)
 
 from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.plotting import get_discrete_cmap
-from hps.src.create_tree import Tree, create_solver_obj_2D
+from hps.src.plotting import get_discrete_cmap, FIGSIZE_2, FONTSIZE_2, TICKSIZE_2
+from hps.src.solver_obj import SolverObj, create_solver_obj_2D
 from hps.src.up_down_passes import (
     local_solve_stage,
     build_stage,
@@ -50,10 +50,12 @@ def plot_problem_1(
     err_vals: jnp.array, l_vals: jnp.array, p_vals: jnp.array, plot_fp: str
 ) -> None:
 
-    p_vals = p_vals.flatten()[:-1]
+    p_vals = p_vals.flatten()
     l_vals = l_vals.flatten()
+    logging.info("plot_problem_1: p_vals: %s", p_vals)
+    logging.info("plot_problem_1: l_vals: %s", l_vals)
 
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(FIGSIZE_2, FIGSIZE_2))
 
     LABELSIZE = 20
     # Compute 1 / h values
@@ -64,7 +66,7 @@ def plot_problem_1(
     # These are manually tuned to place the black dotted lines at the correct place.
     xmins = jnp.array([2.0, 5.0, 5.0, 3.0])
     xmaxes = jnp.array([18.0, 20.0, 20.0, 10.0])
-    c = jnp.array([150.0, 1000.0, 1500.0, 180.0])
+    c = jnp.array([150.0, 2000.0, 2500.0, 380.0])
 
     xvals = np.zeros((p_vals.shape[0], 100), dtype=np.float64)
     yvals = np.zeros((p_vals.shape[0], 100), dtype=np.float64)
@@ -93,12 +95,13 @@ def plot_problem_1(
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("$1/h$", fontsize=LABELSIZE)
-    ax.set_ylabel("Relative $\\ell_\\infty$ Error", fontsize=LABELSIZE)
+    ax.set_xlabel("$1/h$", fontsize=FONTSIZE_2)
+    ax.set_ylabel("Relative $\\ell_\\infty$ Error", fontsize=FONTSIZE_2)
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_2)
 
     # Turn off splines top and right
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["right"].set_visible(False)
     ax.legend()
     ax.grid()
 
@@ -108,10 +111,10 @@ def plot_problem_1(
 def plot_problem_2(
     err_vals: jnp.array, l_vals: jnp.array, p_vals: jnp.array, plot_fp: str
 ) -> None:
-    p_vals = p_vals.flatten()[:-1]
+    p_vals = p_vals.flatten()
     l_vals = l_vals.flatten()
 
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(FIGSIZE_2, FIGSIZE_2))
 
     LABELSIZE = 20
     # Compute 1 / h values
@@ -151,12 +154,13 @@ def plot_problem_2(
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("$1/h$", fontsize=LABELSIZE)
-    ax.set_ylabel("Relative $\\ell_\\infty$ Error", fontsize=LABELSIZE)
+    ax.set_xlabel("$1/h$", fontsize=FONTSIZE_2)
+    ax.set_ylabel("Relative $\\ell_\\infty$ Error", fontsize=FONTSIZE_2)
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_2)
 
     # Turn off splines top and right
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["right"].set_visible(False)
     ax.legend()
     ax.grid()
 
