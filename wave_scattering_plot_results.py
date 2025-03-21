@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.io import loadmat
 import pandas as pd
 import jax.numpy as jnp
@@ -17,7 +18,15 @@ from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src.plotting import (
     get_discrete_cmap,
     plot_field_for_wave_scattering_experiment,
+    make_scaled_colorbar,
     parula_cmap,
+    CMAP_PAD,
+    FONTSIZE_2,
+    FONTSIZE_3,
+    TICKSIZE_2,
+    TICKSIZE_3,
+    FIGSIZE_2,
+    FIGSIZE_3,
 )
 from hps.src.scattering_potentials import (
     q_luneburg,
@@ -118,9 +127,9 @@ def lst_of_dirs_to_df(input_dir: str, lst_of_dirs: List[str]) -> pd.DataFrame:
 
 def plot_convergence(df: pd.DataFrame, output_fp: str, k_str: str) -> None:
 
-    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-    TITLESIZE = 20
+    fig, ax = plt.subplots(1, 1, figsize=(FIGSIZE_2, FIGSIZE_2))
     CAPSIZE = 7
+    MARKERSIZE = 5
 
     # For each p value, plot 1 / l_inf_error on the x axis
     # and time_mean on the y axis. Use time_std to add error bars.
@@ -142,14 +151,18 @@ def plot_convergence(df: pd.DataFrame, output_fp: str, k_str: str) -> None:
             label=f"$p = {p}$",
             color=cmap[i],
             capsize=CAPSIZE,
+            markersize=MARKERSIZE,
         )
-    ax.set_ylabel("Relative $\\ell_\infty$ error", fontsize=TITLESIZE)
-    ax.set_xlabel("Runtime (s)", fontsize=TITLESIZE)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
+    ax.set_ylabel("Relative $\\ell_\infty$ error", fontsize=FONTSIZE_2)
+    ax.set_xlabel("Runtime (s)", fontsize=FONTSIZE_2)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["right"].set_visible(False)
     ax.legend()
     ax.set_xscale("log")
     ax.set_yscale("log")
+
+    # xticks and yticks should be FONTSIZE_2
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_2)
     ax.grid()
     fig.tight_layout()
     plt.savefig(output_fp, bbox_inches="tight")
@@ -169,15 +182,21 @@ def plot_scattering_potential(
     2. Plot the wavelength of the wave given k.
     3. Save the plot to output_fp.
     """
-    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-    TITLESIZE = 20
-    FONTSIZE = 11
-    CAPSIZE = 2
-    THICKNESS = 1.2
+    fig, ax = plt.subplots(1, 1, figsize=(FIGSIZE_3, FIGSIZE_3))
 
     # Plot the scattering potential
-    im = ax.imshow(q, extent=[xmin, xmax, ymin, ymax], cmap=parula_cmap)
-    plt.colorbar(im, ax=ax)
+    im = ax.imshow(q, extent=[xmin, xmax, ymin, ymax], cmap="plasma")
+
+    # divider = make_axes_locatable(ax)
+    # cax = divider.append_axes("right", size="5%", pad=CMAP_PAD)
+    # plt.colorbar(im, cax=cax)
+    make_scaled_colorbar(im, ax, fontsize=TICKSIZE_3)
+
+    # Set ticks to [-1, 0, 1]
+    ax.set_xticks([-1, 0, 1])
+    ax.set_yticks([-1, 0, 1])
+    # ticks should be FONTSIZE_3
+    ax.tick_params(axis="both", which="major", labelsize=TICKSIZE_3)
 
     # Plot the wavelength
     # wavelength = (2 * np.pi) / k
@@ -196,6 +215,8 @@ def plot_scattering_potential(
     #     elinewidth=THICKNESS,
     #     capthick=THICKNESS,
     # )
+
+    fig.tight_layout()
 
     plt.savefig(output_fp, bbox_inches="tight")
 
@@ -289,7 +310,7 @@ def main(args: argparse.Namespace) -> None:
     plot_field_for_wave_scattering_experiment(
         field=utot_ref.real,
         target_pts=target_pts,
-        cmap_str="parula",
+        use_bwr_cmap=True,
         save_fp=output_fp,
     )
 
