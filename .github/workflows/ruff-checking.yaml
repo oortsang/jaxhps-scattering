@@ -6,6 +6,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/ruff-action@v3
+      - run: ruff check --output-format=github
+      - run: ruff format --check --diff
 
 # name: Ruff
 # on: [ push, pull_request ]
