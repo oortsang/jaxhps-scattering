@@ -1,0 +1,23 @@
+name: Ruff
+on: [ push, pull_request ]
+jobs:
+  ruff-linting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ruff Linting Check
+      uses: astral-sh/ruff-action@v3
+      with:
+        - args: check --output-format=github
+      - name: Ruff Formatting Check
+      uses: astral-sh/ruff-action@v3
+      with:
+        - args: format --check --diff
+  ruff-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ruff Formatting Check
+      uses: astral-sh/ruff-action@v3
+      with:
+        - args: format --check --diff
