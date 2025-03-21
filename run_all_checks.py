@@ -27,24 +27,16 @@ from hps.accuracy_checks.single_leaf_checks import (
 )
 from hps.accuracy_checks.single_merge_checks import (
     single_merge_check_0,
-    single_merge_check_1,
     single_merge_check_2,
-    single_merge_check_3,
     single_merge_check_4,
-    single_merge_check_5,
     single_merge_check_6,
     single_merge_check_7,
-    single_merge_check_8,
-    single_merge_check_9,
     single_merge_check_10,
 )
 from hps.accuracy_checks.multi_merge_checks import (
     multi_merge_check_0,
     multi_merge_check_1,
-    multi_merge_check_2,
-    multi_merge_check_3,
     multi_merge_check_4,
-    multi_merge_check_5,
     multi_merge_check_6,
     multi_merge_check_7,
 )
@@ -54,13 +46,6 @@ from hps.accuracy_checks.single_leaf_checks_3D import (
     single_leaf_check_3D_2,
     single_leaf_check_3D_3,
     single_leaf_check_3D_4,
-)
-from hps.accuracy_checks.single_merge_checks_3D import (
-    single_merge_check_3D_0,
-    single_merge_check_3D_1,
-    single_merge_check_3D_2,
-    single_merge_check_3D_3,
-    single_merge_check_3D_4,
 )
 from hps.accuracy_checks.nonuniform_grid_checks import (
     nonuniform_grid_check_0,

@@ -7,12 +7,8 @@ from timeit import default_timer
 
 import jax.numpy as jnp
 import jax
-from scipy.io import loadmat
 import h5py
-import matplotlib.pyplot as plt
 
-# Disable logging
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 from hps.src.solver_obj import create_solver_obj_2D
 from hps.src.methods.fused_methods import (
@@ -27,6 +23,10 @@ from hps.src.quadrature.quad_2D.interpolation import (
     interp_from_nonuniform_hps_to_regular_grid,
 )
 from hps.src.quadrature.trees import Node
+
+
+# Disable logging
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 
 @jax.jit
@@ -281,7 +281,7 @@ def solve_scattering_problem(
 
     logging.debug("solve_scattering_problem: S device: %s", S.devices())
 
-    # Determine whether we need to use fused functions or can fit everything on the 
+    # Determine whether we need to use fused functions or can fit everything on the
     n_leaves = t.leaf_cheby_points.shape[0]
     _, n_levels = get_fused_chunksize_2D(p, jnp.complex128, n_leaves)
     bool_use_recomp = n_levels < l
@@ -304,7 +304,7 @@ def solve_scattering_problem(
             D_yy_coeffs=d_yy_coeffs,
             I_coeffs=i_term,
             host_device=DEVICE_ARR[0],
-            return_top_T=True
+            return_top_T=True,
         )
     else:
         T_arr, Y_arr, h_arr, v_arr = _local_solve_stage_2D_ItI(
@@ -327,7 +327,6 @@ def solve_scattering_problem(
         S_arr_lst, f_arr_lst, R = _uniform_build_stage_2D_ItI(
             R_maps=T_arr, h_arr=h_arr, l=l, host_device=DEVICE_ARR[0], return_ItI=True
         )
-
 
     T = get_DtN_from_ItI(R, t.eta)
 
@@ -379,12 +378,14 @@ def solve_scattering_problem(
             I_coeffs=i_term,
         )
     else:
-        interior_solns = _uniform_down_pass_2D_ItI(boundary_imp_data=incoming_imp_data, 
-                                                   S_maps_lst=S_arr_lst, 
-                                                   f_lst=f_arr_lst, 
-                                                   leaf_Y_maps=Y_arr, 
-                                                   v_array=v_arr,
-                                                   host_device=DEVICE_ARR[0])
+        interior_solns = _uniform_down_pass_2D_ItI(
+            boundary_imp_data=incoming_imp_data,
+            S_maps_lst=S_arr_lst,
+            f_lst=f_arr_lst,
+            leaf_Y_maps=Y_arr,
+            v_array=v_arr,
+            host_device=DEVICE_ARR[0],
+        )
     uscat_soln = interior_solns
 
     # Measure consistency with the PDE

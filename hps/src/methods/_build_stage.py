@@ -1,17 +1,9 @@
-from functools import partial
 import logging
 from typing import Tuple, List
 
 import jax
-from jax.typing import ArrayLike, DTypeLike
 import jax.numpy as jnp
 
-from hps.src.quadrature.quad_2D.indexing import (
-    get_quadmerge_blocks_a,
-    get_quadmerge_blocks_b,
-    get_quadmerge_blocks_c,
-    get_quadmerge_blocks_d,
-)
 from hps.src.quadrature.quad_3D.indexing import (
     get_a_submatrices,
     get_b_submatrices,
@@ -24,7 +16,7 @@ from hps.src.quadrature.quad_3D.indexing import (
     get_rearrange_indices,
 )
 
-from hps.src.config import DEVICE_MESH, HOST_DEVICE, DEVICE_ARR, device_put_wrapper
+from hps.src.config import HOST_DEVICE, DEVICE_ARR
 
 
 def _build_stage_3D(

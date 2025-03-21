@@ -1,13 +1,10 @@
 from typing import List, Tuple
 
-import numpy as np
-import jax
 import jax.numpy as jnp
 
-from hps.src.quadrature.trees import Node, get_all_leaves
+from hps.src.quadrature.trees import Node
 from hps.src.quadrature.quad_3D.grid_creation import get_ordered_lst_of_boundary_nodes
 # from hps.src.methods.schur_complement import assemble_merge_outputs_DtN
-from hps.src.config import DEVICE_ARR, HOST_DEVICE
 
 
 def _compression_lst(

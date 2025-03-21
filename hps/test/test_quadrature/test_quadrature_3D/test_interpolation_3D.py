@@ -10,16 +10,10 @@ from hps.src.quadrature.quad_3D.interpolation import (
 )
 from hps.src.quadrature.quad_3D.indexing import (
     get_face_1_idxes,
-    get_face_2_idxes,
-    get_face_3_idxes,
-    get_face_4_idxes,
-    get_face_5_idxes,
-    get_face_6_idxes,
 )
 from hps.src.quadrature.quad_3D.differentiation import precompute_diff_operators
 from hps.src.quadrature.quadrature_utils import (
     chebyshev_points,
-    barycentric_lagrange_2d_interpolation_matrix,
 )
 from hps.src.quadrature.quad_3D.grid_creation import (
     corners_to_cheby_points_lst,
@@ -28,8 +22,6 @@ from hps.src.quadrature.quad_3D.grid_creation import (
     get_all_boundary_gauss_legendre_points,
 )
 from hps.src.quadrature.trees import Node, add_eight_children
-from hps.src.utils import meshgrid_to_lst_of_pts
-import matplotlib.pyplot as plt
 
 
 class Test_interp_operator_to_uniform:
@@ -132,7 +124,6 @@ class Test_refinement_operator:
         p = 5
         x = refinement_operator(p)
         assert not jnp.any(jnp.isnan(x))
-        corners = jnp.array([[-1, -1, -1], [1, 1, 1]], dtype=jnp.float64)
         root_0 = Node(
             xmin=-1.0,
             xmax=1.0,
@@ -296,7 +287,7 @@ class Test_precompute_Q_D_matrix:
         corners = (jnp.pi / 2) * jnp.array([[-1, -1, -1], [1, 1, 1]])
         cheby_pts = chebyshev_points(p)[0]
         cheby_pts_lst = corners_to_cheby_points_lst(corners, cheby_pts)
-        gauss_pts_lst = corners_to_gauss_points_lst(q, corners)
+        # gauss_pts_lst = corners_to_gauss_points_lst(q, corners)
 
         f_cheby_evals = f(cheby_pts_lst)
         df_dn_gauss_interp = mat @ f_cheby_evals

@@ -1,45 +1,29 @@
 import pytest
 import jax.numpy as jnp
 import numpy as np
-import matplotlib.pyplot as plt
 from hps.src.quadrature.quadrature_utils import (
     affine_transform,
     chebyshev_points,
-    chebyshev_weights,
 )
 from hps.src.quadrature.quad_2D.interpolation import (
     refinement_operator,
     precompute_refining_coarsening_ops,
-    interp_operator_to_regular,
     _interp_to_point,
-    precompute_P_matrix,
-    precompute_Q_D_matrix,
     precompute_I_P_0_matrix,
     precompute_Q_I_matrix,
     interp_from_nonuniform_hps_to_regular_grid,
 )
 from hps.src.quadrature.trees import (
     Node,
-    get_all_leaves,
-    get_all_leaves_jitted,
-    add_four_children,
     add_uniform_levels,
     # _corners_for_quad_subdivision,
 )
-from hps.src.utils import meshgrid_to_lst_of_pts
 from hps.src.quadrature.quad_2D.grid_creation import (
-    chebyshev_points,
     corners_to_cheby_points_lst,
-    vmapped_corners,
-    
-    vmapped_corners_to_cheby_points_lst,
     get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,
     get_all_leaf_2d_cheby_points_uniform_refinement,
 )
-from hps.src.test_utils import check_arrays_close
-
-from hps.src.quadrature.quadrature_utils import affine_transform, chebyshev_points
 
 
 class Test_refinement_operator:
@@ -350,7 +334,7 @@ class Test_interp_from_nonuniform_hps_to_regular_grid:
 class Test__interp_to_point:
     def test_0(self) -> None:
 
-        l = 3
+        # l = 3
         corners = jnp.array([[-1, -1], [1.0, -1.0], [1.0, 1], [-1, 1]])
 
         # xval = jnp.array([-0.99])

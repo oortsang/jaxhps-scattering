@@ -1,25 +1,14 @@
 import os
-from typing import Callable, Tuple, List
-import sys
 import argparse
-import pickle
 import logging
-import numpy as np
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-import matplotlib
 from timeit import default_timer
 from scipy.io import savemat
 
-
-# Suppress matplotlib debug messages
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
-logging.getLogger("jax").setLevel(logging.WARNING)
-
 from hps.src.quadrature.quad_3D.adaptive_meshing import (
     generate_adaptive_mesh_level_restriction,
-    node_corners_to_3d_corners,
     find_leaves_containing_pts,
 )
 from hps.src.solver_obj import (
@@ -37,8 +26,7 @@ from hps.src.quadrature.quad_3D.interpolation import (
     refinement_operator,
     interp_from_nonuniform_hps_to_uniform_grid,
 )
-from hps.src.plotting import plot_2D_adaptive_refinement, plot_adaptive_grid_histogram
-from hps.src.utils import meshgrid_to_lst_of_pts, points_to_2d_lst_of_points
+from hps.src.plotting import plot_adaptive_grid_histogram
 from hps.src.poisson_boltzmann_eqn_helpers import (
     permittivity,
     d_permittivity_d_x,
@@ -50,8 +38,12 @@ from hps.src.poisson_boltzmann_eqn_helpers import (
     d_vdw_permittivity_d_y,
     d_vdw_permittivity_d_z,
 )
-from hps.accuracy_checks.h_refinement_functions import get_l_inf_error_2D
 from hps.src.logging_utils import FMT, TIMEFMT
+
+
+# Suppress matplotlib debug messages
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("jax").setLevel(logging.WARNING)
 
 
 def setup_args() -> argparse.Namespace:

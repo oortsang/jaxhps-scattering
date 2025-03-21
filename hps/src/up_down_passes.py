@@ -3,17 +3,14 @@ Defines functions for the upward and downward passes of the HPS algorithm.
 These functions are defined over a tree of Node objects.
 """
 
-from functools import partial
 import logging
-from typing import List, Tuple
+from typing import List
 
 import jax.numpy as jnp
 import jax
 
 from hps.src.solver_obj import (
     SolverObj,
-    create_solver_obj_2D,
-    create_solver_obj_3D,
 )
 
 from hps.src.methods.local_solve_stage import (
@@ -37,7 +34,7 @@ from hps.src.methods.adaptive_down_pass import (
     _down_pass_3D as _adaptive_down_pass_3D,
 )
 
-from hps.src.quadrature.trees import get_all_leaves_jitted, get_all_leaves
+from hps.src.quadrature.trees import get_all_leaves
 
 from hps.src.methods.uniform_down_pass import (
     _uniform_down_pass_2D_DtN,

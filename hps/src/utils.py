@@ -2,7 +2,7 @@
 This file contains general utility functions for the HPS package.
 """
 
-from typing import List, Tuple
+from typing import Tuple
 import jax
 import jax.numpy as jnp
 

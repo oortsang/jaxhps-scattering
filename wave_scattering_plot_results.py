@@ -1,15 +1,11 @@
 import logging
 import os
 import argparse
-from typing import List, Tuple
-from datetime import datetime
+from typing import List
 
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.cm as cm
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.io import loadmat
 import pandas as pd
 import jax.numpy as jnp
@@ -19,21 +15,11 @@ from hps.src.plotting import (
     get_discrete_cmap,
     plot_field_for_wave_scattering_experiment,
     make_scaled_colorbar,
-    parula_cmap,
-    CMAP_PAD,
     FONTSIZE_2,
-    FONTSIZE_3,
     TICKSIZE_2,
     TICKSIZE_3,
     FIGSIZE_2,
     FIGSIZE_3,
-)
-from hps.src.scattering_potentials import (
-    q_luneburg,
-    q_vertically_graded,
-    q_horizontally_graded,
-    q_gaussian_bumps,
-    q_GBM_1,
 )
 from hps.src.wave_scattering_utils import get_uin
 
@@ -95,10 +81,10 @@ def lst_of_dirs_to_df(input_dir: str, lst_of_dirs: List[str]) -> pd.DataFrame:
         lp_vals = lp_str.split("_")
         # logging.debug("lst_of_dirs_to_df: d: %s", d)
         # logging.debug("lst_of_dirs_to_df: lp_vals: %s", lp_vals)
-        l = lp_vals[4]
-        p = lp_vals[2]
-        l = int(l)
-        p = int(p)
+        l_str = lp_vals[4]
+        p_str = lp_vals[2]
+        l = int(l_str)
+        p = int(p_str)
 
         # Load the data from the directory
         data_fp = os.path.join(input_dir, d, "data.mat")
@@ -226,35 +212,30 @@ def main(args: argparse.Namespace) -> None:
     # Check the scattering potential argument
     if args.scattering_potential == "luneburg":
         args.data_dir = f"data/wave_scattering/luneburg_k_{int(args.k)}"
-        q_fn_handle = q_luneburg
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "vertically_graded":
         args.data_dir = f"data/wave_scattering/vertically_graded_k_{int(args.k)}"
-        q_fn_handle = q_vertically_graded
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "horizontally_graded":
         args.data_dir = f"data/wave_scattering/horizontally_graded_k_{int(args.k)}"
-        q_fn_handle = q_horizontally_graded
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "gauss_bumps":
         args.data_dir = f"data/wave_scattering/gauss_bumps_k_{int(args.k)}"
-        q_fn_handle = q_gaussian_bumps
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "GBM_1":
         args.data_dir = f"data/wave_scattering/GBM_1_k_{int(args.k)}"
-        q_fn_handle = q_GBM_1
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0

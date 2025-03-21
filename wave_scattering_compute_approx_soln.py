@@ -17,7 +17,7 @@ from hps.src.scattering_potentials import (
     q_gaussian_bumps,
     q_GBM_1,
 )
-from hps.src.config import DEVICE_ARR, HOST_DEVICE
+from hps.src.config import DEVICE_ARR
 
 # Silence matplotlib debug messages
 logging.getLogger("matplotlib").disabled = True

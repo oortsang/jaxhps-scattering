@@ -1,18 +1,12 @@
 import os
 import logging
 import argparse
-import numpy as np
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from scipy.io import loadmat, savemat
+from scipy.io import loadmat
 
-# supress matplotlib debug messages
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
-logging.getLogger("matplotlib.font_manager").disabled = True
-logging.getLogger("jax").setLevel(logging.WARNING)
 
-from hps.src.logging_utils import FMT, TIMEFMT, DATESTR
+from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src.plotting import (
     get_discrete_cmap,
     plot_func_with_grid,
@@ -25,6 +19,11 @@ from hps.accuracy_checks.test_cases_3D import (
     d_yy_adaptive_meshing_data_fn,
     d_zz_adaptive_meshing_data_fn,
 )
+
+# supress matplotlib debug messages
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("matplotlib.font_manager").disabled = True
+logging.getLogger("jax").setLevel(logging.WARNING)
 
 K_TOL = "tol"
 K_N_LEAVES = "n_leaves"

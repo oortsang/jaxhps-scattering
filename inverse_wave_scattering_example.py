@@ -1,4 +1,3 @@
-import sys
 import argparse
 import os
 import logging
@@ -7,20 +6,12 @@ import jax.numpy as jnp
 import jax
 import matplotlib.pyplot as plt
 
-from scipy.sparse.linalg import LinearOperator, lsqr, svds
-from scipy.io import savemat, loadmat
+from scipy.sparse.linalg import LinearOperator, lsqr
+from scipy.io import savemat
 
-# Disable all matplorlib logging
-# logging.getLogger("matplotlib").setLevel(logging.WARNING)
-# logging.getLogger("PIL").setLevel(logging.WARNING)
-logging.getLogger("matplotlib").disabled = True
-logging.getLogger("matplotlib.font_manager").disabled = True
-# Uncomment for debugging NaNs. Slows code down.
-# jax.config.update("jax_debug_nans", True)
 
 from hps.src.config import DEVICE_ARR, HOST_DEVICE
 from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src import plotting
 from hps.src.quadrature.quad_2D.interpolation import (
     interp_from_nonuniform_hps_to_regular_grid,
 )
@@ -29,15 +20,21 @@ from hps.src.inverse_scattering_utils import (
     source_locations_to_scattered_field,
     forward_model,
     SAMPLE_TREE,
-    L,
     P,
     XMIN,
     XMAX,
     YMIN,
     YMAX,
     OBSERVATION_BOOLS,
-    MIN_TOL,
 )
+
+# Disable all matplorlib logging
+# logging.getLogger("matplotlib").setLevel(logging.WARNING)
+# logging.getLogger("PIL").setLevel(logging.WARNING)
+logging.getLogger("matplotlib").disabled = True
+logging.getLogger("matplotlib.font_manager").disabled = True
+# Uncomment for debugging NaNs. Slows code down.
+# jax.config.update("jax_debug_nans", True)
 
 N_BUMPS = 4
 
@@ -315,7 +312,6 @@ def main(args: argparse.Namespace) -> None:
     ground_truth_locations = jax.device_put(ground_truth_locations, DEVICE_ARR[0])
     q_evals_hps = q_point_sources(SAMPLE_TREE.leaf_cheby_points, ground_truth_locations)
     n_X = 200
-    corners = jnp.array([[XMIN, YMIN], [XMAX, YMIN], [XMAX, YMAX], [XMIN, YMAX]])
     q_evals_regular, regular_grid = interp_from_nonuniform_hps_to_regular_grid(
         root=SAMPLE_TREE.root,
         p=P,
@@ -347,7 +343,7 @@ def main(args: argparse.Namespace) -> None:
 
     # u_star is the scattered wave field data we get to observe in the inverse problem
     u_star = forward_model(ground_truth_locations)
-    nobs = u_star.shape[0]
+    # nobs = u_star.shape[0]
 
     if args.plot_objective_fn:
         plot_objective_function(args.plots_dir, u_star, n_per_side=args.n_per_side)

@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-import jax
 import numpy as np
 import pytest
 
@@ -12,11 +11,6 @@ from hps.src.quadrature.quadrature_utils import (
     barycentric_lagrange_3d_interpolation_matrix,
     chebyshev_weights,
 )
-from hps.src.quadrature.quad_3D.grid_creation import (
-    corners_to_cheby_points_lst,
-    corners_to_gauss_points_lst,
-)
-from hps.src.quadrature.quad_3D.indexing import get_face_1_idxes
 from hps.src.test_utils import check_arrays_close
 from hps.src.utils import meshgrid_to_lst_of_pts
 

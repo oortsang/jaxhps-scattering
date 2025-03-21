@@ -1,21 +1,14 @@
-import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import numpy as np
-import matplotlib.pyplot as plt
 
 from hps.src.up_down_passes import build_stage, down_pass, local_solve_stage
 from hps.src.solver_obj import create_solver_obj_2D
-from hps.src.quadrature.trees import Node, add_uniform_levels, add_four_children
-from hps.src.solver_obj import create_solver_obj_2D, create_solver_obj_3D
+from hps.src.quadrature.trees import Node
+from hps.src.solver_obj import create_solver_obj_3D
 from hps.src.up_down_passes import (
-    build_stage,
-    down_pass,
-    local_solve_stage,
     fused_pde_solve_2D,
     fused_pde_solve_2D_ItI,
 )
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
 
 def get_l_inf_error_2D(
@@ -44,7 +37,6 @@ def get_l_inf_error_2D(
     north = jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
 
     q = p - 2
 

@@ -6,13 +6,11 @@ import jax.numpy as jnp
 from hps.src.solver_obj import (
     create_solver_obj_2D,
     create_solver_obj_3D,
-    SolverObj,
 )
 from hps.src.quadrature.trees import (
     Node,
     add_four_children,
     get_all_leaves,
-    get_all_leaves_jitted,
     add_uniform_levels,
     get_nodes_at_level,
     add_eight_children,
@@ -826,7 +824,6 @@ class Test__oct_merge:
         v_prime_h = np.random.normal(size=(n_gauss_bdry))
         L_2f1 = np.random.normal(size=(n_gauss_bdry_refined, n_gauss_bdry))
         L_1f2 = np.random.normal(size=(n_gauss_bdry, n_gauss_bdry_refined))
-        q_idxes = np.arange(q)
         sidelens = jnp.array([q**2, q**2, q**2, q**2, q**2, q**2])
         need_interp_lsts = [
             jnp.array([False]),
@@ -902,7 +899,6 @@ class Test__oct_merge:
         need_interp_lsts[7] = jnp.array([True, True, True, True])
         need_interp_lsts[16] = jnp.array([True, True, True, True])
         print("test_1: n_per_face: ", n_per_face)
-        q_idxes = np.arange(q)
         S, T, v_prime_ext, v_int = _oct_merge(
             T_a=T_a,
             T_b=T_b,
@@ -948,7 +944,7 @@ class Test_quad_merge_nonuniform_whole_level:
 
         q = 4
         n_bdry = 8 * q
-        n_bdry_int = 2 * q
+        # n_bdry_int = 2 * q
         n_out_quads = 1
         n_leaves_input = n_out_quads * 4
         T_in = [np.random.normal(size=(n_bdry, n_bdry)) for _ in range(n_leaves_input)]

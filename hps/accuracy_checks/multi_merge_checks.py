@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,13 +15,10 @@ from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
 from hps.src.solver_obj import (
     create_solver_obj_2D,
-    create_solver_obj_3D,
     get_bdry_data_evals_lst_2D,
 )
 from hps.src.up_down_passes import build_stage, down_pass, local_solve_stage
-from hps.src.quadrature.trees import Node, add_four_children
-from hps.accuracy_checks.h_refinement_functions import get_l_inf_error_2D_ItI
-from hps.src.up_down_passes import build_stage, down_pass, local_solve_stage
+from hps.src.quadrature.trees import Node
 from hps.src.methods.fused_methods import (
     _fused_local_solve_and_build_2D_ItI,
     _down_pass_from_fused_ItI,
@@ -57,7 +54,6 @@ def check_l_inf_error_convergence_fixed_p_increasing_l(
     north = jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
 
     n_X = 100
     x = jnp.linspace(west, east, n_X)
@@ -304,7 +300,6 @@ def check_l_inf_error_convergence_fixed_l_increasing_p_ItI(
     north = jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
 
     n_X = 100
     x = jnp.linspace(west, east, n_X)

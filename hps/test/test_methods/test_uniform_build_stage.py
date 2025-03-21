@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 import jax.numpy as jnp
 
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
+from hps.src.solver_obj import create_solver_obj_2D, create_solver_obj_3D
 
 from hps.src.methods.uniform_build_stage import (
     _uniform_build_stage_2D_DtN,
@@ -249,7 +249,6 @@ class Test__uniform_build_stage_2D_ItI:
         l = 3
         eta = 4.0
         num_leaves = 4**l
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
@@ -278,7 +277,7 @@ class Test__uniform_build_stage_2D_ItI:
         # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
         # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
 
-        S_arr_lst,  f_arr_lst = _uniform_build_stage_2D_ItI(
+        S_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
             R_maps=R_arr, h_arr=h_arr, l=l
         )
         print("test_0: S_arr_lst shapes = ", [S_arr.shape for S_arr in S_arr_lst])

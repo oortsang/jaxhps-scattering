@@ -20,12 +20,7 @@ from hps.src.quadrature.quad_3D.indexing import (
     get_face_6_idxes,
     indexing_for_refinement_operator,
 )
-from hps.src.quadrature.quad_3D.differentiation import precompute_diff_operators
-from hps.src.quadrature.trees import Node, get_all_leaves, add_four_children
-from hps.src.quadrature.quad_3D.grid_creation import (
-    get_all_boundary_gauss_legendre_points,
-    get_all_boundary_gauss_legendre_points_uniform_refinement,
-)
+from hps.src.quadrature.trees import Node, get_all_leaves
 
 
 def precompute_refining_coarsening_ops(q: int) -> Tuple[jnp.ndarray, jnp.ndarray]:
@@ -399,12 +394,12 @@ def interp_from_nonuniform_hps_to_uniform_grid(
     to_y: jnp.array,
     to_z: jnp.array,
 ) -> Tuple[jnp.array]:
-    xmin = root.xmin
-    xmax = root.xmax
-    ymin = root.ymin
-    ymax = root.ymax
-    zmin = root.zmin
-    zmax = root.zmax
+    # xmin = root.xmin
+    # xmax = root.xmax
+    # ymin = root.ymin
+    # ymax = root.ymax
+    # zmin = root.zmin
+    # zmax = root.zmax
 
     X, Y, Z = jnp.meshgrid(to_x, to_y, to_z)
 
@@ -486,8 +481,6 @@ def _interp_to_point(
     # print("_interp_to_point: yval: ", yval, " yval shape: ", yval.shape)
 
     cheby_pts = chebyshev_points(p)[0]
-
-    out = jnp.zeros_like(xval)
 
     from_x = affine_transform(cheby_pts, corners[:, 0])
     from_y = affine_transform(cheby_pts, corners[:, 1])

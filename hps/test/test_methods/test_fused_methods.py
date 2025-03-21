@@ -10,11 +10,9 @@ from hps.src.methods.fused_methods import (
     _down_pass_from_fused,
     _fused_all_single_chunk,
     _fused_all_single_chunk_ItI,
-    _partial_down_pass_ItI,
-    _partial_down_pass,
     _down_pass_from_fused_ItI,
 )
-from hps.src.config import get_fused_chunksize_2D, GPU_AVAILABLE
+from hps.src.config import GPU_AVAILABLE
 from hps.src.quadrature.trees import Node, get_all_leaves
 
 
@@ -59,7 +57,7 @@ class Test_fused_local_solve_and_build:
             D_xx_coeffs=d_xx_coeffs,
             D_yy_coeffs=d_yy_coeffs,
         )
-        n_fused_levels = get_fused_chunksize_2D(p, source_term.dtype, 4**l)[1]
+        # n_fused_levels = get_fused_chunksize_2D(p, source_term.dtype, 4**l)[1]
 
         # assert len(S_arr_lst) == l - n_fused_levels
         # # assert len(DtN_arr_lst) == l - n_fused_levels
@@ -73,8 +71,6 @@ class Test_fused_local_solve_and_build_ItI:
         p = 7
         q = 5
         l = 4
-
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
@@ -90,7 +86,7 @@ class Test_fused_local_solve_and_build_ItI:
 
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
 
-        S_arr_lst,  v_arr_lst = _fused_local_solve_and_build_2D_ItI(
+        S_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D_ItI(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -106,7 +102,7 @@ class Test_fused_local_solve_and_build_ItI:
             D_xx_coeffs=d_xx_coeffs,
             D_yy_coeffs=d_yy_coeffs,
         )
-        n_fused_levels = get_fused_chunksize_2D(p, source_term.dtype, 4**l)[1]
+        # n_fused_levels = get_fused_chunksize_2D(p, source_term.dtype, 4**l)[1]
 
         # assert len(S_arr_lst) == l - n_fused_levels
         # # assert len(DtN_arr_lst) == l - n_fused_levels
@@ -124,8 +120,6 @@ class Test_down_pass_from_fused:
         p = 7
         q = 5
         l = 4
-
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
@@ -160,7 +154,7 @@ class Test_down_pass_from_fused:
             D_xx_coeffs=d_xx_coeffs,
             D_yy_coeffs=d_yy_coeffs,
         )
-        n_fused_levels = get_fused_chunksize_2D(p, source_term.dtype, 4**l)[1]
+        # n_fused_levels = get_fused_chunksize_2D(p, source_term.dtype, 4**l)[1]
 
         # Print out the shapes of the arrays.
         print("test_0: S_arr_lst shape: ", [S.shape for S in S_arr_lst])
@@ -197,8 +191,6 @@ class Test_fused_all_single_chunk:
         p = 8
         q = 6
         l = 4
-
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
@@ -244,7 +236,6 @@ class Test_fused_all_single_chunk_ItI:
         q = 6
         l = 4
 
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
         t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=4.0)
@@ -293,8 +284,6 @@ class Test_down_pass_from_fused_ItI:
         q = 5
         l = 4
 
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
-
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
         t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=4.0)
@@ -311,7 +300,7 @@ class Test_down_pass_from_fused_ItI:
 
         bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
 
-        S_arr_lst,  v_arr_lst = _fused_local_solve_and_build_2D_ItI(
+        S_arr_lst, v_arr_lst = _fused_local_solve_and_build_2D_ItI(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -327,7 +316,7 @@ class Test_down_pass_from_fused_ItI:
             D_xx_coeffs=d_xx_coeffs,
             D_yy_coeffs=d_yy_coeffs,
         )
-        n_fused_levels = get_fused_chunksize_2D(p, source_term.dtype, 4**l)[1]
+        # n_fused_levels = get_fused_chunksize_2D(p, source_term.dtype, 4**l)[1]
 
         # Print out the shapes of the arrays.
         print("test_0: S_arr_lst shape: ", [S.shape for S in S_arr_lst])

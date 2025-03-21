@@ -1,19 +1,14 @@
 import os
-from typing import Callable, Tuple, List
-import sys
+from typing import Callable
 import argparse
 import logging
 import numpy as np
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-import matplotlib
 from timeit import default_timer
 from scipy.io import savemat
 
-# Suppress matplotlib debug messages
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
-logging.getLogger("jax").setLevel(logging.WARNING)
 
 from hps.src.quadrature.quad_3D.adaptive_meshing import (
     generate_adaptive_mesh_level_restriction,
@@ -40,8 +35,7 @@ from hps.src.quadrature.quad_3D.interpolation import (
     refinement_operator,
     interp_from_nonuniform_hps_to_uniform_grid,
 )
-from hps.src.plotting import plot_2D_adaptive_refinement, plot_adaptive_grid_histogram
-from hps.src.utils import meshgrid_to_lst_of_pts, points_to_2d_lst_of_points
+from hps.src.plotting import plot_adaptive_grid_histogram
 from hps.accuracy_checks.test_cases_3D import (
     adaptive_meshing_data_fn,
     d_xx_adaptive_meshing_data_fn,
@@ -49,9 +43,12 @@ from hps.accuracy_checks.test_cases_3D import (
     d_zz_adaptive_meshing_data_fn,
     default_lap_coeffs,
 )
-from hps.accuracy_checks.h_refinement_functions import get_l_inf_error_2D
 from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src.config import HOST_DEVICE, DEVICE_ARR
+
+# Suppress matplotlib debug messages
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("jax").setLevel(logging.WARNING)
 
 
 def setup_args() -> argparse.Namespace:
@@ -415,7 +412,7 @@ def hp_convergence_study() -> None:
         )
         u_reg_y = u_reg_y.reshape(args.n, args.n)
         eval_pts_y = eval_pts_y.reshape(args.n, args.n, 3)
-        y_leaf_corners = find_leaves_containing_pts(eval_pts_y, t.root)
+        # y_leaf_corners = find_leaves_containing_pts(eval_pts_y, t.root)
 
         u_reg_z, eval_pts_z = interp_from_nonuniform_hps_to_uniform_grid(
             root=t.root,
@@ -427,7 +424,7 @@ def hp_convergence_study() -> None:
         )
         u_reg_z = u_reg_z.reshape(args.n, args.n)
         eval_pts_z = eval_pts_z.reshape(args.n, args.n, 3)
-        z_leaf_corners = find_leaves_containing_pts(eval_pts_z, t.root)
+        # z_leaf_corners = find_leaves_containing_pts(eval_pts_z, t.root)
 
         #############################################################
         # Plot the solution
@@ -508,7 +505,7 @@ def adaptive_small_ex_for_jit() -> None:
         D_yy_coeffs=D_yy_evals,
         D_zz_coeffs=D_zz_evals,
     )
-    D_size = build_stage(t, return_D_size=True)
+    # D_size = build_stage(t, return_D_size=True)
 
     bdry_data = get_bdry_data_evals_lst_3D(t, f=adaptive_meshing_data_fn)
     down_pass(t, bdry_data)
@@ -525,7 +522,7 @@ def uniform_small_ex_for_jit() -> None:
         zmax=ZMAX,
         depth=0,
     )
-    interp = refinement_operator(args.p)
+    # interp = refinement_operator(args.p)
 
     t = create_solver_obj_3D(p=args.p, q=args.p - 2, root=root, uniform_levels=1)
 
@@ -542,7 +539,7 @@ def uniform_small_ex_for_jit() -> None:
         D_yy_coeffs=D_yy_evals,
         D_zz_coeffs=D_zz_evals,
     )
-    D_size = build_stage(t, return_D_size=True)
+    # D_size = build_stage(t, return_D_size=True)
 
     bdry_data = get_bdry_data_evals_lst_3D(t, f=adaptive_meshing_data_fn)
     down_pass(t, bdry_data)

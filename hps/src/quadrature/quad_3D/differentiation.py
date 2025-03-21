@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple
 from functools import partial
 import jax.numpy as jnp
 import jax
@@ -7,7 +7,6 @@ import jax
 from hps.src.quadrature.quad_3D.indexing import rearrange_indices_ext_int
 from hps.src.quadrature.quadrature_utils import (
     chebyshev_points,
-    affine_transform,
     differentiation_matrix_1d,
 )
 

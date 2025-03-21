@@ -2,7 +2,6 @@ from typing import List, Tuple
 import jax
 import jax.numpy as jnp
 
-from hps.src.config import DEVICE_ARR, HOST_DEVICE
 
 
 @jax.jit

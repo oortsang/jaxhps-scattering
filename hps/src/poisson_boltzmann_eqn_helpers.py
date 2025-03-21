@@ -269,7 +269,7 @@ def d_vdw_permittivity_d_x(x: jnp.array) -> jnp.array:
     """
     # Create a tangent vector that's 1.0 for x and 0.0 for y and z
     # This needs to match the shape of inputs
-    batch_shape = x.shape[:-1]
+    # batch_shape = x.shape[:-1]
 
     # Create a one-hot tangent vector where only the x-component is 1.0
     tangent = jnp.zeros_like(x)
@@ -294,7 +294,7 @@ def d_vdw_permittivity_d_y(x: jnp.array) -> jnp.array:
     """
     # Create a tangent vector that's 1.0 for y and 0.0 for x and z
     # This needs to match the shape of inputs
-    batch_shape = x.shape[:-1]
+    # batch_shape = x.shape[:-1]
 
     # Create a one-hot tangent vector where only the y-component is 1.0
     tangent = jnp.zeros_like(x)
@@ -319,7 +319,7 @@ def d_vdw_permittivity_d_z(x: jnp.array) -> jnp.array:
     """
     # Create a tangent vector that's 1.0 for z and 0.0 for x and y
     # This needs to match the shape of inputs
-    batch_shape = x.shape[:-1]
+    # batch_shape = x.shape[:-1]
 
     # Create a one-hot tangent vector where only the z-component is 1.0
     tangent = jnp.zeros_like(x)

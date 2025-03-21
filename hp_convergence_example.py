@@ -1,14 +1,19 @@
-import sys
 import argparse
 import os
 import logging
 
 import jax.numpy as jnp
-import jax
 import matplotlib.pyplot as plt
-import matplotlib
-from scipy.sparse.linalg import LinearOperator, lsqr, svds
-from scipy.io import savemat, loadmat
+from scipy.io import savemat
+
+
+from hps.src.logging_utils import FMT, TIMEFMT
+from hps.src.solver_obj import create_solver_obj_2D
+from hps.src.up_down_passes import (
+    fused_pde_solve_2D,
+    fused_pde_solve_2D_ItI,
+)
+from hps.src.quadrature.trees import Node
 
 # Disable all matplorlib logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -16,19 +21,6 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 # Uncomment for debugging NaNs. Slows code down.
 # jax.config.update("jax_debug_nans", True)
-
-from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src import plotting
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D
-from hps.src.up_down_passes import (
-    local_solve_stage,
-    build_stage,
-    down_pass,
-    fused_pde_solve_2D,
-    fused_pde_solve_2D_ItI,
-)
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
-from hps.src.quadrature.trees import Node
 
 
 def setup_args() -> argparse.Namespace:
@@ -52,7 +44,8 @@ CORNERS = jnp.array([[XMIN, YMIN], [XMAX, YMIN], [XMAX, YMAX], [XMIN, YMAX]])
 
 K = 5
 LAMBDA = 10
-PI =  jnp.pi
+PI = jnp.pi
+
 
 def problem_1_homog_soln(x: jnp.array) -> jnp.array:
     """
@@ -112,9 +105,21 @@ def problem_1_source(x: jnp.array) -> jnp.array:
 
     f(x,y) = -\lamba^2 sin(\lambda x) - \lambda cos(\lambda x) cos(k y)
     """
-    term_1 = -1 * (PI**2) *  (1 + LAMBDA**2) * problem_1_part_soln(x)
-    term_2 = -1 * PI * LAMBDA * jnp.cos(PI * LAMBDA * x[..., 0]) * jnp.sin(PI * x[..., 1]) * jnp.cos(K * x[..., 1])
-    term_3 = PI * jnp.sin(PI*LAMBDA * x[..., 0])* jnp.cos(PI * x[..., 1]) * jnp.sin(K * x[..., 1])
+    term_1 = -1 * (PI**2) * (1 + LAMBDA**2) * problem_1_part_soln(x)
+    term_2 = (
+        -1
+        * PI
+        * LAMBDA
+        * jnp.cos(PI * LAMBDA * x[..., 0])
+        * jnp.sin(PI * x[..., 1])
+        * jnp.cos(K * x[..., 1])
+    )
+    term_3 = (
+        PI
+        * jnp.sin(PI * LAMBDA * x[..., 0])
+        * jnp.cos(PI * x[..., 1])
+        * jnp.sin(K * x[..., 1])
+    )
     return term_1 + term_2 + term_3
 
 

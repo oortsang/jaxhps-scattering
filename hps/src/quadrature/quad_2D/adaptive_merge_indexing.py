@@ -1,8 +1,5 @@
-from functools import partial
 from typing import Tuple
-import jax
 import jax.numpy as jnp
-import numpy as np
 
 
 # These get_quadmerge_blocks functions are called during the quad merge. They find the sub-matrices

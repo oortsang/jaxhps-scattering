@@ -1,13 +1,10 @@
-from functools import partial
 from typing import Tuple
 import jax.numpy as jnp
-import jax
 
 from hps.src.quadrature.quad_2D.indexing import _rearrange_indices
 from hps.src.quadrature.quadrature_utils import (
     chebyshev_points,
     differentiation_matrix_1d,
-    barycentric_lagrange_interpolation_matrix,
 )
 
 
@@ -16,8 +13,6 @@ def precompute_diff_operators(p: int, half_side_len: float) -> Tuple[jnp.ndarray
     Returns D_x, D_y, D_xx, D_yy, D_xy
     """
     rearrange_indices = _rearrange_indices(p)
-
-    n_cheby_bdry_pts = 4 * (p - 1)
 
     pts = chebyshev_points(p)[0]
     cheby_diff_matrix = differentiation_matrix_1d(pts) / half_side_len

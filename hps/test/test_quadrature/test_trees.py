@@ -1,7 +1,4 @@
-import pytest
 
-import numpy as np
-import jax
 import jax.numpy as jnp
 
 from hps.src.quadrature.trees import (
@@ -20,7 +17,6 @@ from hps.src.quadrature.trees import (
     find_path_from_root_2D,
     find_nodes_along_interface_2D,
     find_nodes_along_interface_3D,
-    find_path_from_root_3D,
     get_all_uniform_leaves_2D,
 )
 

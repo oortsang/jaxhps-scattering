@@ -1,6 +1,5 @@
 from functools import partial
-from typing import Tuple, List
-import numpy as np
+from typing import Tuple
 import jax
 import jax.numpy as jnp
 
@@ -670,7 +669,7 @@ def get_rearrange_indices(
     region_g_xz = region_g_idxes[n_g_1 : n_g_1 + n_g_3]
     region_g_xy = region_g_idxes[n_g_1 + n_g_3 :]
 
-    n_h = n_h_0 + n_h_3 + n_h_4
+    # n_h = n_h_0 + n_h_3 + n_h_4
     region_h_idxes = idxes[n_a + n_b + n_c + n_d + n_e + n_f + n_g :]
     region_h_yz = region_h_idxes[:n_h_0]
     region_h_xz = region_h_idxes[n_h_0 : n_h_0 + n_h_3]

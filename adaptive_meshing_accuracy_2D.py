@@ -1,19 +1,12 @@
 import os
-from typing import Callable, Tuple, List
-import sys
 import argparse
 import logging
 import numpy as np
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-import matplotlib
 
 from hps.src.quadrature.quad_2D.adaptive_meshing import (
-    generate_adaptive_mesh_l2,
     generate_adaptive_mesh_linf,
-    node_corners_to_2d_corners,
-    get_squared_l2_norm_single_panel,
 )
 from hps.src.solution_obj import create_solver_obj_2D, get_bdry_data_evals_lst_2D
 from hps.src.up_down_passes import (
@@ -31,14 +24,12 @@ from hps.src.quadrature.quad_2D.interpolation import (
     interp_from_nonuniform_hps_to_uniform_grid,
 )
 from hps.src.plotting import plot_2D_adaptive_refinement
-from hps.src.utils import meshgrid_to_lst_of_pts, points_to_2d_lst_of_points
 from hps.accuracy_checks.dirichlet_neumann_data import (
     adaptive_meshing_data_fn,
     d_xx_adaptive_meshing_data_fn,
     d_yy_adaptive_meshing_data_fn,
     default_lap_coeffs,
 )
-from hps.accuracy_checks.h_refinement_functions import get_l_inf_error_2D
 from hps.src.logging_utils import FMT, TIMEFMT
 
 

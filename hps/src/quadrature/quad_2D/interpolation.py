@@ -9,15 +9,12 @@ from hps.src.quadrature.quad_2D.indexing import (
 )
 from hps.src.quadrature.quadrature_utils import (
     chebyshev_points,
-    differentiation_matrix_1d,
     barycentric_lagrange_interpolation_matrix,
     barycentric_lagrange_2d_interpolation_matrix,
     affine_transform,
 )
 from hps.src.quadrature.quad_2D.differentiation import precompute_N_matrix
-from hps.src.quadrature.quad_2D.grid_creation import vmapped_corners
 from hps.src.quadrature.trees import Node, get_all_leaves
-from hps.src.utils import meshgrid_to_lst_of_pts
 
 
 def refinement_operator(p: int) -> jnp.array:
@@ -133,8 +130,6 @@ def precompute_Q_I_matrix(p: int, q: int) -> jnp.array:
     Q = barycentric_lagrange_interpolation_matrix(cheby_pts, gauss_pts)
     Q_I = jnp.kron(jnp.eye(4), Q)
     return Q_I
-
-    return Q_D
 
 
 @partial(jax.jit, static_argnums=(0,))
@@ -320,8 +315,6 @@ def interp_from_nonuniform_hps_to_regular_grid(
     X, Y = jnp.meshgrid(x, y)
     target_pts = jnp.concatenate((jnp.expand_dims(X, 2), jnp.expand_dims(Y, 2)), axis=2)
     pts_lst = target_pts.reshape(-1, 2)
-
-    corners = jnp.array([[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]])
 
     all_leaves = get_all_leaves(root)
     corners_lst = [

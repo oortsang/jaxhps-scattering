@@ -1,7 +1,4 @@
-import jax
 import jax.numpy as jnp
-import numpy as np
-import pytest
 
 from hps.src.quadrature.quad_2D.indexing import (
     indexing_for_refinement_operator,

@@ -1,24 +1,22 @@
 import os
 import logging
 import argparse
-import numpy as np
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from scipy.io import loadmat, savemat
 
-# supress matplotlib debug messages
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
-logging.getLogger("matplotlib.font_manager").disabled = True
-logging.getLogger("jax").setLevel(logging.WARNING)
 
-from hps.src.logging_utils import FMT, TIMEFMT, DATESTR
-from hps.src.plotting import get_discrete_cmap
+from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src.quadrature.trees import Node, add_four_children
 from hps.src.quadrature.quad_2D.grid_creation import (
     get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,
 )
+
+
+# supress matplotlib debug messages
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("matplotlib.font_manager").disabled = True
+logging.getLogger("jax").setLevel(logging.WARNING)
 
 
 def setup_args() -> argparse.Namespace:

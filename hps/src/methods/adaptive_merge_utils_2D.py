@@ -1,7 +1,5 @@
-from typing import List, Tuple
+from typing import Tuple
 
-import numpy as np
-import jax
 import jax.numpy as jnp
 
 from hps.src.quadrature.trees import Node, get_all_leaves

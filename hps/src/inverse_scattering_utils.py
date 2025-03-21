@@ -1,10 +1,7 @@
-import logging
-import os
-
 import jax.numpy as jnp
 import jax
-import numpy as np
 from hps.src.solver_obj import create_solver_obj_2D
+
 # from hps.src.up_down_passes import local_solve_stage, build_stage, down_pass
 # from hps.src.methods.fused_methods import _fused_local_solve_and_build_2D_ItI, _down_pass_from_fused_ItI
 from hps.src.methods.local_solve_stage import _local_solve_stage_2D_ItI
@@ -12,17 +9,12 @@ from hps.src.methods.uniform_build_stage import _uniform_build_stage_2D_ItI
 from hps.src.methods.uniform_down_pass import _uniform_down_pass_2D_ItI
 from hps.src.wave_scattering_utils import (
     get_uin,
-    get_uin_and_normals,
     load_SD_matrices,
     get_scattering_uscat_impedance,
     get_DtN_from_ItI,
 )
-from hps.src.config import DEVICE_ARR, HOST_DEVICE
-from hps.src.quadrature.quadrature_utils import (
-    chebyshev_points,
-    barycentric_lagrange_interpolation_matrix,
-)
-from hps.src.quadrature.trees import Node, get_all_leaves
+from hps.src.config import DEVICE_ARR
+from hps.src.quadrature.trees import Node
 
 L = 3
 K = 20
@@ -101,7 +93,6 @@ def q_point_sources(x: jnp.array, source_locations: jnp.array) -> jnp.array:
 
     diff = x_expanded - source_locations_expanded  # shape (..., n, 2)
     radii = jnp.linalg.norm(diff, axis=-1) ** 2  # shape (..., n)
-    norm_factor = 1 / (2 * jnp.pi * SIGMA**2)
     return AMPLITUDE * jnp.sum(jnp.exp(-radii / SIGMA**2), axis=-1)
 
 
@@ -144,28 +135,26 @@ def source_locations_to_scattered_field(source_locations: jnp.array) -> jnp.arra
     #     host_device=DEVICE_ARR[0],
     # )
     T_arr, Y_arr, h_arr, v_arr = _local_solve_stage_2D_ItI(
-            D_xx=tree.D_xx,
-            D_xy=tree.D_xy,
-            D_yy=tree.D_yy,
-            D_x=tree.D_x,
-            D_y=tree.D_y,
-            I_P_0=tree.I_P_0,
-            Q_I=tree.Q_I,
-            F=tree.F,
-            G=tree.G,
-            p=tree.p,
-            D_xx_coeffs=d_xx_coeffs,
-            D_yy_coeffs=d_yy_coeffs,
-            I_coeffs=i_term,
-            source_term=source_term,
-            host_device=DEVICE_ARR[0],
-        )
+        D_xx=tree.D_xx,
+        D_xy=tree.D_xy,
+        D_yy=tree.D_yy,
+        D_x=tree.D_x,
+        D_y=tree.D_y,
+        I_P_0=tree.I_P_0,
+        Q_I=tree.Q_I,
+        F=tree.F,
+        G=tree.G,
+        p=tree.p,
+        D_xx_coeffs=d_xx_coeffs,
+        D_yy_coeffs=d_yy_coeffs,
+        I_coeffs=i_term,
+        source_term=source_term,
+        host_device=DEVICE_ARR[0],
+    )
     S_arr_lst, f_arr_lst, R = _uniform_build_stage_2D_ItI(
-            R_maps=T_arr, h_arr=h_arr, l=tree.l, host_device=DEVICE_ARR[0], return_ItI=True
-        )
+        R_maps=T_arr, h_arr=h_arr, l=tree.l, host_device=DEVICE_ARR[0], return_ItI=True
+    )
     # R is the top-level ItI matrix
-
-
 
     T = get_DtN_from_ItI(R, tree.eta)
 
@@ -205,12 +194,14 @@ def source_locations_to_scattered_field(source_locations: jnp.array) -> jnp.arra
     #     D_yy_coeffs=d_yy_coeffs,
     #     I_coeffs=i_term,
     # )
-    interior_solns = _uniform_down_pass_2D_ItI(boundary_imp_data=incoming_imp_data, 
-                                                   S_maps_lst=S_arr_lst, 
-                                                   f_lst=f_arr_lst, 
-                                                   leaf_Y_maps=Y_arr, 
-                                                   v_array=v_arr,
-                                                   host_device=DEVICE_ARR[0])
+    interior_solns = _uniform_down_pass_2D_ItI(
+        boundary_imp_data=incoming_imp_data,
+        S_maps_lst=S_arr_lst,
+        f_lst=f_arr_lst,
+        leaf_Y_maps=Y_arr,
+        v_array=v_arr,
+        host_device=DEVICE_ARR[0],
+    )
 
     uscat_evals = interior_solns
 

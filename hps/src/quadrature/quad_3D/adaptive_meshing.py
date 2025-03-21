@@ -4,25 +4,16 @@
 import logging
 from functools import partial
 from typing import Callable, Tuple
-import numpy as np
 import jax
 import jax.numpy as jnp
 from hps.src.config import DEVICE_ARR, HOST_DEVICE
 from hps.src.quadrature.quadrature_utils import (
-    chebyshev_points,
-    affine_transform,
-    barycentric_lagrange_3d_interpolation_matrix,
     check_current_discretization_global_linf_norm,
-    EPS,
     chebyshev_weights,
 )
 from hps.src.quadrature.quad_3D.indexing import rearrange_indices_ext_int
 from hps.src.quadrature.quad_3D.grid_creation import (
     _corners_for_oct_subdivision,
-    _corners_for_quad_subdivision,
-    vmapped_corners_quad,
-    vmapped_corners,
-    corners_to_cheby_points_lst,
     get_all_leaf_3d_cheby_points_uniform_refinement,
     get_all_leaf_3d_cheby_points,
 )
@@ -30,8 +21,6 @@ from hps.src.quadrature.trees import (
     Node,
     add_eight_children,
     get_all_leaves,
-    get_node_area,
-    get_depth,
 )
 
 

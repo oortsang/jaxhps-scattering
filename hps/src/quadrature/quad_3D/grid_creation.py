@@ -2,7 +2,6 @@
 2D Gauss-Legendre quadrature of the faces.
 """
 
-import logging
 from typing import Tuple
 from functools import partial
 import numpy as np
@@ -12,9 +11,6 @@ from hps.src.quadrature.quadrature_utils import chebyshev_points, affine_transfo
 from hps.src.quadrature.quad_3D.indexing import rearrange_indices_ext_int
 from hps.src.quadrature.trees import (
     Node,
-    add_eight_children,
-    get_node_area,
-    get_all_leaves,
     get_all_leaves_jitted,
     get_all_leaves_special_ordering,
 )

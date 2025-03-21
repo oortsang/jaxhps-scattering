@@ -6,11 +6,9 @@ from matplotlib import cm, colors
 from scipy.interpolate import LinearNDInterpolator
 
 from hps.src.solver_obj import (
-    SolverObj,
     create_solver_obj_2D,
-    create_solver_obj_3D,
 )
-from hps.src.quadrature.trees import Node, add_four_children
+from hps.src.quadrature.trees import Node
 from hps.src.utils import meshgrid_to_lst_of_pts
 
 

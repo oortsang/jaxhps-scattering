@@ -1,6 +1,6 @@
 """
 This module does not contain runnable tests, but it contains utility functions that other tests call.
-It is named 'test_utils.py' so that pytest will import it as a top-level module when running the 
+It is named 'test_utils.py' so that pytest will import it as a top-level module when running the
 following command from the project root directory.
 ```
 python -m pytest test/
@@ -9,7 +9,6 @@ python -m pytest test/
 
 import numpy as np
 import os
-import sys
 import pytest
 import shutil
 
@@ -38,7 +37,6 @@ def _evaluate_arrays_close(
     assert a.size == b.size, f"Sizes don't match: {a.size} vs {b.size}"
 
     max_diff = np.max(np.abs(a - b))
-    samp_n = 5
 
     # Compute relative difference
     x = a.flatten()

@@ -1,4 +1,3 @@
-from functools import partial
 import logging
 from typing import Tuple, List
 
@@ -346,11 +345,7 @@ def _propogate_down_quad(
         jnp.ndarray: Has shape (4, 4 * n_child)
     """
 
-    q = refinement_op.shape[1]
-
     g_int = S_arr @ jnp.concatenate(bdry_data_lst) + v_int_data
-
-    n_child = g_int.shape[0] // 4
 
     idx_g_int = 0
 

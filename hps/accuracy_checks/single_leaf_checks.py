@@ -1,15 +1,13 @@
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import jax
 import numpy as np
 import matplotlib.pyplot as plt
 
 from hps.src.methods.local_solve_stage import _local_solve_stage_2D
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D
+from hps.src.solver_obj import create_solver_obj_2D
 from hps.src.quadrature.trees import Node
 from hps.src.methods.local_solve_stage import (
-    _local_solve_stage_2D,
     _local_solve_stage_2D_ItI,
 )
 from hps.accuracy_checks.dirichlet_neumann_data import (
@@ -23,11 +21,6 @@ from hps.accuracy_checks.dirichlet_neumann_data import (
     TEST_CASE_HELMHOLTZ_1,
     ETA,
 )
-from hps.accuracy_checks.utils import (
-    plot_soln_from_cheby_nodes,
-    _distance_around_boundary_nonode,
-)
-from hps.src.config import DEVICE_ARR, HOST_DEVICE
 
 
 def check_l_inf_error_convergence(
@@ -53,8 +46,8 @@ def check_l_inf_error_convergence(
     south = -jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
-    half_side_len = (east - west) / 2
+    # corners = [(west, south), (east, south), (east, north), (west, north)]
+    # half_side_len = (east - west) / 2
 
     n_X = 100
     x = jnp.linspace(west, east, n_X)
@@ -197,8 +190,7 @@ def check_l_inf_error_convergence_particular_homog_solns(
     south = -jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
-    half_side_len = (east - west) / 2
+    # half_side_len = (east - west) / 2
 
     n_X = 100
     x = jnp.linspace(west, east, n_X)
@@ -410,8 +402,7 @@ def check_l_inf_error_convergence_ItI_maps(
     south = -jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
-    half_side_len = (east - west) / 2
+    # half_side_len = (east - west) / 2
 
     n_X = 100
     x = jnp.linspace(west, east, n_X)
@@ -566,7 +557,6 @@ def check_l_inf_error_convergence_particular_homog_solns_ItI(
     south = -jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
 
     error_vals_iti = jnp.zeros_like(p_values, dtype=jnp.float64)
     error_vals_homog = jnp.zeros_like(p_values, dtype=jnp.float64)
@@ -666,15 +656,15 @@ def check_l_inf_error_convergence_particular_homog_solns_ItI(
                 -1 * dudx_fn(t.root_boundary_points[3 * q :]),
             ]
         )
-        boundary_part_f = particular_soln_fn(t.root_boundary_points)
-        boundary_part_n = jnp.concatenate(
-            [
-                -1 * particular_dy_fn(t.root_boundary_points[:q]),
-                particular_dx_fn(t.root_boundary_points[q : 2 * q]),
-                particular_dy_fn(t.root_boundary_points[2 * q : 3 * q]),
-                -1 * particular_dx_fn(t.root_boundary_points[3 * q :]),
-            ]
-        )
+        # boundary_part_f = particular_soln_fn(t.root_boundary_points)
+        # boundary_part_n = jnp.concatenate(
+        #     [
+        #         -1 * particular_dy_fn(t.root_boundary_points[:q]),
+        #         particular_dx_fn(t.root_boundary_points[q : 2 * q]),
+        #         particular_dy_fn(t.root_boundary_points[2 * q : 3 * q]),
+        #         -1 * particular_dx_fn(t.root_boundary_points[3 * q :]),
+        #     ]
+        # )
         incoming_imp_data = (boundary_homog_n) + 1j * eta * (boundary_homog_f)
         expected_outgoing_imp_data = (boundary_homog_n) - 1j * eta * (boundary_homog_f)
 

@@ -1,9 +1,6 @@
 import logging
-from typing import Tuple, Callable, Dict
+from typing import Dict
 import jax.numpy as jnp
-import jax
-import numpy as np
-import matplotlib.pyplot as plt
 import pytest
 
 from hps.src.solver_obj import SolverObj, create_solver_obj_2D

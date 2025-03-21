@@ -1,15 +1,15 @@
-import sys
 import argparse
 import os
 import logging
 
 import numpy as np
 import jax.numpy as jnp
-import jax
 import matplotlib.pyplot as plt
-import matplotlib
-from scipy.sparse.linalg import LinearOperator, lsqr, svds
-from scipy.io import savemat, loadmat
+from scipy.io import loadmat
+
+
+from hps.src.logging_utils import FMT, TIMEFMT
+from hps.src.plotting import get_discrete_cmap, FIGSIZE_2, FONTSIZE_2, TICKSIZE_2
 
 # Disable all matplorlib logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -17,18 +17,6 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 # Uncomment for debugging NaNs. Slows code down.
 # jax.config.update("jax_debug_nans", True)
-
-from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.plotting import get_discrete_cmap, FIGSIZE_2, FONTSIZE_2, TICKSIZE_2
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D
-from hps.src.up_down_passes import (
-    local_solve_stage,
-    build_stage,
-    down_pass,
-    fused_pde_solve_2D,
-    fused_pde_solve_2D_ItI,
-)
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
 
 def setup_args() -> argparse.Namespace:
@@ -57,7 +45,6 @@ def plot_problem_1(
 
     fig, ax = plt.subplots(figsize=(FIGSIZE_2, FIGSIZE_2))
 
-    LABELSIZE = 20
     # Compute 1 / h values
     n_patches_per_side = 2**l_vals
     h_vals = (XMAX - XMIN) / n_patches_per_side
@@ -116,7 +103,6 @@ def plot_problem_2(
 
     fig, ax = plt.subplots(figsize=(FIGSIZE_2, FIGSIZE_2))
 
-    LABELSIZE = 20
     # Compute 1 / h values
     n_patches_per_side = 2**l_vals
     h_vals = (XMAX - XMIN) / n_patches_per_side

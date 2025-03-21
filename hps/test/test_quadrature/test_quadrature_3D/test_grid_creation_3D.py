@@ -108,9 +108,9 @@ class Test__corners_for_oct_subdivision:
     def test_2(self) -> None:
         xmin, ymin, zmin = 0, 0, 0
         xmax, ymax, zmax = 1, 1, 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
+        # xmid = (xmin + xmax) / 2
+        # ymid = (ymin + ymax) / 2
+        # zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         out = _corners_for_oct_subdivision(corners)
 

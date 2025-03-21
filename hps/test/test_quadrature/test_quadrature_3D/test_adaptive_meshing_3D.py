@@ -1,5 +1,4 @@
 import pytest
-import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -13,7 +12,6 @@ from hps.src.quadrature.trees import (
     Node,
     add_eight_children,
     get_all_leaves,
-    tree_equal,
 )
 from hps.src.quadrature.quad_3D.interpolation import refinement_operator
 from hps.src.quadrature.quad_3D.grid_creation import get_all_leaf_3d_cheby_points

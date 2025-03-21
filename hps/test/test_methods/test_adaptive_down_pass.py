@@ -5,7 +5,6 @@ import jax.numpy as jnp
 from hps.src.solver_obj import (
     create_solver_obj_2D,
     create_solver_obj_3D,
-    SolverObj,
     get_bdry_data_evals_lst_2D,
     get_bdry_data_evals_lst_3D,
 )
@@ -14,7 +13,6 @@ from hps.src.methods.adaptive_down_pass import (
     _down_pass_2D,
     _propogate_down_quad,
     _propogate_down_oct,
-    _decompress_merge_interface_2D,
 )
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
@@ -27,7 +25,6 @@ from hps.src.quadrature.trees import (
     add_four_children,
     add_eight_children,
     add_uniform_levels,
-    get_all_leaves_jitted,
 )
 
 
@@ -76,7 +73,9 @@ class Test__down_pass_2D:
             refinement_op=t.refinement_op,
             coarsening_op=t.coarsening_op,
         )
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_2D(t, f)
 
@@ -129,7 +128,9 @@ class Test__down_pass_2D:
             refinement_op=t.refinement_op,
             coarsening_op=t.coarsening_op,
         )
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_2D(t, f)
 
@@ -191,7 +192,8 @@ class Test__down_pass_2D:
         )
         print("test_3: Completed build stage.")
 
-        f = lambda x: jnp.ones_like(x[..., 0])
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_2D(t, f)
 
@@ -232,7 +234,7 @@ class Test__propogate_down_quad:
         )
         expected_out_len = 4
         assert len(out) == expected_out_len
-        expected_out_shape = (4 * q,)
+        # expected_out_shape = (4 * q,)
         for x in out:
             for z in x:
                 assert z.shape == (q,)
@@ -334,7 +336,9 @@ class Test__down_pass_3D:
             v_prime_arr=v_prime_arr,
             q=q,
         )
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_3D(t, f)
         print(
@@ -349,7 +353,6 @@ class Test__down_pass_3D:
         """3D non-uniform case"""
         p = 4
         q = 2
-        l = 2
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=0.0, zmax=1.0)
 
@@ -403,7 +406,9 @@ class Test__down_pass_3D:
             v_prime_arr=v_prime_arr,
             q=q,
         )
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_3D(t, f)
         print(

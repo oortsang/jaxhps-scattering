@@ -1,28 +1,15 @@
 import pytest
-import numpy as np
 import jax.numpy as jnp
 
-from hps.src.solver_obj import (
-    create_solver_obj_2D,
-    create_solver_obj_3D,
-    SolverObj,
-)
 from hps.src.quadrature.trees import (
     Node,
     add_four_children,
-    get_all_leaves,
-    get_all_leaves_jitted,
-    add_uniform_levels,
-    get_nodes_at_level,
-    add_eight_children,
 )
 
 
 from hps.src.methods.adaptive_merge_utils_2D import (
     _find_compression_list_5,
     _find_compression_list_6,
-    _find_compression_list_7,
-    _find_compression_list_8,
     find_compression_lists_2D,
 )
 
@@ -43,13 +30,13 @@ class Test__find_compression_list_5:
         assert len(out_a) == 1
         assert len(out_b) == 1
 
-        assert out_a[0] == False
-        assert out_b[0] == False
+        assert not out_a[0]
+        assert not out_b[0]
 
     def test_1(self) -> None:
         """
         More complicated case with non-uniform refinement"""
-        p = 4
+        # p = 4
         q = 2
 
         print("test_3: q = ", q)
@@ -77,7 +64,7 @@ class Test__find_compression_list_5:
         """
         More complicated case with non-uniform refinement.
         """
-        p = 4
+        # p = 4
         q = 2
 
         print("test_3: q = ", q)
@@ -117,7 +104,7 @@ class Test__find_compression_lst_6:
     def test_0(self) -> None:
         """
         Non-uniform refinement"""
-        p = 4
+        # p = 4
         q = 2
 
         print("test_3: q = ", q)

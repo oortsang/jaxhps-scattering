@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,19 +9,14 @@ from hps.accuracy_checks.dirichlet_neumann_data import (
     TEST_CASE_POISSON_NONPOLY,
     TEST_CASE_NONCONSTANT_COEFF_POLY,
     TEST_CASE_NONPOLY_ITI,
-    TEST_CASE_POLY_ITI,
     TEST_CASE_HELMHOLTZ_1,
     ETA,
 )
 from hps.accuracy_checks.utils import (
-    _distance_around_boundary,
     setup_tree_quad_merge,
-    plot_soln_from_cheby_nodes,
 )
 from hps.src.up_down_passes import build_stage, down_pass, local_solve_stage
 from hps.src.solver_obj import (
-    SolverObj,
-    create_solver_obj_2D,
     get_bdry_data_evals_lst_2D,
 )
 
@@ -47,8 +42,8 @@ def check_l_inf_error_convergence_quad_merge(
 
     It then computes the L_inf error at the Chebyshev points, and plots the convergence of the error.
     """
-    south = -jnp.pi / 2
-    north = jnp.pi / 2
+    # south = -jnp.pi / 2
+    # north = jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
 
@@ -178,10 +173,6 @@ def check_l_inf_error_convergence_quad_merge_ItI(
 
     It then computes the L_inf error at the Chebyshev points, and plots the convergence of the error.
     """
-    south = -jnp.pi / 2
-    north = jnp.pi / 2
-    east = jnp.pi / 2
-    west = -jnp.pi / 2
 
     error_vals = jnp.ones_like(p_values, dtype=jnp.float64)
 
@@ -362,19 +353,10 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
         eta (float): _description_
         check_ItI (bool, optional): _description_. Defaults to False.
     """
-    south = -jnp.pi / 2
-    north = jnp.pi / 2
-    east = jnp.pi / 2
-    west = -jnp.pi / 2
-
-    corners = jnp.array(
-        [
-            [west, south],
-            [east, south],
-            [east, north],
-            [west, north],
-        ]
-    )
+    # south = -jnp.pi / 2
+    # north = jnp.pi / 2
+    # east = jnp.pi / 2
+    # west = -jnp.pi / 2
 
     error_vals = jnp.ones_like(p_values, dtype=jnp.float64)
 
@@ -401,9 +383,9 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
 
         root_bdry_points = t.root_boundary_points
         n_per_side = root_bdry_points.shape[0] // 4
-        boundary_f = dirichlet_data_fn(root_bdry_points) + part_data_fn(
-            root_bdry_points
-        )
+        # boundary_f = dirichlet_data_fn(root_bdry_points) + part_data_fn(
+        #     root_bdry_points
+        # )
 
         boundary_homog_normals = jnp.concatenate(
             [
@@ -782,7 +764,8 @@ def single_merge_check_10(plot_fp: str) -> None:
     logging.info("Running single_merge_check_10")
     p_values = jnp.array([4, 8, 12, 16, 20, 24])
 
-    z = lambda x: jnp.zeros_like(x[..., 0])
+    def z(x):
+        return jnp.zeros_like(x[..., 0])
 
     check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
         p_values=p_values,

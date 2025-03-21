@@ -1,16 +1,13 @@
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, Tuple
 import jax
 import jax.numpy as jnp
 
-jax.config.update("jax_enable_x64", True)
 import hashlib
 import numpy as np
-import os
 import argparse
 import logging
-import sys
 from timeit import default_timer
-from scipy.io import loadmat, savemat
+from scipy.io import savemat
 
 from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
 from hps.src.up_down_passes import (
@@ -30,6 +27,8 @@ from hps.accuracy_checks.dirichlet_neumann_data import (
 from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src import config
 from hps.src.quadrature.trees import Node
+
+jax.config.update("jax_enable_x64", True)
 
 
 def hash_dict(dictionary: Dict[str, Any]) -> str:
@@ -178,7 +177,7 @@ def pde_solve(
             # D_xx_coeffs=coeffs_dxx,
             # D_yy_coeffs=coeffs_dyy,
         )
-        x = t.interior_solns.block_until_ready()
+        x = t.interior_solns.block_until_ready()  # noqa: F841
         t_down = default_timer() - t_3
         t_all = default_timer() - t0
 

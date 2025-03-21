@@ -1,14 +1,10 @@
 import pytest
-import jax
 import jax.numpy as jnp
 
 from hps.src.config import (
     DEVICE_MEM_BYTES,
     get_n_levels_2D,
     get_fused_chunksize_2D,
-    DEVICE_ARR,
-    HOST_DEVICE,
-    GPU_AVAILABLE,
 )
 
 
@@ -22,7 +18,7 @@ class Test_get_fused_chunksize_2D:
         print("test_0: DEVICE_MEM_BYTES: ", DEVICE_MEM_BYTES)
 
         assert len(max_chunksize) == 2
-        assert type(max_chunksize[0]) == int
+        assert type(max_chunksize[0]) is int
 
 
 class Test_get_n_levels_2D:

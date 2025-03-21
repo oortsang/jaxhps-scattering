@@ -1,8 +1,6 @@
-import jax
 import jax.numpy as jnp
 import scipy.special as sp
 
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
 
 
 def _hankel1(x: jnp.array) -> jnp.array:

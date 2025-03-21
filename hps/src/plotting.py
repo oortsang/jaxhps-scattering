@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import jax.numpy as jnp
-from matplotlib import cm, colors
 from scipy.interpolate import LinearNDInterpolator
 
 from hps.src.utils import meshgrid_to_lst_of_pts
@@ -46,7 +45,6 @@ def plot_func_with_grid(
 
     Expects corners to be shape (x, 2, 2). The first row is xmin, ymin and the second row is xmax, ymax.
     """
-    LABELSIZE = 20
     LINEWIDTH = 0.5
 
     # evaluate perm on the eval_pts
@@ -104,20 +102,6 @@ def plot_func_with_grid(
     # Save the figure
     plt.savefig(plot_fp, bbox_inches="tight")
     plt.close(fig)
-
-
-def get_discrete_cmap(N: int, cmap: str) -> cm.ScalarMappable:
-    """
-    Create an N-bin discrete colormap from the specified input map
-    """
-    cmap = plt.get_cmap(cmap)
-
-    # If it's plasma, go 0 to 0.8
-    if cmap.name == "plasma":
-        return cmap(np.linspace(0, 0.8, N))
-    else:
-
-        return cmap(np.linspace(0, 1, N))
 
 
 # https://stackoverflow.com/questions/34859628/has-someone-made-the-parula-colormap-in-matplotlib
@@ -346,7 +330,6 @@ def plot_2D_adaptive_refinement(
         ax.vlines(w, s, n, color="black")
         ax.vlines(e, s, n, color="black")
 
-    n_leaves = len(get_all_leaves_jitted(root))
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.set_title(title)

@@ -1,10 +1,8 @@
-from functools import partial
 import logging
 from typing import Tuple, List, Any
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from hps.src.quadrature.quad_2D.adaptive_merge_indexing import (
     get_quadmerge_blocks_a,
@@ -26,12 +24,8 @@ from hps.src.quadrature.quad_3D.adaptive_merge_indexing import (
 from hps.src.quadrature.trees import (
     Node,
     get_all_leaves,
-    get_all_leaves_jitted,
     get_nodes_at_level,
     get_depth,
-    get_all_nodes,
-    get_all_nodes_jitted,
-    get_all_parents_of_leaves,
 )
 from hps.src.methods.uniform_build_stage import vmapped_uniform_oct_merge
 from hps.src.methods.schur_complement import (

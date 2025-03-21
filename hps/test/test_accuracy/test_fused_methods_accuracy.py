@@ -1,16 +1,12 @@
 # from __future__ import annotations
 import logging
-from typing import Tuple, Callable, Dict
+from typing import Dict
 import jax.numpy as jnp
-import jax
-import numpy as np
-import matplotlib.pyplot as plt
 import pytest
 
 from hps.src.solver_obj import (
     SolverObj,
     create_solver_obj_2D,
-    get_bdry_data_evals_lst_2D,
 )
 from hps.src.quadrature.trees import Node
 from hps.src.up_down_passes import (
@@ -33,11 +29,8 @@ from hps.test.test_accuracy.cases import (
     K_DIRICHLET_DUDX,
     K_DIRICHLET_DUDY,
     K_PART_SOLN,
-    K_PART_SOLN_DUDX,
-    K_PART_SOLN_DUDY,
     K_HOMOG_SOLN,
 )
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
 
 ATOL = 1e-12

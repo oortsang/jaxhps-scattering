@@ -1,18 +1,13 @@
-from typing import Tuple, List, Dict, Callable
-import logging
+from typing import List, Callable
 import jax.numpy as jnp
 import numpy as np
-from scipy.interpolate import LinearNDInterpolator
 
 
-from hps.src.utils import meshgrid_to_lst_of_pts
 from hps.src.quadrature.trees import (
     Node,
     add_uniform_levels,
     get_all_leaves,
     get_all_uniform_leaves_2D,
-    get_all_leaves_jitted,
-    get_nodes_at_level,
 )
 
 from hps.src.quadrature.quad_2D.grid_creation import (

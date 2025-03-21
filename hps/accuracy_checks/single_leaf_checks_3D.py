@@ -1,20 +1,13 @@
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import jax
 import numpy as np
 import matplotlib.pyplot as plt
 
 from hps.src.quadrature.quad_3D.differentiation import precompute_diff_operators
 from hps.src.quadrature.quad_3D.interpolation import (
     precompute_P_matrix,
-    precompute_Q_D_matrix,
 )
-from hps.src.quadrature.quad_3D.grid_creation import (
-    corners_to_cheby_points_lst,
-    corners_to_gauss_points_lst,
-)
-from hps.src.quadrature.quadrature_utils import chebyshev_points
 from hps.src.quadrature.trees import Node
 from hps.src.methods.local_solve_stage import _local_solve_stage_3D
 from hps.src.solver_obj import create_solver_obj_3D
@@ -35,10 +28,6 @@ from hps.accuracy_checks.test_cases_3D import (
     TEST_CASE_POISSON_POLY,
     TEST_CASE_POISSON_NONPOLY,
     TEST_CASE_HOMOG_PART_POLY,
-)
-from hps.accuracy_checks.utils import (
-    plot_soln_from_cheby_nodes,
-    _distance_around_boundary_nonode,
 )
 
 

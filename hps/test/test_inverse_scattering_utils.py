@@ -4,7 +4,6 @@ import jax.numpy as jnp
 
 from hps.src.inverse_scattering_utils import (
     q_point_sources,
-    source_locations_to_scattered_field,
 )
 
 

@@ -5,9 +5,8 @@ so the convergence will be obvious once the choice of polynomial basis is correc
 """
 
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import numpy as np
 import matplotlib.pyplot as plt
 
 from hps.accuracy_checks.test_cases_3D import (
@@ -20,10 +19,6 @@ from hps.accuracy_checks.test_cases_3D import (
     K_XX_COEFF,
     K_ZZ_COEFF,
     K_DIRICHLET,
-    adaptive_meshing_data_fn,
-    d_x_adaptive_meshing_data_fn,
-    d_y_adaptive_meshing_data_fn,
-    d_z_adaptive_meshing_data_fn,
     d_xx_adaptive_meshing_data_fn,
     d_yy_adaptive_meshing_data_fn,
     d_zz_adaptive_meshing_data_fn,
@@ -39,7 +34,6 @@ from hps.src.quadrature.quad_3D.interpolation import refinement_operator
 from hps.src.quadrature.quad_3D.adaptive_meshing import (
     generate_adaptive_mesh_level_restriction,
 )
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
 
 def adaptive_meshing_data_fn_source(x: jnp.array) -> jnp.array:

@@ -3,26 +3,23 @@ import pytest
 import numpy as np
 import jax.numpy as jnp
 
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
+from hps.src.solver_obj import create_solver_obj_2D
 from hps.src.methods.uniform_down_pass import (
     _uniform_down_pass_2D_DtN,
     _propogate_down_quad,
     _propogate_down_oct,
     _propogate_down_quad_ItI,
     _uniform_down_pass_2D_ItI,
-    _uniform_down_pass_3D_DtN,
 )
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
     _local_solve_stage_2D_ItI,
-    _local_solve_stage_3D,
 )
 from hps.src.methods.uniform_build_stage import (
     _uniform_build_stage_2D_DtN,
-    _uniform_build_stage_3D_DtN,
     _uniform_build_stage_2D_ItI,
 )
-from hps.src.quadrature.trees import Node, get_all_leaves, add_uniform_levels
+from hps.src.quadrature.trees import Node, get_all_leaves
 
 
 class Test__uniform_down_pass_2D_DtN:

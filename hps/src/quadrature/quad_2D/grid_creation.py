@@ -1,4 +1,4 @@
-from typing import Tuple, List, Dict
+from typing import Tuple
 from functools import partial
 import jax
 import jax.numpy as jnp
@@ -9,9 +9,7 @@ from hps.src.utils import meshgrid_to_lst_of_pts
 from hps.src.quadrature.quad_2D.indexing import _rearrange_indices
 from hps.src.quadrature.trees import (
     Node,
-    get_all_leaves,
     get_all_leaves_jitted,
-    get_nodes_at_level,
     find_node_at_corner,
     vmapped_corners,
 )

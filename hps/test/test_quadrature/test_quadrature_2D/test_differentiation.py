@@ -1,23 +1,9 @@
 import jax.numpy as jnp
-import jax
-import numpy as np
 import pytest
 
-import matplotlib.pyplot as plt
 
 from hps.src.quadrature.quad_2D.grid_creation import (
-    chebyshev_points,
-    corners_to_cheby_points_lst,
-    vmapped_corners,
-    vmapped_corners_to_cheby_points_lst,
-    get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,
-)
-from hps.src.test_utils import check_arrays_close
-from hps.src.quadrature.quad_2D.interpolation import (
-    precompute_P_matrix,
-    precompute_Q_D_matrix,
-    precompute_I_P_0_matrix,
 )
 from hps.src.quadrature.quad_2D.differentiation import (
     precompute_diff_operators,
@@ -26,14 +12,14 @@ from hps.src.quadrature.quad_2D.differentiation import (
     precompute_G_matrix,
     precompute_F_matrix,
 )
-from hps.src.quadrature.trees import Node, _corners_for_quad_subdivision
+from hps.src.quadrature.trees import Node
 
 
 class Test_precompute_N_matrix:
     def test_0(self) -> None:
         """Check the shape of the output."""
         p = 8
-        q = 6
+        # q = 6
         du_dx, du_dy, _, _, _ = precompute_diff_operators(p, 1.0)
         out = precompute_N_matrix(du_dx, du_dy, p)
         assert out.shape == (4 * p, p**2)
@@ -41,7 +27,7 @@ class Test_precompute_N_matrix:
     def test_1(self) -> None:
         """Check the output is correct on low-degree polynomials."""
         p = 8
-        q = 6
+        # q = 6
         north = jnp.pi / 2
         south = -jnp.pi / 2
         east = jnp.pi / 2
@@ -66,7 +52,7 @@ class Test_precompute_N_matrix:
 
         # Set up the Chebyshev points.
         cheby_pts = get_all_leaf_2d_cheby_points(p, root)
-        interior_pts = cheby_pts[0, 4 * (p - 1) :]
+        # interior_pts = cheby_pts[0, 4 * (p - 1) :]
         exterior_pts = cheby_pts[0, : 4 * (p - 1)]
         all_pts = cheby_pts[0]
 
@@ -126,7 +112,7 @@ class Test_precompute_N_tilde_matrix:
         """Check that low-degree polynomials are handled correctly."""
 
         p = 8
-        q = 6
+        # q = 6
         north = jnp.pi / 2
         south = -jnp.pi / 2
         east = jnp.pi / 2
@@ -182,7 +168,7 @@ class Test_precompute_G_matrix:
     def test_1(self) -> None:
         """Check that low-degree polynomials are handled correctly."""
         p = 8
-        q = 6
+        # q = 6
         north = jnp.pi / 2
         south = -jnp.pi / 2
         east = jnp.pi / 2

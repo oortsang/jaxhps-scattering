@@ -1,22 +1,15 @@
 import logging
 import os
 import argparse
-from typing import List, Tuple
-from datetime import datetime
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.cm as cm
 from scipy.io import loadmat
-import pandas as pd
 
 from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src.plotting import (
     get_discrete_cmap,
-    parula_cmap,
     make_scaled_colorbar,
     FONTSIZE_3,
     FIGSIZE_3,
@@ -28,9 +21,7 @@ from hps.src.quadrature.quad_2D.interpolation import (
 from hps.src.inverse_scattering_utils import (
     q_point_sources,
     source_locations_to_scattered_field,
-    forward_model,
     SAMPLE_TREE,
-    L,
     P,
     XMIN,
     XMAX,
@@ -233,10 +224,6 @@ def main(args: argparse.Namespace) -> None:
 
     q_evals_hps = q_point_sources(SAMPLE_TREE.leaf_cheby_points, ground_truth_locations)
     n_X = 200
-    corners = jnp.array([[XMIN, YMIN], [XMAX, YMIN], [XMAX, YMAX], [XMIN, YMAX]])
-    # q_evals_regular, regular_grid = interp_from_hps_to_regular_grid(
-    # L, P, corners, XMIN, XMAX, YMIN, YMAX, q_evals_hps, n_X
-    # )
     q_evals_regular, regular_grid = interp_from_nonuniform_hps_to_regular_grid(
         root=SAMPLE_TREE.root, p=P, f_evals=q_evals_hps, n_pts=n_X
     )

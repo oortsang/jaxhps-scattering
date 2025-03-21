@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 import jax.numpy as jnp
 
@@ -14,18 +13,13 @@ from hps.src.quadrature.quad_3D.adaptive_merge_indexing import (
     get_rearrange_indices,
 )
 from hps.src.quadrature.quad_3D.grid_creation import (
-    corners_to_cheby_points_lst,
     get_all_boundary_gauss_legendre_points,
-    get_all_leaf_3d_cheby_points,
     corners_to_gauss_points_lst,
     _corners_for_oct_subdivision,
-    affine_transform,
 )
 from hps.src.quadrature.quad_3D.interpolation import precompute_refining_coarsening_ops
-from hps.src.quadrature.quadrature_utils import chebyshev_points
 from hps.src.quadrature.trees import (
     Node,
-    get_all_leaves,
     add_uniform_levels,
     add_eight_children,
 )
@@ -97,9 +91,6 @@ class Test_get_a_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
 
@@ -189,9 +180,6 @@ class Test_get_a_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
 
@@ -200,8 +188,8 @@ class Test_get_a_submatrices:
 
         quad_pts = get_all_boundary_gauss_legendre_points(q, root)
 
-        root_0 = Node(xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0)
-        quad_pts_0 = get_all_boundary_gauss_legendre_points(q, root_0)
+        # root_0 = Node(xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0)
+        # quad_pts_0 = get_all_boundary_gauss_legendre_points(q, root_0)
 
         need_interp_9 = jnp.array([True, True, True, True])
         need_interp_12 = jnp.array([False])
@@ -288,9 +276,6 @@ class Test_get_c_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
 
@@ -378,9 +363,6 @@ class Test_get_d_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
         L_1f2 = np.random.normal(size=(n_per_face, 4 * n_per_face))
@@ -466,9 +448,6 @@ class Test_get_h_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
         L_1f2 = np.random.normal(size=(n_per_face, 4 * n_per_face))
@@ -548,7 +527,6 @@ class Test_get_rearrange_indices:
         q = 4
         q_squared = q**2
         idxes = np.arange(24 * q**2)
-        q_idxes = np.arange(q).astype(int)
         out = get_rearrange_indices(
             idxes,
             n_a_0=q_squared,
@@ -751,7 +729,6 @@ class Test_get_rearrange_indices:
 
             # Step 5:
             idxes = np.arange(v_all.shape[0])
-            q_idxes = np.arange(q).astype(int)
             q_squared = q**2
             rearranged_idxes = get_rearrange_indices(
                 idxes,
@@ -813,7 +790,7 @@ class Test_get_rearrange_indices:
         """
         # Setup:
         q = 4
-        corners = jnp.array([[-1, -1, -1], [1, 1, 1]])
+        # corners = jnp.array([[-1, -1, -1], [1, 1, 1]])
 
         root = Node(xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0)
         add_eight_children(root, root=root, q=q)
@@ -978,7 +955,6 @@ class Test_get_rearrange_indices:
 
             # Step 5:
             idxes = np.arange(v_all.shape[0])
-            q_idxes = np.arange(q).astype(int)
             rearranged_idxes = get_rearrange_indices(
                 idxes,
                 n_a_0=root.children[0].n_0,

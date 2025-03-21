@@ -6,7 +6,6 @@ import jax
 from hps.src.solver_obj import (
     create_solver_obj_2D,
     create_solver_obj_3D,
-    SolverObj,
     get_bdry_data_evals_lst_2D,
     get_bdry_data_evals_lst_3D,
 )
@@ -65,7 +64,6 @@ class Test_local_solve_stage:
         """Tests the local_solve_stage function returns without error when using DtN maps. 2D case w/ non-uniform refinement."""
         p = 16
         q = 14
-        n_leaves = 7
 
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None)
         add_four_children(root, root=root, q=q)
@@ -118,7 +116,6 @@ class Test_local_solve_stage:
             D_zz_coeffs=d_zz_coeffs,
         )
         n_leaves = 8**l
-        n_merge_octs = 8 ** (l - 1)
         assert len(t.interior_node_DtN_maps) == 1
         assert t.interior_node_DtN_maps[0].shape == (
             n_leaves,
@@ -138,7 +135,6 @@ class Test_local_solve_stage:
         n_src = 2
         eta = 4.0
 
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
         root = Node(
             xmin=0,
             xmax=1,
@@ -182,8 +178,6 @@ class Test_build_stage:
         p = 16
         q = 14
         l = 2
-
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None)
 
@@ -251,7 +245,6 @@ class Test_build_stage:
         caplog.set_level(logging.DEBUG)
         p = 4
         q = 2
-        l = 3
 
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=0, zmax=1.0)
         add_eight_children(root, root, q)
@@ -286,7 +279,6 @@ class Test_build_stage:
         q = 14
         l = 2
         eta = 4.0
-        n_src = 2
 
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1)
 
@@ -307,7 +299,6 @@ class Test_build_stage:
         )
         build_stage(t)
 
-
         assert len(t.interior_node_S_maps) == l
         # l = 2 so we expect the root node to have 8q boundary points
         n_interface_pts = t.root_boundary_points.shape[0]
@@ -324,8 +315,6 @@ class Test_down_pass:
         p = 5
         q = 3
         l = 2
-
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None)
 
@@ -351,7 +340,9 @@ class Test_down_pass:
         build_stage(t)
 
         print("test_0: Boundary points shape: ", t.root_boundary_points.shape)
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_2D(t, f)
 
@@ -381,7 +372,9 @@ class Test_down_pass:
             D_zz_coeffs=d_zz_coeffs,
         )
         build_stage(t)
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_3D(t, f)
         down_pass(t, boundary_data_lst)
@@ -394,7 +387,6 @@ class Test_down_pass:
         l = 2
         eta = 4.0
 
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
         root = Node(
             xmin=0,
             xmax=1,

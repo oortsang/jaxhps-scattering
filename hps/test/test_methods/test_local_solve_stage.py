@@ -2,7 +2,6 @@ import logging
 import pytest
 import jax.numpy as jnp
 import numpy as np
-from matplotlib import pyplot as plt
 
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
@@ -19,7 +18,7 @@ from hps.src.methods.local_solve_stage import (
     get_soln_DtN,
 )
 
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
+from hps.src.solver_obj import create_solver_obj_2D, create_solver_obj_3D
 from hps.src.quadrature.quad_2D.differentiation import (
     precompute_diff_operators,
     precompute_N_matrix,
@@ -28,18 +27,14 @@ from hps.src.quadrature.quad_2D.differentiation import (
     precompute_G_matrix,
 )
 from hps.src.quadrature.quad_2D.interpolation import (
-    precompute_P_matrix,
-    precompute_Q_D_matrix,
     precompute_I_P_0_matrix,
     precompute_Q_I_matrix,
 )
 from hps.src.quadrature.trees import (
     Node,
     get_all_leaves,
-    add_four_children,
     add_uniform_levels,
 )
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 from hps.src.quadrature.quad_2D.grid_creation import (
     get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,
@@ -61,12 +56,12 @@ class Test_gather_coeffs:
         )
         assert out_coeffs.shape == (2, n_leaf_nodes, p_squared)
         assert out_bools.shape == (6,)
-        assert out_bools[0] == True
-        assert out_bools[1] == False
-        assert out_bools[2] == True
-        assert out_bools[3] == False
-        assert out_bools[4] == False
-        assert out_bools[5] == False
+        assert out_bools[0] is True
+        assert out_bools[1] is False
+        assert out_bools[2] is True
+        assert out_bools[3] is False
+        assert out_bools[4] is False
+        assert out_bools[5] is False
 
     def test_2(self) -> None:
         """Tests things return correct shape."""
@@ -87,11 +82,7 @@ class Test_assemble_diff_operator:
     def test_0(self) -> None:
 
         p = 8
-        q = 6
-        l = 2
-        n_leaves = 2**l
         half_side_len = 0.25
-        corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         d_x, d_y, d_xx, d_yy, d_xy = precompute_diff_operators(p, half_side_len)
 
@@ -107,10 +98,7 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
         """Check accuracy"""
         p = 3
         q = 6
-        l = 2
-        n_leaves = 2**l
         half_side_len = 0.25
-        corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         # First precompute the diff operators without the sidelen scaling. This is how things
         # work in the local solve stage code
@@ -139,8 +127,6 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
         """Checks accuracy with non-constant coefficients"""
         p = 3
         q = 6
-        l = 2
-        n_leaves = 2**l
         half_side_len = 0.25
         # First precompute the diff operators without the sidelen scaling. This is how things
         # work in the local solve stage code
@@ -309,7 +295,7 @@ class Test__local_solve_stage_2D:
         q = 6
         l = 2
         n_leaves = 4**l
-        n_quads = 4 ** (l - 1)
+        # n_quads = 4 ** (l - 1)
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
@@ -364,7 +350,6 @@ class Test__local_solutions_2D_DtN_uniform:
         d_xx_coeffs = TEST_CASE_POLY_PART_HOMOG["d_xx_coeff_fn"](t.leaf_cheby_points)
         d_yy_coeffs = TEST_CASE_POLY_PART_HOMOG["d_yy_coeff_fn"](t.leaf_cheby_points)
         source_term = TEST_CASE_POLY_PART_HOMOG["source_fn"](t.leaf_cheby_points)
-        sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
         bdry_data = np.random.normal(size=(n_leaves, 4 * q))
 
@@ -410,8 +395,6 @@ class Test__local_solve_stage_2D_ItI:
         n_leaves = 4**l
 
         t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=eta)
-
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
 
         d_xx_coeffs = np.random.normal(size=(n_leaves, p**2))
         source_term = np.random.normal(size=(n_leaves, p**2))
@@ -505,16 +488,16 @@ class Test__gather_coeffs_3D:
         )
         assert out_coeffs.shape == (3, n_leaf_nodes, p_cubed)
         assert out_bools.shape == (10,)
-        assert out_bools[0] == True
-        assert out_bools[1] == False
-        assert out_bools[2] == True
-        assert out_bools[3] == False
-        assert out_bools[4] == False
-        assert out_bools[5] == False
-        assert out_bools[6] == False
-        assert out_bools[7] == False
-        assert out_bools[8] == False
-        assert out_bools[9] == True
+        assert out_bools[0] is True
+        assert out_bools[1] is False
+        assert out_bools[2] is True
+        assert out_bools[3] is False
+        assert out_bools[4] is False
+        assert out_bools[5] is False
+        assert out_bools[6] is False
+        assert out_bools[7] is False
+        assert out_bools[8] is False
+        assert out_bools[9] is True
 
 
 class Test_get_DtN:
@@ -571,7 +554,7 @@ class Test_vmapped_prep_nonuniform_refinement_diff_operators_2D:
         n_cheby_pts = p**2
         n_leaves = 13
         n_diff_terms = 6
-        n_cheby_bdry = 4 * (p - 1)
+        # n_cheby_bdry = 4 * (p - 1)
         n_gauss_bdry = 4 * q
 
         sidelens = np.random.normal(size=(n_leaves,))
@@ -613,7 +596,6 @@ class Test_get_ItI:
         G = jnp.array(
             np.random.normal(size=(n_cheby_bdry_dbl, n_cheby)).astype(np.complex128)
         )
-        eta = 4.0
 
         R, Y, g_part, part_soln = get_ItI(
             diff_operator=diff_operator,
@@ -657,7 +639,6 @@ class Test_get_ItI:
         G = jnp.array(
             np.random.normal(size=(n_cheby_bdry_dbl, n_cheby)).astype(np.complex128)
         )
-        eta = 4.0
 
         R, Y, g_part, part_soln = get_ItI(
             diff_operator=diff_operator,
@@ -686,9 +667,6 @@ class Test_get_ItI:
         south = -jnp.pi / 2
         east = jnp.pi / 2
         west = -jnp.pi / 2
-        corners = jnp.array(
-            [[west, south], [east, south], [east, north], [west, north]]
-        )
         half_side_len = jnp.pi / 2
         root = Node(xmin=west, xmax=east, ymin=south, ymax=north)
 

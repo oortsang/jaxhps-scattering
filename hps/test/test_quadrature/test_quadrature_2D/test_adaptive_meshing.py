@@ -1,14 +1,11 @@
-import pytest
 from copy import deepcopy
 import jax.numpy as jnp
 import numpy as np
-import jax
 
 from hps.src.quadrature.quad_2D.interpolation import refinement_operator
 from hps.src.quadrature.quad_2D.grid_creation import get_all_leaf_2d_cheby_points
 from hps.src.quadrature.quad_2D.adaptive_meshing import (
     generate_adaptive_mesh_l2,
-    generate_adaptive_mesh_linf,
     find_or_add_child,
     get_squared_l2_norm_single_panel,
     check_current_discretization_relative_global_l2_norm,
@@ -18,10 +15,7 @@ from hps.src.quadrature.trees import (
     Node,
     get_all_leaves,
     add_four_children,
-    get_node_area,
-    _node_flatten,
     tree_equal,
-    plot_tree,
 )
 
 
@@ -98,7 +92,6 @@ class Test_get_squared_l2_norm_single_panel:
         )
 
         p = 16
-        cheby_pts = get_all_leaf_2d_cheby_points(p, root)
         f_evals = 3 * np.ones((p**2))
         expected_x = 9 * np.pi**2
         x = get_squared_l2_norm_single_panel(

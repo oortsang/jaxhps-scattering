@@ -5,15 +5,12 @@ so the convergence will be obvious once the choice of polynomial basis is correc
 """
 
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import numpy as np
 import matplotlib.pyplot as plt
 
 from hps.accuracy_checks.dirichlet_neumann_data import (
     TEST_CASE_POISSON_POLY,
-    TEST_CASE_POISSON_NONPOLY,
-    TEST_CASE_NONCONSTANT_COEFF_POLY,
     K_DU_DY,
     K_DU_DX,
     K_SOURCE,
@@ -29,12 +26,8 @@ from hps.src.solver_obj import (
 )
 from hps.src.quadrature.trees import Node, add_four_children
 from hps.accuracy_checks.dirichlet_neumann_data import (
-    adaptive_meshing_data_fn,
     d_xx_adaptive_meshing_data_fn,
     d_yy_adaptive_meshing_data_fn,
-    d_x_adaptive_meshing_data_fn,
-    d_y_adaptive_meshing_data_fn,
-    default_lap_coeffs,
 )
 from hps.src.quadrature.quad_2D.adaptive_meshing import (
     generate_adaptive_mesh_linf,

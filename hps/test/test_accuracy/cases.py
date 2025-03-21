@@ -1,13 +1,5 @@
-import logging
-from typing import Tuple, Callable
 import jax.numpy as jnp
-import jax
-import numpy as np
-import matplotlib.pyplot as plt
 
-from hps.src.methods.local_solve_stage import _local_solve_stage_2D
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D
-from hps.src.quadrature.trees import Node
 
 
 ####################################################################

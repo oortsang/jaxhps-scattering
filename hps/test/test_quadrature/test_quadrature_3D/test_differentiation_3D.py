@@ -1,6 +1,5 @@
 import numpy as np
 import jax.numpy as jnp
-import pytest
 
 
 from hps.src.quadrature.quadrature_utils import chebyshev_points

@@ -1,5 +1,4 @@
-"""Defines different scattering potentials for use in forward wave scattering experiments.
-"""
+"""Defines different scattering potentials for use in forward wave scattering experiments."""
 
 import jax.numpy as jnp
 import jax
@@ -76,7 +75,6 @@ def q_horizontally_graded(x: jnp.array) -> jnp.array:
         Array of charge densities with shape (...)
     """
     x_nrm = jnp.linalg.norm(x, axis=-1)
-    y = x[..., 1]
     x = x[..., 0]
 
     return 4 * (x - 0.2) * (jax.scipy.special.erf(25 * (jnp.abs(x_nrm) - 0.3)) - 1)

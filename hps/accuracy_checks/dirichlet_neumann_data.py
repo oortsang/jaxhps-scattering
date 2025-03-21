@@ -4,15 +4,9 @@ from hps.accuracy_checks.test_cases_3D import (
     K_DIRICHLET,
     K_DU_DX,
     K_DU_DY,
-    K_DU_DZ,
     K_XX_COEFF,
     K_YY_COEFF,
-    K_ZZ_COEFF,
     K_SOURCE,
-    K_PART_SOLN,
-    K_PART_SOLN_DUDX,
-    K_PART_SOLN_DUDY,
-    K_PART_SOLN_DUDZ,
 )
 
 

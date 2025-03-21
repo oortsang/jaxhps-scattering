@@ -3,7 +3,6 @@ import os
 import logging
 
 import jax.numpy as jnp
-import jax
 from scipy.io import savemat
 
 from hps.src.logging_utils import FMT, TIMEFMT
@@ -20,7 +19,6 @@ from hps.src.scattering_potentials import (
     q_GBM_1,
 )
 from hps.src.plotting import plot_field_for_wave_scattering_experiment
-from hps.src.config import HOST_DEVICE, DEVICE_ARR
 
 
 # Silence matplotlib debug messages

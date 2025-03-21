@@ -1,11 +1,11 @@
-from functools import partial
 import logging
-from typing import Tuple, List
+from typing import List
 
 import jax
 import jax.numpy as jnp
 
 from hps.src.config import HOST_DEVICE, DEVICE_ARR
+from hps.src.methods.local_solve_stage import _local_solve_stage_2D_chunked
 
 
 def _uniform_down_pass_3D_DtN(

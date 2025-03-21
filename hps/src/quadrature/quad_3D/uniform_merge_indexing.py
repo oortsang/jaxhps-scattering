@@ -1,6 +1,4 @@
-from functools import partial
-from typing import Tuple, List
-import numpy as np
+from typing import Tuple
 import jax
 import jax.numpy as jnp
 
@@ -203,22 +201,6 @@ def get_rearrange_indices(idxes: jnp.array, q_idxes: jnp.array) -> jnp.array:
     which will re-arrange the outputs to be in the order
     [face 1, ..., face 6], where the quad points in each face
     are ordered in column-first order
-
-    Args:
-        idxes (jnp.array): Has shape (24 * q**2,)
-
-    Returns:
-        jnp.array: Has shape (24 * q**2,)
-    """
-    n_per_region = idxes.shape[0] // 8
-    n_per_region_face = n_per_region // 3
-    """
-    After the _oct_merge computation, the outputs are ordered
-    [region_1, ..., region_8]. This function returns the indices
-    which will re-arrange the outputs to be in the order
-    [face 1, ..., face 6], where the quad points in each face
-    are ordered in column-first order
-
 
     Args:
         idxes (jnp.array): Has shape (24 * q**2,)

@@ -7,7 +7,7 @@ as 1D differentiation matrices defined over 2D Chebyshev grids.
 
 from functools import partial
 
-from typing import Tuple, List, Dict
+from typing import Tuple
 
 import jax.numpy as jnp
 import jax

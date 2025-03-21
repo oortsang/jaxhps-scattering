@@ -1,6 +1,5 @@
 import logging
-from functools import partial
-from typing import Tuple, Any, List
+from typing import Tuple, List
 import jax.numpy as jnp
 import jax
 import matplotlib.pyplot as plt
@@ -717,12 +716,6 @@ def plot_tree(
     """
 
     fig, ax = plt.subplots()
-
-    # Plot the function
-    north_outer = root.ymax
-    south_outer = root.ymin
-    east_outer = root.xmax
-    west_outer = root.xmin
 
     for leaf in get_all_leaves(root):
         w = leaf.xmin

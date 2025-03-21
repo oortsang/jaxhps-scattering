@@ -2,9 +2,8 @@
 
 from functools import partial
 import logging
-from typing import List, Tuple
+from typing import Tuple
 
-import numpy as np
 import jax.numpy as jnp
 import jax
 
@@ -18,7 +17,6 @@ from hps.src.quadrature.quad_3D.interpolation import (
 
 
 from hps.src.config import (
-    DEVICE_MESH,
     DEVICE_ARR,
     HOST_DEVICE,
     get_fused_chunksize_2D,
@@ -69,7 +67,6 @@ def _local_solve_stage_2D_chunked(
     v_arr = []
     v_prime_arr = []
     Y_arr = []
-    solns_arr = []
 
     while chunk_start_idx < n_leaves:
 
@@ -127,7 +124,7 @@ def _local_solve_stage_2D_chunked(
                 P=P,
                 Q_D=Q_D,
                 p=p,
-                sidelens=sidelens,
+                sidelens=sidelens_chunk,
                 source_term=source_term_chunk,
                 D_xx_coeffs=D_xx_coeffs_chunk,
                 D_xy_coeffs=D_xy_coeffs_chunk,
@@ -289,7 +286,6 @@ def _local_solve_stage_2D(
     else:
         # Have to generate Q_D matrices for each leaf
         sidelens = jax.device_put(sidelens, device)
-        n_cheby_bdry_pts = 4 * (p - 1)
         q = P.shape[1] // 4
 
         all_diff_operators, Q_Ds = vmapped_prep_nonuniform_refinement_diff_operators_2D(
@@ -847,7 +843,6 @@ def _local_solve_stage_3D(
     which_coeffs = jax.device_put(which_coeffs, device)
     source_term = jax.device_put(source_term, device)
     P = jax.device_put(P, device)
-    n_cheby_bdry_pts = p**3 - (p - 2) ** 3
 
     # Prepare the differential operators for non-uniform refined grid
     diff_operators, Q_Ds = vmapped_prep_nonuniform_refinement_diff_operators_3D(
