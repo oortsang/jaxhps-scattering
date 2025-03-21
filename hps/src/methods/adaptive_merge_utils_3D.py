@@ -3,7 +3,9 @@ from typing import List, Tuple
 import jax.numpy as jnp
 
 from hps.src.quadrature.trees import Node
-from hps.src.quadrature.quad_3D.grid_creation import get_ordered_lst_of_boundary_nodes
+from hps.src.quadrature.quad_3D.grid_creation import (
+    get_ordered_lst_of_boundary_nodes,
+)
 # from hps.src.methods.schur_complement import assemble_merge_outputs_DtN
 
 

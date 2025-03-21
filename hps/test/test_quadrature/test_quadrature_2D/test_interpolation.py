@@ -52,14 +52,14 @@ class Test_refinement_operator:
         )
 
         # These are the Chebyshev points, ordered to be exterior points, then interior points.
-        pts_0 = get_all_leaf_2d_cheby_points_uniform_refinement(p, 0, corners).reshape(
-            (-1, 2)
-        )
+        pts_0 = get_all_leaf_2d_cheby_points_uniform_refinement(
+            p, 0, corners
+        ).reshape((-1, 2))
 
         # These are four copies of the Che
-        pts_1 = get_all_leaf_2d_cheby_points_uniform_refinement(p, 1, corners).reshape(
-            (-1, 2)
-        )
+        pts_1 = get_all_leaf_2d_cheby_points_uniform_refinement(
+            p, 1, corners
+        ).reshape((-1, 2))
 
         def f(x: jnp.array) -> jnp.array:
             """f(x,y) = y + 3x**2 - 20"""
@@ -238,7 +238,9 @@ class Test_interp_from_nonuniform_hps_to_regular_grid:
 
         f_evals = jnp.ones((4**l, p**2))
 
-        out_0, out_1 = interp_from_nonuniform_hps_to_regular_grid(root, p, f_evals, n_x)
+        out_0, out_1 = interp_from_nonuniform_hps_to_regular_grid(
+            root, p, f_evals, n_x
+        )
 
         assert out_0.shape == (n_x, n_x)
         assert not jnp.any(jnp.isnan(out_0))
@@ -333,7 +335,6 @@ class Test_interp_from_nonuniform_hps_to_regular_grid:
 
 class Test__interp_to_point:
     def test_0(self) -> None:
-
         # l = 3
         corners = jnp.array([[-1, -1], [1.0, -1.0], [1.0, 1], [-1, 1]])
 

@@ -37,7 +37,9 @@ K_DOWN_PASS_TIMES = "down_pass_times"
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--plot_dir", type=str, default="data/adaptive_meshing_3D")
+    parser.add_argument(
+        "--plot_dir", type=str, default="data/adaptive_meshing_3D"
+    )
     parser.add_argument("--l2", action="store_true")
     parser.add_argument("--mesh_tol", type=float, default=1e-2)
     parser.add_argument("--mesh_p", type=int, default=16)
@@ -117,7 +119,9 @@ def plot_tol_vs_error(
     colors = get_discrete_cmap(len(p_vals), "plasma")
     for i, p in enumerate(p_vals):
         p_str = f"$p = {int(p)}$"
-        ax.plot(tol_vals[i], adaptive_errors[i], ".-", color=colors[i], label=p_str)
+        ax.plot(
+            tol_vals[i], adaptive_errors[i], ".-", color=colors[i], label=p_str
+        )
         ax.plot(tol_vals[i], tol_vals[i], "--", color="black")
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -206,7 +210,6 @@ def plot_different_meshing_strats(
 
 
 def main(args: argparse.Namespace) -> None:
-
     # Load the adaptive refinement data.
     adaptive_str = "adaptive_data"
     if args.l2:
@@ -266,7 +269,9 @@ def main(args: argparse.Namespace) -> None:
     for p in [8, 12, 16]:
         p_int = int(p)
         try:
-            data_fp = os.path.join(args.plot_dir, f"p_{p}", f"hp_data_p_{p_int}.mat")
+            data_fp = os.path.join(
+                args.plot_dir, f"p_{p}", f"hp_data_p_{p_int}.mat"
+            )
             data_dd = loadmat(data_fp)
             uniform_errors.append(data_dd[K_ERRORS].flatten())
             uniform_runtimes.append(

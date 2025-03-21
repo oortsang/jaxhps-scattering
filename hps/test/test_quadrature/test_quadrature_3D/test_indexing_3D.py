@@ -174,7 +174,9 @@ class Test_into_column_first_order:
 
         q_idxes = np.arange(q).astype(int)
 
-        out = into_column_first_order(q_idxes, idxes_a, idxes_b, idxes_c, idxes_d)
+        out = into_column_first_order(
+            q_idxes, idxes_a, idxes_b, idxes_c, idxes_d
+        )
         print("test_0: out = ", out)
         assert out.shape == (4 * q**2,)
         assert np.unique(out).shape == (4 * q**2,)
@@ -199,7 +201,10 @@ class Test_indexing_for_refinement_operator:
         )
 
         col_x, col_y, col_z = jnp.meshgrid(
-            cheby_pts_refined, cheby_pts_refined, cheby_pts_refined, indexing="ij"
+            cheby_pts_refined,
+            cheby_pts_refined,
+            cheby_pts_refined,
+            indexing="ij",
         )
         col_pts = jnp.stack([col_x, col_y, col_z], axis=-1).reshape(-1, 3)
         print("test_1: col_pts", col_pts)

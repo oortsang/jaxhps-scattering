@@ -48,7 +48,9 @@ def setup_args() -> argparse.Namespace:
         type=str,
         help="Directory to save the reference solution.",
     )
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging."
+    )
     return parser.parse_args()
 
 
@@ -93,7 +95,9 @@ def plot_uscat(
     plt.clf()
 
 
-def plot_iterates(iterates: jnp.array, plots_dir: str, q_evals: jnp.array) -> None:
+def plot_iterates(
+    iterates: jnp.array, plots_dir: str, q_evals: jnp.array
+) -> None:
     """
     Make a plot of the evaluations of the ground-truth q and then draw arrows showing the iterates.
     """
@@ -201,12 +205,13 @@ def plot_residuals(residuals: jnp.array, plots_dir: str) -> None:
 
 
 def main(args: argparse.Namespace) -> None:
-
     logging.info("Plots will be saved to %s", args.plots_dir)
 
     # Set up boolean array for observation points
 
-    observation_pts = SAMPLE_TREE.leaf_cheby_points[OBSERVATION_BOOLS].reshape(-1, 2)
+    observation_pts = SAMPLE_TREE.leaf_cheby_points[OBSERVATION_BOOLS].reshape(
+        -1, 2
+    )
     logging.debug("Observation points has shape %s", observation_pts.shape)
 
     # Set up ground-truth scatterer locations by copying in from terminal on the cluster.
@@ -220,9 +225,13 @@ def main(args: argparse.Namespace) -> None:
             [0.3619092, 0.11641294],
         ]
     )
-    logging.info("Ground-truth scatterer locations: %s", ground_truth_locations)
+    logging.info(
+        "Ground-truth scatterer locations: %s", ground_truth_locations
+    )
 
-    q_evals_hps = q_point_sources(SAMPLE_TREE.leaf_cheby_points, ground_truth_locations)
+    q_evals_hps = q_point_sources(
+        SAMPLE_TREE.leaf_cheby_points, ground_truth_locations
+    )
     n_X = 200
     q_evals_regular, regular_grid = interp_from_nonuniform_hps_to_regular_grid(
         root=SAMPLE_TREE.root, p=P, f_evals=q_evals_hps, n_pts=n_X

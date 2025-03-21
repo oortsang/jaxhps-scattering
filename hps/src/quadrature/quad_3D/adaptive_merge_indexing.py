@@ -72,7 +72,10 @@ def get_b_submatrices(
     n_5: int,
 ) -> Tuple[jnp.array]:
     idxes_2 = jnp.concatenate(
-        [jnp.arange(n_0, n_0 + n_1 + n_2), jnp.arange(T.shape[0] - n_5, T.shape[0])]
+        [
+            jnp.arange(n_0, n_0 + n_1 + n_2),
+            jnp.arange(T.shape[0] - n_5, T.shape[0]),
+        ]
     )
     idxes_9 = jnp.arange(n_0)
     idxes_10 = jnp.arange(n_0 + n_1 + n_2, n_0 + n_1 + n_2 + n_3)
@@ -147,7 +150,6 @@ def get_d_submatrices(
     n_4: int,
     n_5: int,
 ) -> Tuple[jnp.array]:
-
     idxes_4 = jnp.concatenate(
         [
             jnp.arange(n_0),
@@ -189,7 +191,6 @@ def get_e_submatrices(
     n_4: int,
     n_5: int,
 ) -> Tuple[jnp.array]:
-
     idxes_5 = jnp.concatenate(
         [
             jnp.arange(n_0),
@@ -270,7 +271,6 @@ def get_g_submatrices(
     n_4: int,
     n_5: int,
 ) -> Tuple[jnp.array]:
-
     idxes_7 = jnp.concatenate(
         [
             jnp.arange(n_0, n_0 + n_1),
@@ -310,7 +310,6 @@ def get_h_submatrices(
     n_4: int,
     n_5: int,
 ) -> Tuple[jnp.array]:
-
     idxes_8 = jnp.concatenate(
         [
             jnp.arange(n_0),
@@ -401,7 +400,6 @@ def _return_submatrices_subvecs(
     need_interp_2: jnp.array,
     need_interp_3: jnp.array,
 ) -> Tuple[jnp.array]:
-
     (
         T_0_0,
         T_0_1,
@@ -552,7 +550,9 @@ def _compress_rows_from_lst(
 
 
 @partial(jax.jit, static_argnums=(3,))
-def _compress_col(L: jnp.array, T: jnp.array, i: int, n_per_panel: int) -> jnp.array:
+def _compress_col(
+    L: jnp.array, T: jnp.array, i: int, n_per_panel: int
+) -> jnp.array:
     a, b = T.shape
     X = jax.lax.dynamic_slice(T, (0, i * n_per_panel), (a, 4 * n_per_panel))
 
@@ -560,7 +560,9 @@ def _compress_col(L: jnp.array, T: jnp.array, i: int, n_per_panel: int) -> jnp.a
 
 
 @partial(jax.jit, static_argnums=(3,))
-def _compress_row(L: jnp.array, T: jnp.array, i: int, n_per_panel: int) -> jnp.array:
+def _compress_row(
+    L: jnp.array, T: jnp.array, i: int, n_per_panel: int
+) -> jnp.array:
     if T.ndim == 1:
         T = T.reshape(-1, 1)
     b = T.shape[1]
@@ -663,7 +665,13 @@ def get_rearrange_indices(
 
     n_g = n_g_1 + n_g_3 + n_g_4
     region_g_idxes = idxes[
-        n_a + n_b + n_c + n_d + n_e + n_f : n_a + n_b + n_c + n_d + n_e + n_f + n_g
+        n_a + n_b + n_c + n_d + n_e + n_f : n_a
+        + n_b
+        + n_c
+        + n_d
+        + n_e
+        + n_f
+        + n_g
     ]
     region_g_yz = region_g_idxes[:n_g_1]
     region_g_xz = region_g_idxes[n_g_1 : n_g_1 + n_g_3]

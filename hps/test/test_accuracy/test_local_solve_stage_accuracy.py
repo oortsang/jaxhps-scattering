@@ -48,7 +48,9 @@ def check_solution_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
     d_xx_coeffs = test_case[K_XX_COEFF](solver.leaf_cheby_points)
     d_yy_coeffs = test_case[K_YY_COEFF](solver.leaf_cheby_points)
     source = test_case[K_SOURCE](solver.leaf_cheby_points).squeeze(2)
-    boundary_g = jnp.expand_dims(test_case[K_DIRICHLET](solver.root_boundary_points), 0)
+    boundary_g = jnp.expand_dims(
+        test_case[K_DIRICHLET](solver.root_boundary_points), 0
+    )
 
     logging.debug(
         "check_solution_accuracy_DtN: d_xx_coeffs shape: %s", d_xx_coeffs.shape
@@ -56,7 +58,9 @@ def check_solution_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
     logging.debug(
         "check_solution_accuracy_DtN: d_yy_coeffs shape: %s", d_yy_coeffs.shape
     )
-    logging.debug("check_solution_accuracy_DtN: source shape: %s", source.shape)
+    logging.debug(
+        "check_solution_accuracy_DtN: source shape: %s", source.shape
+    )
 
     ##############################################################
     # Solve the local problem
@@ -75,7 +79,8 @@ def check_solution_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
         bdry_data=boundary_g,
     )
     logging.debug(
-        "check_solution_accuracy_DtN: computed_soln shape: %s", computed_soln.shape
+        "check_solution_accuracy_DtN: computed_soln shape: %s",
+        computed_soln.shape,
     )
 
     ##############################################################
@@ -89,7 +94,9 @@ def check_solution_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
         "check_leaf_accuracy_DtN: expected_homogeneous_soln shape: %s",
         expected_homogeneous_soln.shape,
     )
-    expected_part_soln = test_case[K_PART_SOLN](solver.leaf_cheby_points).flatten()
+    expected_part_soln = test_case[K_PART_SOLN](
+        solver.leaf_cheby_points
+    ).flatten()
 
     logging.debug(
         "check_leaf_accuracy_DtN: expected_part_soln shape: %s",
@@ -144,9 +151,16 @@ def check_leaf_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
     boundary_g_normals = jnp.concatenate(
         [
             -1 * test_case[K_DIRICHLET_DUDY](solver.root_boundary_points[:q]),
-            test_case[K_DIRICHLET_DUDX](solver.root_boundary_points[q : 2 * q]),
-            test_case[K_DIRICHLET_DUDY](solver.root_boundary_points[2 * q : 3 * q]),
-            -1 * test_case[K_DIRICHLET_DUDX](solver.root_boundary_points[3 * q :]),
+            test_case[K_DIRICHLET_DUDX](
+                solver.root_boundary_points[q : 2 * q]
+            ),
+            test_case[K_DIRICHLET_DUDY](
+                solver.root_boundary_points[2 * q : 3 * q]
+            ),
+            -1
+            * test_case[K_DIRICHLET_DUDX](
+                solver.root_boundary_points[3 * q :]
+            ),
         ]
     )
     expected_outgoing_data = boundary_g_normals
@@ -181,13 +195,18 @@ def check_leaf_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
         expected_homogeneous_soln.shape,
     )
     assert jnp.allclose(
-        computed_homogeneous_soln, expected_homogeneous_soln, atol=ATOL, rtol=RTOL
+        computed_homogeneous_soln,
+        expected_homogeneous_soln,
+        atol=ATOL,
+        rtol=RTOL,
     )
     ##############################################################
     # Check the accuracy of the particular solution
     # Construct computed particular solution
     computed_part_soln = v
-    expected_part_soln = test_case[K_PART_SOLN](solver.leaf_cheby_points).flatten()
+    expected_part_soln = test_case[K_PART_SOLN](
+        solver.leaf_cheby_points
+    ).flatten()
     logging.debug(
         "check_leaf_accuracy_DtN: computed_part_soln shape: %s",
         computed_part_soln.shape,
@@ -196,7 +215,9 @@ def check_leaf_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
         "check_leaf_accuracy_DtN: expected_part_soln shape: %s",
         expected_part_soln.shape,
     )
-    assert jnp.allclose(computed_part_soln, expected_part_soln, atol=ATOL, rtol=RTOL)
+    assert jnp.allclose(
+        computed_part_soln, expected_part_soln, atol=ATOL, rtol=RTOL
+    )
 
     ##############################################################
     # Check the accuracy of the outgoing particular data
@@ -204,13 +225,22 @@ def check_leaf_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
     boundary_part_soln_normals = jnp.concatenate(
         [
             -1 * test_case[K_PART_SOLN_DUDY](solver.root_boundary_points[:q]),
-            test_case[K_PART_SOLN_DUDX](solver.root_boundary_points[q : 2 * q]),
-            test_case[K_PART_SOLN_DUDY](solver.root_boundary_points[2 * q : 3 * q]),
-            -1 * test_case[K_PART_SOLN_DUDX](solver.root_boundary_points[3 * q :]),
+            test_case[K_PART_SOLN_DUDX](
+                solver.root_boundary_points[q : 2 * q]
+            ),
+            test_case[K_PART_SOLN_DUDY](
+                solver.root_boundary_points[2 * q : 3 * q]
+            ),
+            -1
+            * test_case[K_PART_SOLN_DUDX](
+                solver.root_boundary_points[3 * q :]
+            ),
         ]
     )
     # Expect part solution = 0 on the boundary so impedance data is just normals
-    expected_outgoing_part_data = (boundary_part_soln_normals + 0 * 1j).flatten()
+    expected_outgoing_part_data = (
+        boundary_part_soln_normals + 0 * 1j
+    ).flatten()
     computed_outgoing_part_data = h
     logging.debug(
         "check_leaf_accuracy_DtN: computed_outgoing_part_data shape: %s",
@@ -277,13 +307,22 @@ def check_leaf_accuracy_ItI(solver: SolverObj, test_case: Dict) -> None:
     boundary_g_normals = jnp.concatenate(
         [
             -1 * test_case[K_DIRICHLET_DUDY](solver.root_boundary_points[:q]),
-            test_case[K_DIRICHLET_DUDX](solver.root_boundary_points[q : 2 * q]),
-            test_case[K_DIRICHLET_DUDY](solver.root_boundary_points[2 * q : 3 * q]),
-            -1 * test_case[K_DIRICHLET_DUDX](solver.root_boundary_points[3 * q :]),
+            test_case[K_DIRICHLET_DUDX](
+                solver.root_boundary_points[q : 2 * q]
+            ),
+            test_case[K_DIRICHLET_DUDY](
+                solver.root_boundary_points[2 * q : 3 * q]
+            ),
+            -1
+            * test_case[K_DIRICHLET_DUDX](
+                solver.root_boundary_points[3 * q :]
+            ),
         ]
     )
     incoming_imp_data = boundary_g_normals + 1j * solver.eta * boundary_g
-    expected_outgoing_imp_data = boundary_g_normals - 1j * solver.eta * boundary_g
+    expected_outgoing_imp_data = (
+        boundary_g_normals - 1j * solver.eta * boundary_g
+    )
 
     # Construct computed outgoing imp data
     computed_outgoing_imp_data = R @ incoming_imp_data
@@ -296,7 +335,10 @@ def check_leaf_accuracy_ItI(solver: SolverObj, test_case: Dict) -> None:
         expected_outgoing_imp_data.shape,
     )
     assert jnp.allclose(
-        computed_outgoing_imp_data, expected_outgoing_imp_data, atol=ATOL, rtol=RTOL
+        computed_outgoing_imp_data,
+        expected_outgoing_imp_data,
+        atol=ATOL,
+        rtol=RTOL,
     )
 
     ##############################################################
@@ -315,7 +357,10 @@ def check_leaf_accuracy_ItI(solver: SolverObj, test_case: Dict) -> None:
         expected_homogeneous_soln.shape,
     )
     assert jnp.allclose(
-        computed_homogeneous_soln, expected_homogeneous_soln, atol=ATOL, rtol=RTOL
+        computed_homogeneous_soln,
+        expected_homogeneous_soln,
+        atol=ATOL,
+        rtol=RTOL,
     )
     ##############################################################
     # Check the accuracy of the particular solution
@@ -330,7 +375,9 @@ def check_leaf_accuracy_ItI(solver: SolverObj, test_case: Dict) -> None:
         "check_leaf_accuracy_ItI: expected_part_soln shape: %s",
         expected_part_soln.shape,
     )
-    assert jnp.allclose(computed_part_soln, expected_part_soln, atol=ATOL, rtol=RTOL)
+    assert jnp.allclose(
+        computed_part_soln, expected_part_soln, atol=ATOL, rtol=RTOL
+    )
 
     ##############################################################
     # Check the accuracy of the outgoing particular impedance data
@@ -338,9 +385,16 @@ def check_leaf_accuracy_ItI(solver: SolverObj, test_case: Dict) -> None:
     boundary_part_soln_normals = jnp.concatenate(
         [
             -1 * test_case[K_PART_SOLN_DUDY](solver.root_boundary_points[:q]),
-            test_case[K_PART_SOLN_DUDX](solver.root_boundary_points[q : 2 * q]),
-            test_case[K_PART_SOLN_DUDY](solver.root_boundary_points[2 * q : 3 * q]),
-            -1 * test_case[K_PART_SOLN_DUDX](solver.root_boundary_points[3 * q :]),
+            test_case[K_PART_SOLN_DUDX](
+                solver.root_boundary_points[q : 2 * q]
+            ),
+            test_case[K_PART_SOLN_DUDY](
+                solver.root_boundary_points[2 * q : 3 * q]
+            ),
+            -1
+            * test_case[K_PART_SOLN_DUDX](
+                solver.root_boundary_points[3 * q :]
+            ),
         ]
     )
     # Expect part solution = 0 on the boundary so impedance data is just normals

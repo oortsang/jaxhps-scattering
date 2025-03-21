@@ -102,17 +102,14 @@ def check_l_inf_error_convergence_oct_merge(
                     -1
                     * dudy_fn(
                         root_bdry_points[
-                            t.root.n_0
-                            + t.root.n_1 : t.root.n_0
+                            t.root.n_0 + t.root.n_1 : t.root.n_0
                             + t.root.n_1
                             + t.root.n_2
                         ]
                     ),  # face 2
                     dudy_fn(
                         root_bdry_points[
-                            t.root.n_0
-                            + t.root.n_1
-                            + t.root.n_2 : t.root.n_0
+                            t.root.n_0 + t.root.n_1 + t.root.n_2 : t.root.n_0
                             + t.root.n_1
                             + t.root.n_2
                             + t.root.n_3
@@ -166,7 +163,6 @@ def check_l_inf_error_convergence_oct_merge(
             # plt.show()
 
         else:
-
             down_pass(t, boundary_data_lst=bdry_data_lst)
 
             all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 3))
@@ -195,7 +191,9 @@ def check_l_inf_error_convergence_oct_merge(
             l_inf_error,
         )
 
-    logging.info("check_l_inf_error_convergence_oct_merge: error_vals = %s", error_vals)
+    logging.info(
+        "check_l_inf_error_convergence_oct_merge: error_vals = %s", error_vals
+    )
     # Plot the convergence on a semi-log plot
     if compute_convergence_rate:
         log_error_vals = jnp.log(error_vals)
@@ -314,9 +312,9 @@ def single_merge_check_3D_4(plot_fp: str) -> None:
     logging.info("Running single_merge_check_3D_4")
 
     def soln_fn(x):
-        return TEST_CASE_HOMOG_PART_POLY[K_DIRICHLET](x) + TEST_CASE_HOMOG_PART_POLY[
-            K_PART_SOLN
-        ](x)
+        return TEST_CASE_HOMOG_PART_POLY[K_DIRICHLET](
+            x
+        ) + TEST_CASE_HOMOG_PART_POLY[K_PART_SOLN](x)
 
     p_values = jnp.array([4, 6, 8])
     check_l_inf_error_convergence_oct_merge(

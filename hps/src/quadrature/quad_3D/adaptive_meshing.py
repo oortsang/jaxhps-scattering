@@ -1,5 +1,4 @@
-"""This file has functions to create an adaptive mesh for 3D problems. 
-"""
+"""This file has functions to create an adaptive mesh for 3D problems."""
 
 import logging
 from functools import partial
@@ -87,7 +86,6 @@ def generate_adaptive_mesh(
     tol: float,
     p: int,
 ) -> None:
-
     return generate_adaptive_mesh_level_restriction(
         root, refinement_op, f_fn, tol, p, restrict_bool=False
     )
@@ -103,7 +101,6 @@ def generate_adaptive_mesh_level_restriction(
     restrict_bool: bool = True,
     l2_norm: bool = False,
 ) -> None:
-
     if l2_norm:
         # Get a rough estimate of the L2 norm of the function
         add_eight_children(root, root=root, q=q)
@@ -251,7 +248,10 @@ def generate_adaptive_mesh_level_restriction(
         # Update the queue and do it all again
         refinement_check_queue = new_refinement_check_queue
         refinement_check_corners = jnp.array(
-            [node_corners_to_3d_corners(node) for node in refinement_check_queue]
+            [
+                node_corners_to_3d_corners(node)
+                for node in refinement_check_queue
+            ]
         )
 
 
@@ -458,7 +458,9 @@ def find_or_add_child(
         raise ValueError("Requested volume is too large for the current node")
 
     else:
-        return find_or_add_child(child, root, q, xmin, xmax, ymin, ymax, zmin, zmax)
+        return find_or_add_child(
+            child, root, q, xmin, xmax, ymin, ymax, zmin, zmax
+        )
 
 
 @partial(jax.jit, static_argnums=(2,))

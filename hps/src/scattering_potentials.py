@@ -6,7 +6,9 @@ import jax
 
 key = jax.random.key(0)
 N_ATOMS = 10
-ATOM_CENTERS = jax.random.uniform(key, minval=-0.5, maxval=0.5, shape=(N_ATOMS, 2))
+ATOM_CENTERS = jax.random.uniform(
+    key, minval=-0.5, maxval=0.5, shape=(N_ATOMS, 2)
+)
 DELTA = 50
 
 
@@ -46,7 +48,9 @@ def q_gaussian_bumps(x: jnp.array) -> jnp.array:
     # Reshape ATOM_CENTERS to (1, ..., 1, n_atoms, 2) where the number of 1s
     # matches the number of batch dimensions in x
     # This ensures proper broadcasting with x_expanded
-    n_batch_dims = x.ndim - 1  # number of dimensions before the coordinate dimension
+    n_batch_dims = (
+        x.ndim - 1
+    )  # number of dimensions before the coordinate dimension
     atom_centers_shape = (1,) * n_batch_dims + (ATOM_CENTERS.shape[0], 2)
     atoms_expanded = jnp.reshape(ATOM_CENTERS, atom_centers_shape)
 
@@ -77,7 +81,11 @@ def q_horizontally_graded(x: jnp.array) -> jnp.array:
     x_nrm = jnp.linalg.norm(x, axis=-1)
     x = x[..., 0]
 
-    return 4 * (x - 0.2) * (jax.scipy.special.erf(25 * (jnp.abs(x_nrm) - 0.3)) - 1)
+    return (
+        4
+        * (x - 0.2)
+        * (jax.scipy.special.erf(25 * (jnp.abs(x_nrm) - 0.3)) - 1)
+    )
 
 
 @jax.jit
@@ -94,7 +102,11 @@ def q_vertically_graded(x: jnp.array) -> jnp.array:
     y = x[..., 1]
     x = x[..., 0]
 
-    return 4 * (y - 0.2) * (jax.scipy.special.erf(25 * (jnp.abs(x_nrm) - 0.3)) - 1)
+    return (
+        4
+        * (y - 0.2)
+        * (jax.scipy.special.erf(25 * (jnp.abs(x_nrm) - 0.3)) - 1)
+    )
 
 
 def q_GBM_1(x: jnp.ndarray) -> jnp.ndarray:

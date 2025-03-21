@@ -45,18 +45,23 @@ SOLVER_LOCAL_SOLVE_ITI = create_solver_obj_2D(
 )
 
 
-def check_merge_accuracy_2D_DtN_uniform(solver: SolverObj, test_case: Dict) -> None:
+def check_merge_accuracy_2D_DtN_uniform(
+    solver: SolverObj, test_case: Dict
+) -> None:
     d_xx_coeffs = test_case[K_XX_COEFF](solver.leaf_cheby_points)
     d_yy_coeffs = test_case[K_YY_COEFF](solver.leaf_cheby_points)
     source_term = test_case[K_SOURCE](solver.leaf_cheby_points).squeeze()
     logging.debug(
-        "check_merge_accuracy_2D_DtN_uniform: d_xx_coeffs = %s", d_xx_coeffs.shape
+        "check_merge_accuracy_2D_DtN_uniform: d_xx_coeffs = %s",
+        d_xx_coeffs.shape,
     )
     logging.debug(
-        "check_merge_accuracy_2D_DtN_uniform: d_yy_coeffs = %s", d_yy_coeffs.shape
+        "check_merge_accuracy_2D_DtN_uniform: d_yy_coeffs = %s",
+        d_yy_coeffs.shape,
     )
     logging.debug(
-        "check_merge_accuracy_2D_DtN_uniform: source_term = %s", source_term.shape
+        "check_merge_accuracy_2D_DtN_uniform: source_term = %s",
+        source_term.shape,
     )
 
     # Do the local solve and build stages
@@ -87,31 +92,39 @@ def check_merge_accuracy_2D_DtN_uniform(solver: SolverObj, test_case: Dict) -> N
         "check_merge_accuracy_2D_DtN_uniform: part_soln = %s", part_soln.shape
     )
     logging.debug(
-        "check_merge_accuracy_2D_DtN_uniform: homog_soln = %s", homog_soln.shape
+        "check_merge_accuracy_2D_DtN_uniform: homog_soln = %s",
+        homog_soln.shape,
     )
     expected_soln = part_soln + homog_soln
     computed_soln = solver.interior_solns
     logging.debug(
-        "check_merge_accuracy_2D_DtN_uniform: computed_soln = %s", computed_soln.shape
+        "check_merge_accuracy_2D_DtN_uniform: computed_soln = %s",
+        computed_soln.shape,
     )
     logging.debug(
-        "check_merge_accuracy_2D_DtN_uniform: expected_soln = %s", expected_soln.shape
+        "check_merge_accuracy_2D_DtN_uniform: expected_soln = %s",
+        expected_soln.shape,
     )
     assert jnp.allclose(computed_soln, expected_soln, atol=ATOL, rtol=RTOL)
 
 
-def check_merge_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> None:
+def check_merge_accuracy_2D_ItI_uniform(
+    solver: SolverObj, test_case: Dict
+) -> None:
     d_xx_coeffs = test_case[K_XX_COEFF](solver.leaf_cheby_points)
     d_yy_coeffs = test_case[K_YY_COEFF](solver.leaf_cheby_points)
     source_term = test_case[K_SOURCE](solver.leaf_cheby_points).squeeze()
     logging.debug(
-        "check_merge_accuracy_2D_ItI_uniform: d_xx_coeffs = %s", d_xx_coeffs.shape
+        "check_merge_accuracy_2D_ItI_uniform: d_xx_coeffs = %s",
+        d_xx_coeffs.shape,
     )
     logging.debug(
-        "check_merge_accuracy_2D_ItI_uniform: d_yy_coeffs = %s", d_yy_coeffs.shape
+        "check_merge_accuracy_2D_ItI_uniform: d_yy_coeffs = %s",
+        d_yy_coeffs.shape,
     )
     logging.debug(
-        "check_merge_accuracy_2D_ItI_uniform: source_term = %s", source_term.shape
+        "check_merge_accuracy_2D_ItI_uniform: source_term = %s",
+        source_term.shape,
     )
     # Do the local solve and build stages
     local_solve_stage(
@@ -128,7 +141,10 @@ def check_merge_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> N
     n_per_side = solver.root_boundary_points.shape[0] // 4
     boundary_g_normals = jnp.concatenate(
         [
-            -1 * test_case[K_DIRICHLET_DUDY](solver.root_boundary_points[:n_per_side]),
+            -1
+            * test_case[K_DIRICHLET_DUDY](
+                solver.root_boundary_points[:n_per_side]
+            ),
             test_case[K_DIRICHLET_DUDX](
                 solver.root_boundary_points[n_per_side : 2 * n_per_side]
             ),
@@ -183,16 +199,19 @@ def check_merge_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> N
         "check_merge_accuracy_2D_ItI_uniform: part_soln = %s", part_soln.shape
     )
     logging.debug(
-        "check_merge_accuracy_2D_ItI_uniform: homog_soln = %s", homog_soln.shape
+        "check_merge_accuracy_2D_ItI_uniform: homog_soln = %s",
+        homog_soln.shape,
     )
     expected_soln = part_soln + homog_soln
     computed_soln = solver.interior_solns
 
     logging.debug(
-        "check_merge_accuracy_2D_ItI_uniform: computed_soln = %s", computed_soln.shape
+        "check_merge_accuracy_2D_ItI_uniform: computed_soln = %s",
+        computed_soln.shape,
     )
     logging.debug(
-        "check_merge_accuracy_2D_ItI_uniform: expected_soln = %s", expected_soln.shape
+        "check_merge_accuracy_2D_ItI_uniform: expected_soln = %s",
+        expected_soln.shape,
     )
 
     # Uncomment this if you want to plot the solution for debugging.

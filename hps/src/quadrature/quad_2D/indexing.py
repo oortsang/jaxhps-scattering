@@ -63,7 +63,9 @@ def indexing_for_refinement_operator(p: int) -> jnp.array:
     a_idxes = a_idxes[col_idxes]
 
     # b is where x is in the second half and y is in the first half
-    b_bools = jnp.logical_and(ii % (2 * p) >= p, (ii // (2 * p)) % (2 * p) >= p)
+    b_bools = jnp.logical_and(
+        ii % (2 * p) >= p, (ii // (2 * p)) % (2 * p) >= p
+    )
     b_idxes = ii[b_bools]
     b_idxes = b_idxes[col_idxes]
 

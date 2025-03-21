@@ -9,7 +9,11 @@ import logging
 from timeit import default_timer
 from scipy.io import savemat
 
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
+from hps.src.solver_obj import (
+    SolverObj,
+    create_solver_obj_2D,
+    create_solver_obj_3D,
+)
 from hps.src.up_down_passes import (
     down_pass,
     local_solve_stage,
@@ -47,7 +51,6 @@ def hash_dict(dictionary: Dict[str, Any]) -> str:
 
 
 def setup_args() -> argparse.Namespace:
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-n_samples", type=int)
@@ -56,7 +59,11 @@ def setup_args() -> argparse.Namespace:
     parser.add_argument("-out_fp", type=str)
     parser.add_argument("--debug", default=False, action="store_true")
     parser.add_argument(
-        "-t", "--three_d", default=False, action="store_true", help="Time 3D problems"
+        "-t",
+        "--three_d",
+        default=False,
+        action="store_true",
+        help="Time 3D problems",
     )
     parser.add_argument(
         "--fused",
@@ -71,7 +78,11 @@ def setup_args() -> argparse.Namespace:
         choices=["None", "Baseline", "Ours"],
     )
     parser.add_argument(
-        "--ItI", "-i", default=False, action="store_true", help="Use ItI solver."
+        "--ItI",
+        "-i",
+        default=False,
+        action="store_true",
+        help="Use ItI solver.",
     )
     a = parser.parse_args()
     a.hash = hash_dict(vars(a))
@@ -132,7 +143,6 @@ def pde_solve(
         if use_ItI:
             raise ValueError("Baseline recomputation not implemented for ItI")
         else:
-
             baseline_pde_solve_2D(
                 t,
                 source_term=source,
@@ -149,7 +159,10 @@ def pde_solve(
 
     else:
         local_solve_stage(
-            t, source_term=source, D_xx_coeffs=coeffs_dxx, D_yy_coeffs=coeffs_dyy
+            t,
+            source_term=source,
+            D_xx_coeffs=coeffs_dxx,
+            D_yy_coeffs=coeffs_dyy,
         )
         if blocking:
             t.leaf_node_v_vecs.block_until_ready()
@@ -209,10 +222,14 @@ def main(args: argparse.Namespace) -> None:
 
     bool_fused = args.recomputation == "Ours"
     bool_baseline = args.recomputation == "Baseline"
-    logging.info("bool_fused=%s, and bool_baseline=%s", bool_fused, bool_baseline)
+    logging.info(
+        "bool_fused=%s, and bool_baseline=%s", bool_fused, bool_baseline
+    )
 
     if args.three_d:
-        t = create_solver_obj_3D(p=args.p, q=args.p - 2, l=args.l, corners=corners)
+        t = create_solver_obj_3D(
+            p=args.p, q=args.p - 2, l=args.l, corners=corners
+        )
     else:
         xmin, ymin = corners[0]
         xmax, ymax = corners[2]
@@ -250,7 +267,9 @@ def main(args: argparse.Namespace) -> None:
         args.l,
     )
 
-    time_samples_total = np.full((args.n_samples,), fill_value=np.nan, dtype=np.float64)
+    time_samples_total = np.full(
+        (args.n_samples,), fill_value=np.nan, dtype=np.float64
+    )
     for i in range(args.n_samples):
         logging.debug("Getting sample %i/%i", i + 1, args.n_samples)
         t_setup, t_solve, t_merge, t_down, t_total = pde_solve(
@@ -266,10 +285,18 @@ def main(args: argparse.Namespace) -> None:
         "Done taking samples for full PDE solves. Now taking samples in a blocking fashion."
     )
 
-    time_samples_setup = np.full((args.n_samples,), fill_value=np.nan, dtype=np.float64)
-    time_samples_solve = np.full((args.n_samples,), fill_value=np.nan, dtype=np.float64)
-    time_samples_merge = np.full((args.n_samples,), fill_value=np.nan, dtype=np.float64)
-    time_samples_down = np.full((args.n_samples,), fill_value=np.nan, dtype=np.float64)
+    time_samples_setup = np.full(
+        (args.n_samples,), fill_value=np.nan, dtype=np.float64
+    )
+    time_samples_solve = np.full(
+        (args.n_samples,), fill_value=np.nan, dtype=np.float64
+    )
+    time_samples_merge = np.full(
+        (args.n_samples,), fill_value=np.nan, dtype=np.float64
+    )
+    time_samples_down = np.full(
+        (args.n_samples,), fill_value=np.nan, dtype=np.float64
+    )
     time_samples_total_blocking = np.full(
         (args.n_samples,), fill_value=np.nan, dtype=np.float64
     )
@@ -294,13 +321,19 @@ def main(args: argparse.Namespace) -> None:
 
     mean_setup = np.mean(time_samples_setup)
     stddev_setup = np.std(time_samples_setup)
-    logging.info("Setup stage results: %f sec +/- %f", mean_setup, stddev_setup)
+    logging.info(
+        "Setup stage results: %f sec +/- %f", mean_setup, stddev_setup
+    )
     mean_solve = np.mean(time_samples_solve)
     stddev_solve = np.std(time_samples_solve)
-    logging.info("Solve stage results: %f sec +/- %f", mean_solve, stddev_solve)
+    logging.info(
+        "Solve stage results: %f sec +/- %f", mean_solve, stddev_solve
+    )
     mean_merge = np.mean(time_samples_merge)
     stddev_merge = np.std(time_samples_merge)
-    logging.info("Merge stage results: %f sec +/- %f", mean_merge, stddev_merge)
+    logging.info(
+        "Merge stage results: %f sec +/- %f", mean_merge, stddev_merge
+    )
     mean_down = np.mean(time_samples_down)
     stddev_down = np.std(time_samples_down)
     logging.info("Down pass results: %f sec +/- %f", mean_down, stddev_down)

@@ -22,7 +22,9 @@ logging.getLogger("jax").setLevel(logging.WARNING)
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--plot_dir", type=str, default="data/quad_merge_indices")
+    parser.add_argument(
+        "--plot_dir", type=str, default="data/quad_merge_indices"
+    )
     parser.add_argument("-p", type=int, default=8)
     return parser.parse_args()
 
@@ -32,7 +34,9 @@ FONTSIZE_OMEGA = 20
 
 def plot_quad_merge_indices_main_text(q: int, fp_out: str) -> None:
     # Set up a Node with four children on [-1,1]^2
-    root = Node(xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0, zmin=None, zmax=None, depth=0)
+    root = Node(
+        xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0, zmin=None, zmax=None, depth=0
+    )
     add_four_children(root)
 
     # Get the boundary points for each child
@@ -50,9 +54,13 @@ def plot_quad_merge_indices_main_text(q: int, fp_out: str) -> None:
     # Otherwise, plot blue.
     x_zero_bools = boundary_points[:, 0] == 0
     y_zero_bools = boundary_points[:, 1] == 0
-    boundary_points_red = boundary_points[jnp.logical_or(x_zero_bools, y_zero_bools)]
+    boundary_points_red = boundary_points[
+        jnp.logical_or(x_zero_bools, y_zero_bools)
+    ]
     boundary_points_blue = boundary_points[
-        jnp.logical_and(jnp.logical_not(x_zero_bools), jnp.logical_not(y_zero_bools))
+        jnp.logical_and(
+            jnp.logical_not(x_zero_bools), jnp.logical_not(y_zero_bools)
+        )
     ]
     print(
         "plot_quad_merge_indices_main_text: boundary_points_red.shape",
@@ -63,10 +71,16 @@ def plot_quad_merge_indices_main_text(q: int, fp_out: str) -> None:
         boundary_points_blue.shape,
     )
     ax.scatter(
-        boundary_points_red[:, 0], boundary_points_red[:, 1], marker="x", color="red"
+        boundary_points_red[:, 0],
+        boundary_points_red[:, 1],
+        marker="x",
+        color="red",
     )
     ax.scatter(
-        boundary_points_blue[:, 0], boundary_points_blue[:, 1], marker=".", color="blue"
+        boundary_points_blue[:, 0],
+        boundary_points_blue[:, 1],
+        marker=".",
+        color="blue",
     )
     plt.xlim(-1.1, 1.1)
     plt.ylim(-1.1, 1.1)
@@ -84,7 +98,12 @@ def plot_quad_merge_indices_main_text(q: int, fp_out: str) -> None:
 
     # Turn off all ticks
     ax.tick_params(
-        axis="both", which="both", bottom=False, top=False, left=False, right=False
+        axis="both",
+        which="both",
+        bottom=False,
+        top=False,
+        left=False,
+        right=False,
     )
     # Turn off all tick labels
     ax.set_xticklabels([])
@@ -95,7 +114,9 @@ def plot_quad_merge_indices_main_text(q: int, fp_out: str) -> None:
 
 def plot_interior_points_main_text(p: int, fp_out: str) -> None:
     # Set up a Node with four children on [-1,1]^2
-    root = Node(xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0, zmin=None, zmax=None, depth=0)
+    root = Node(
+        xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0, zmin=None, zmax=None, depth=0
+    )
     add_four_children(root)
 
     # Get the boundary points for each child
@@ -106,7 +127,9 @@ def plot_interior_points_main_text(p: int, fp_out: str) -> None:
     fig, ax = plt.subplots(figsize=(5, 5))
 
     # Plot the interior points
-    ax.scatter(cheby_points[:, 0], cheby_points[:, 1], marker=".", color="black")
+    ax.scatter(
+        cheby_points[:, 0], cheby_points[:, 1], marker=".", color="black"
+    )
     plt.xlim(-1.1, 1.1)
     plt.ylim(-1.1, 1.1)
     # Turn off all splines
@@ -123,7 +146,12 @@ def plot_interior_points_main_text(p: int, fp_out: str) -> None:
 
     # Turn off all ticks
     ax.tick_params(
-        axis="both", which="both", bottom=False, top=False, left=False, right=False
+        axis="both",
+        which="both",
+        bottom=False,
+        top=False,
+        left=False,
+        right=False,
     )
     # Turn off all tick labels
     ax.set_xticklabels([])
@@ -133,7 +161,6 @@ def plot_interior_points_main_text(p: int, fp_out: str) -> None:
 
 
 def main(args: argparse.Namespace) -> None:
-
     # Set up the plotting directory
     if not os.path.exists(args.plot_dir):
         os.makedirs(args.plot_dir)

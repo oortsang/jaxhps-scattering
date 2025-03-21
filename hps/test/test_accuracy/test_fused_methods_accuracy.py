@@ -46,17 +46,26 @@ SOLVER_DTN = create_solver_obj_2D(
 )
 
 SOLVER_ITI = create_solver_obj_2D(
-    p=7, q=5, root=ROOT_ITI, uniform_levels=3, use_ItI=True, eta=ETA, fill_tree=False
+    p=7,
+    q=5,
+    root=ROOT_ITI,
+    uniform_levels=3,
+    use_ItI=True,
+    eta=ETA,
+    fill_tree=False,
 )
 
 
-def check_fused_accuracy_2D_DtN_uniform(solver: SolverObj, test_case: Dict) -> None:
+def check_fused_accuracy_2D_DtN_uniform(
+    solver: SolverObj, test_case: Dict
+) -> None:
     d_xx_coeffs = test_case[K_XX_COEFF](solver.leaf_cheby_points)
     d_yy_coeffs = test_case[K_YY_COEFF](solver.leaf_cheby_points)
     source = test_case[K_SOURCE](solver.leaf_cheby_points).squeeze(2)
     boundary_g = test_case[K_DIRICHLET](solver.root_boundary_points)
     logging.debug(
-        "check_fused_accuracy_2D_DtN_uniform: boundary_g shape: %s", boundary_g.shape
+        "check_fused_accuracy_2D_DtN_uniform: boundary_g shape: %s",
+        boundary_g.shape,
     )
     fused_pde_solve_2D(
         t=solver,
@@ -75,16 +84,20 @@ def check_fused_accuracy_2D_DtN_uniform(solver: SolverObj, test_case: Dict) -> N
         "check_fused_accuracy_2D_DtN_uniform: part_soln = %s", part_soln.shape
     )
     logging.debug(
-        "check_fused_accuracy_2D_DtN_uniform: homog_soln = %s", homog_soln.shape
+        "check_fused_accuracy_2D_DtN_uniform: homog_soln = %s",
+        homog_soln.shape,
     )
     logging.debug(
-        "check_fused_accuracy_2D_DtN_uniform: computed_soln = %s", computed_soln.shape
+        "check_fused_accuracy_2D_DtN_uniform: computed_soln = %s",
+        computed_soln.shape,
     )
     expected_soln = homog_soln + part_soln
     assert jnp.allclose(computed_soln, expected_soln, atol=ATOL, rtol=RTOL)
 
 
-def check_baseline_accuracy_2D_DtN_uniform(solver: SolverObj, test_case: Dict) -> None:
+def check_baseline_accuracy_2D_DtN_uniform(
+    solver: SolverObj, test_case: Dict
+) -> None:
     d_xx_coeffs = test_case[K_XX_COEFF](solver.leaf_cheby_points)
     d_yy_coeffs = test_case[K_YY_COEFF](solver.leaf_cheby_points)
     source = test_case[K_SOURCE](solver.leaf_cheby_points).squeeze(2)
@@ -103,16 +116,20 @@ def check_baseline_accuracy_2D_DtN_uniform(solver: SolverObj, test_case: Dict) -
         homog_soln.shape
     )
     logging.debug(
-        "check_baseline_accuracy_2D_DtN_uniform: part_soln = %s", part_soln.shape
+        "check_baseline_accuracy_2D_DtN_uniform: part_soln = %s",
+        part_soln.shape,
     )
     logging.debug(
-        "check_baseline_accuracy_2D_DtN_uniform: homog_soln = %s", homog_soln.shape
+        "check_baseline_accuracy_2D_DtN_uniform: homog_soln = %s",
+        homog_soln.shape,
     )
     expected_soln = homog_soln + part_soln
     assert jnp.allclose(computed_soln, expected_soln, atol=ATOL, rtol=RTOL)
 
 
-def check_fused_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> None:
+def check_fused_accuracy_2D_ItI_uniform(
+    solver: SolverObj, test_case: Dict
+) -> None:
     d_xx_coeffs = test_case[K_XX_COEFF](solver.leaf_cheby_points)
     d_yy_coeffs = test_case[K_YY_COEFF](solver.leaf_cheby_points)
     source = test_case[K_SOURCE](solver.leaf_cheby_points).squeeze(2)
@@ -120,7 +137,10 @@ def check_fused_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> N
     n_per_side = solver.root_boundary_points.shape[0] // 4
     boundary_g_normals = jnp.concatenate(
         [
-            -1 * test_case[K_DIRICHLET_DUDY](solver.root_boundary_points[:n_per_side]),
+            -1
+            * test_case[K_DIRICHLET_DUDY](
+                solver.root_boundary_points[:n_per_side]
+            ),
             test_case[K_DIRICHLET_DUDX](
                 solver.root_boundary_points[n_per_side : 2 * n_per_side]
             ),
@@ -152,10 +172,12 @@ def check_fused_accuracy_2D_ItI_uniform(solver: SolverObj, test_case: Dict) -> N
         "check_fused_accuracy_2D_ItI_uniform: part_soln = %s", part_soln.shape
     )
     logging.debug(
-        "check_fused_accuracy_2D_ItI_uniform: homog_soln = %s", homog_soln.shape
+        "check_fused_accuracy_2D_ItI_uniform: homog_soln = %s",
+        homog_soln.shape,
     )
     logging.debug(
-        "check_fused_accuracy_2D_ItI_uniform: computed_soln = %s", computed_soln.shape
+        "check_fused_accuracy_2D_ItI_uniform: computed_soln = %s",
+        computed_soln.shape,
     )
     expected_soln = homog_soln + part_soln
     assert jnp.allclose(computed_soln, expected_soln, atol=ATOL, rtol=RTOL)
@@ -165,24 +187,32 @@ class Test_accuracy_fused_2D_DtN_uniform:
     def test_0(self, caplog) -> None:
         """Polynomial data with zero source term."""
         caplog.set_level(logging.DEBUG)
-        check_fused_accuracy_2D_DtN_uniform(SOLVER_DTN, TEST_CASE_POLY_ZERO_SOURCE)
+        check_fused_accuracy_2D_DtN_uniform(
+            SOLVER_DTN, TEST_CASE_POLY_ZERO_SOURCE
+        )
 
     def test_1(self, caplog) -> None:
         """Polynomial data with non-zero source term."""
         caplog.set_level(logging.DEBUG)
-        check_fused_accuracy_2D_DtN_uniform(SOLVER_DTN, TEST_CASE_POLY_PART_HOMOG)
+        check_fused_accuracy_2D_DtN_uniform(
+            SOLVER_DTN, TEST_CASE_POLY_PART_HOMOG
+        )
 
 
 class Test_accuracy_baseline_2D_DtN_uniform:
     def test_0(self, caplog) -> None:
         """Polynomial data with zero source term."""
         caplog.set_level(logging.DEBUG)
-        check_baseline_accuracy_2D_DtN_uniform(SOLVER_DTN, TEST_CASE_POLY_ZERO_SOURCE)
+        check_baseline_accuracy_2D_DtN_uniform(
+            SOLVER_DTN, TEST_CASE_POLY_ZERO_SOURCE
+        )
 
     def test_1(self, caplog) -> None:
         """Polynomial data with non-zero source term."""
         caplog.set_level(logging.DEBUG)
-        check_baseline_accuracy_2D_DtN_uniform(SOLVER_DTN, TEST_CASE_POLY_PART_HOMOG)
+        check_baseline_accuracy_2D_DtN_uniform(
+            SOLVER_DTN, TEST_CASE_POLY_PART_HOMOG
+        )
 
 
 class Test_accuracy_fused_2D_ItI_uniform:
@@ -190,7 +220,9 @@ class Test_accuracy_fused_2D_ItI_uniform:
         """Polynomial data with zero source term."""
         caplog.set_level(logging.DEBUG)
 
-        check_fused_accuracy_2D_ItI_uniform(SOLVER_ITI, TEST_CASE_POLY_ZERO_SOURCE)
+        check_fused_accuracy_2D_ItI_uniform(
+            SOLVER_ITI, TEST_CASE_POLY_ZERO_SOURCE
+        )
 
 
 if __name__ == "__main__":

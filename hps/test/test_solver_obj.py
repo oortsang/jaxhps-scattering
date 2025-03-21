@@ -13,7 +13,6 @@ import jax.numpy as jnp
 
 
 class Test_create_solver_obj_2D:
-
     def test_0(self) -> None:
         p = 14
         q = 12
@@ -131,7 +130,9 @@ class Test_create_solver_obj_2D:
 
         # n_leaf_nodes = 4**l
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=4.0)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=4.0
+        )
 
         assert t.I_P_0.shape == (4 * (p - 1), 4 * q)
         assert t.Q_I.shape == (4 * q, 4 * p)

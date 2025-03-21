@@ -81,13 +81,25 @@ class Test_precompute_N_matrix:
         assert jnp.allclose(computed_normals[:p], expected_normals[:p])
 
         # E side
-        print("test_1: computed_normals[p:2*p] = ", computed_normals[p : 2 * p])
-        print("test_1: expected_normals[p:2*p] = ", expected_normals[p : 2 * p])
-        assert jnp.allclose(computed_normals[p : 2 * p], expected_normals[p : 2 * p])
+        print(
+            "test_1: computed_normals[p:2*p] = ", computed_normals[p : 2 * p]
+        )
+        print(
+            "test_1: expected_normals[p:2*p] = ", expected_normals[p : 2 * p]
+        )
+        assert jnp.allclose(
+            computed_normals[p : 2 * p], expected_normals[p : 2 * p]
+        )
 
         # N side
-        print("test_1: computed_normals[2*p:3*p] = ", computed_normals[2 * p : 3 * p])
-        print("test_1: expected_normals[2*p:3*p] = ", expected_normals[2 * p : 3 * p])
+        print(
+            "test_1: computed_normals[2*p:3*p] = ",
+            computed_normals[2 * p : 3 * p],
+        )
+        print(
+            "test_1: expected_normals[2*p:3*p] = ",
+            expected_normals[2 * p : 3 * p],
+        )
         assert jnp.allclose(
             computed_normals[2 * p : 3 * p], expected_normals[2 * p : 3 * p]
         )
@@ -95,7 +107,9 @@ class Test_precompute_N_matrix:
         # W side
         print("test_1: computed_normals[3*p:] = ", computed_normals[3 * p :])
         print("test_1: expected_normals[3*p:] = ", expected_normals[3 * p :])
-        assert jnp.allclose(computed_normals[3 * p :], expected_normals[3 * p :])
+        assert jnp.allclose(
+            computed_normals[3 * p :], expected_normals[3 * p :]
+        )
 
         assert jnp.allclose(computed_normals, expected_normals)
 
@@ -278,7 +292,10 @@ class Test_precompute_F_matrix:
             ]
         )
         expected_bdry_f = f(pts[0][: 4 * (p - 1)])
-        print("test_1: expected_bdry_normals shape = ", expected_bdry_normals.shape)
+        print(
+            "test_1: expected_bdry_normals shape = ",
+            expected_bdry_normals.shape,
+        )
         print("test_1: expected_bdry_f shape = ", expected_bdry_f.shape)
         expected_inc_imp = expected_bdry_normals + 1j * eta * expected_bdry_f
 

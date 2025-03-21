@@ -6,7 +6,10 @@ from hps.src.quadrature.quad_2D.indexing import (
 from hps.src.quadrature.quad_2D.grid_creation import (
     get_all_leaf_2d_cheby_points_uniform_refinement,
 )
-from hps.src.quadrature.quadrature_utils import chebyshev_points, affine_transform
+from hps.src.quadrature.quadrature_utils import (
+    chebyshev_points,
+    affine_transform,
+)
 
 
 class Test_indexing_for_refinement_operator:
@@ -43,9 +46,9 @@ class Test_indexing_for_refinement_operator:
             dtype=jnp.float64,
         )
 
-        pts_1 = get_all_leaf_2d_cheby_points_uniform_refinement(p, 1, corners).reshape(
-            (-1, 2)
-        )
+        pts_1 = get_all_leaf_2d_cheby_points_uniform_refinement(
+            p, 1, corners
+        ).reshape((-1, 2))
 
         row_idxes, col_idxes = indexing_for_refinement_operator(p)
 

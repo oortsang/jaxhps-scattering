@@ -327,14 +327,18 @@ def helmholtz_case_1_part_du_dy_fn(
     return -1j * helmholtz_case_1_particular_soln(x, k, eta) * 2 * x[..., 1]
 
 
-def helmholtz_case_1_source(x: jnp.array, k: float = K1, eta: float = ETA) -> jnp.array:
+def helmholtz_case_1_source(
+    x: jnp.array, k: float = K1, eta: float = ETA
+) -> jnp.array:
     # Expect x to have shape [..., 2]
     # f(x, y) = (- 4 x^2 -  4 y^2 - 4i + 2k^2) v(x,y)
     term1 = -4 * x[..., 0] ** 2
     term2 = -4 * x[..., 1] ** 2
     term3 = -4j
     term4 = 2 * k**2
-    return (term1 + term2 + term3 + term4) * helmholtz_case_1_particular_soln(x, k, eta)
+    return (term1 + term2 + term3 + term4) * helmholtz_case_1_particular_soln(
+        x, k, eta
+    )
 
 
 """
@@ -433,7 +437,10 @@ def d_x_adaptive_meshing_data_fn(x: jnp.array) -> jnp.array:
         * (x + 0.05)
         / (
             jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2)
-            * (100 * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7) ** 2 + 1)
+            * (
+                100 * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7) ** 2
+                + 1
+            )
         )
     )
     return out
@@ -448,7 +455,10 @@ def d_y_adaptive_meshing_data_fn(x: jnp.array) -> jnp.array:
         * (y + 0.05)
         / (
             jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2)
-            * (100 * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7) ** 2 + 1)
+            * (
+                100 * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7) ** 2
+                + 1
+            )
         )
     )
     return out
@@ -468,7 +478,11 @@ def d_xx_adaptive_meshing_data_fn(x: jnp.array) -> jnp.array:
             * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7)
             / (
                 ((x + 0.05) ** 2 + (y + 0.05) ** 2)
-                * (100 * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7) ** 2 + 1)
+                * (
+                    100
+                    * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7) ** 2
+                    + 1
+                )
             )
             - (x + 0.05) ** 2 / ((x + 0.05) ** 2 + (y + 0.05) ** 2) ** (3 / 2)
             + 1 / jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2)
@@ -493,7 +507,11 @@ def d_yy_adaptive_meshing_data_fn(x: jnp.array) -> jnp.array:
             * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7)
             / (
                 ((x + 0.05) ** 2 + (y + 0.05) ** 2)
-                * (100 * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7) ** 2 + 1)
+                * (
+                    100
+                    * (jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2) - 0.7) ** 2
+                    + 1
+                )
             )
             - (y + 0.05) ** 2 / ((x + 0.05) ** 2 + (y + 0.05) ** 2) ** (3 / 2)
             + 1 / jnp.sqrt((x + 0.05) ** 2 + (y + 0.05) ** 2)

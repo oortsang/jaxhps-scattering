@@ -9,7 +9,12 @@ from scipy.io import loadmat
 
 
 from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.plotting import get_discrete_cmap, FIGSIZE_2, FONTSIZE_2, TICKSIZE_2
+from hps.src.plotting import (
+    get_discrete_cmap,
+    FIGSIZE_2,
+    FONTSIZE_2,
+    TICKSIZE_2,
+)
 
 # Disable all matplorlib logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -37,7 +42,6 @@ CORNERS = jnp.array([[XMIN, YMIN], [XMAX, YMIN], [XMAX, YMAX], [XMIN, YMAX]])
 def plot_problem_1(
     err_vals: jnp.array, l_vals: jnp.array, p_vals: jnp.array, plot_fp: str
 ) -> None:
-
     p_vals = p_vals.flatten()
     l_vals = l_vals.flatten()
     logging.info("plot_problem_1: p_vals: %s", p_vals)
@@ -71,12 +75,18 @@ def plot_problem_1(
     for i, p in enumerate(p_vals):
         n_i = n_to_plot[i]
         ax.plot(
-            h_inv_vals[:n_i], err_vals[:n_i, i], ".-", color=cmap[i], label=f"$p={p}$"
+            h_inv_vals[:n_i],
+            err_vals[:n_i, i],
+            ".-",
+            color=cmap[i],
+            label=f"$p={p}$",
         )
 
         if p == np.max(p_vals):
             # Only want to lable this once.
-            plt.plot(xvals[i], yvals[i], "--", color="black", label="$O(h^{p - 2})$")
+            plt.plot(
+                xvals[i], yvals[i], "--", color="black", label="$O(h^{p - 2})$"
+            )
         else:
             plt.plot(xvals[i], yvals[i], "--", color="black")
 
@@ -129,12 +139,18 @@ def plot_problem_2(
     for i, p in enumerate(p_vals):
         n_i = n_to_plot[i]
         ax.plot(
-            h_inv_vals[:n_i], err_vals[:n_i, i], ".-", color=cmap[i], label=f"$p={p}$"
+            h_inv_vals[:n_i],
+            err_vals[:n_i, i],
+            ".-",
+            color=cmap[i],
+            label=f"$p={p}$",
         )
 
         if p == np.max(p_vals):
             # Only want to lable this once.
-            plt.plot(xvals[i], yvals[i], "--", color="black", label="$O(h^{p - 2})$")
+            plt.plot(
+                xvals[i], yvals[i], "--", color="black", label="$O(h^{p - 2})$"
+            )
         else:
             plt.plot(xvals[i], yvals[i], "--", color="black")
 

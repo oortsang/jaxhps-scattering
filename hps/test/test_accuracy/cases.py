@@ -1,7 +1,6 @@
 import jax.numpy as jnp
 
 
-
 ####################################################################
 # Define the keys that will be used in the test cases
 K_DIRICHLET = "dirichlet_data_fn"

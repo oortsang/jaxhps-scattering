@@ -42,7 +42,13 @@ def get_l_inf_error_2D(
 
     # Set up the root of the domain
     root = Node(
-        xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+        xmin=west,
+        xmax=east,
+        ymin=south,
+        ymax=north,
+        depth=0,
+        zmin=None,
+        zmax=None,
     )
 
     solver_obj = create_solver_obj_2D(p=p, q=q, root=root, uniform_levels=l)
@@ -88,7 +94,9 @@ def get_l_inf_error_2D(
         boundary_data_lst = [
             dirichlet_data_fn(boundary_points[:n_per_side]),
             dirichlet_data_fn(boundary_points[n_per_side : 2 * n_per_side]),
-            dirichlet_data_fn(boundary_points[2 * n_per_side : 3 * n_per_side]),
+            dirichlet_data_fn(
+                boundary_points[2 * n_per_side : 3 * n_per_side]
+            ),
             dirichlet_data_fn(boundary_points[3 * n_per_side :]),
         ]
 

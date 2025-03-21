@@ -23,7 +23,9 @@ from hps.src.quadrature.quad_3D.indexing import (
 from hps.src.quadrature.trees import Node, get_all_leaves
 
 
-def precompute_refining_coarsening_ops(q: int) -> Tuple[jnp.ndarray, jnp.ndarray]:
+def precompute_refining_coarsening_ops(
+    q: int,
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
     """
     The refining operator maps from a Gauss-Legendre grid to four Gauss-Legendre grids on
     the same domain.
@@ -83,14 +85,18 @@ def precompute_refining_coarsening_ops(q: int) -> Tuple[jnp.ndarray, jnp.ndarray
     )
     B_bools = idxes % q < q / 2
     B_bools = jnp.logical_and(B_bools, idxes >= q**2 / 2)
-    coarsening_op_out = coarsening_op_out.at[B_bools, q**2 : 2 * (q**2)].set(from_B)
+    coarsening_op_out = coarsening_op_out.at[B_bools, q**2 : 2 * (q**2)].set(
+        from_B
+    )
 
     from_C = barycentric_lagrange_2d_interpolation_matrix(
         second_half, second_half, gauss_pts_second_half, gauss_pts_second_half
     )
     C_bools = idxes % q >= q / 2
     C_bools = jnp.logical_and(C_bools, idxes >= q**2 / 2)
-    coarsening_op_out = coarsening_op_out.at[C_bools, 2 * q**2 : 3 * (q**2)].set(from_C)
+    coarsening_op_out = coarsening_op_out.at[
+        C_bools, 2 * q**2 : 3 * (q**2)
+    ].set(from_C)
 
     from_D = barycentric_lagrange_2d_interpolation_matrix(
         first_half, second_half, gauss_pts_first_half, gauss_pts_second_half
@@ -341,7 +347,6 @@ def interp_operator_to_uniform(
 
     # Loop through each point and compute the operator for that point
     for i in range(pts.shape[0]):
-
         leaves_containing_i = []
         to_x_i = pts[i, 0].reshape((1,))
         to_y_i = pts[i, 1].reshape((1,))
@@ -357,9 +362,15 @@ def interp_operator_to_uniform(
             leaf = leaves_iter[leaf_idx]
 
             # Get the 3D Cheby panel for this leaf
-            from_x = affine_transform(cheby_pts_1d, jnp.array([leaf.xmin, leaf.xmax]))
-            from_y = affine_transform(cheby_pts_1d, jnp.array([leaf.ymin, leaf.ymax]))
-            from_z = affine_transform(cheby_pts_1d, jnp.array([leaf.zmin, leaf.zmax]))
+            from_x = affine_transform(
+                cheby_pts_1d, jnp.array([leaf.xmin, leaf.xmax])
+            )
+            from_y = affine_transform(
+                cheby_pts_1d, jnp.array([leaf.ymin, leaf.ymax])
+            )
+            from_z = affine_transform(
+                cheby_pts_1d, jnp.array([leaf.zmin, leaf.zmax])
+            )
 
             I_local = barycentric_lagrange_3d_interpolation_matrix(
                 from_x, from_y, from_z, to_x_i, to_y_i, to_z_i
@@ -441,7 +452,12 @@ def interp_from_nonuniform_hps_to_uniform_grid(
 
     # Interpolate to the target points
     vals = vmapped_interp_to_point(
-        xvals_for_vmap, yvals_for_vmap, zvals_for_vmap, corners_for_vmap, f_for_vmap, p
+        xvals_for_vmap,
+        yvals_for_vmap,
+        zvals_for_vmap,
+        corners_for_vmap,
+        f_for_vmap,
+        p,
     )
     return vals, pts
 
@@ -498,4 +514,6 @@ def _interp_to_point(
     return I @ f
 
 
-vmapped_interp_to_point = jax.vmap(_interp_to_point, in_axes=(0, 0, 0, 0, 0, None))
+vmapped_interp_to_point = jax.vmap(
+    _interp_to_point, in_axes=(0, 0, 0, 0, 0, None)
+)

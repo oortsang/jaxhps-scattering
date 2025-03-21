@@ -9,7 +9,6 @@ from hps.src.inverse_scattering_utils import (
 
 class Test_q_point_sources:
     def test_0(self) -> None:
-
         a = 3
         b = 4
         n = 5

@@ -12,7 +12,9 @@ from hps.src.quadrature.quadrature_utils import (
 
 
 @partial(jax.jit, static_argnums=(0,))
-def precompute_diff_operators(p: int, half_side_len: float) -> Tuple[jnp.ndarray]:
+def precompute_diff_operators(
+    p: int, half_side_len: float
+) -> Tuple[jnp.ndarray]:
     """
     Returns D_x, D_y, D_z, D_xx, D_yy, D_zz, D_xy, D_xz, D_yz
     """

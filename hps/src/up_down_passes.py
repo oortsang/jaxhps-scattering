@@ -87,7 +87,9 @@ def fused_pde_solve_2D(
     """
     chunksize, _ = get_fused_chunksize_2D(t.p, source_term.dtype, 4**t.l)
     if chunksize == 4**t.l:
-        logging.debug("fused_pde_solve_2D: data is small enough for single chunk.")
+        logging.debug(
+            "fused_pde_solve_2D: data is small enough for single chunk."
+        )
         t.interior_solns = _fused_all_single_chunk(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -183,7 +185,9 @@ def fused_pde_solve_2D_ItI(
     """
     chunksize, _ = get_fused_chunksize_2D(t.p, source_term.dtype, 4**t.l)
     if chunksize == 4**t.l:
-        logging.debug("fused_pde_solve_2D: data is small enough for single chunk.")
+        logging.debug(
+            "fused_pde_solve_2D: data is small enough for single chunk."
+        )
         t.interior_solns = _fused_all_single_chunk_ItI(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -207,7 +211,7 @@ def fused_pde_solve_2D_ItI(
         )
 
     else:
-        S_arr_lst,  f_lst = _fused_local_solve_and_build_2D_ItI(
+        S_arr_lst, f_lst = _fused_local_solve_and_build_2D_ItI(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
             D_yy=t.D_yy,
@@ -283,7 +287,9 @@ def baseline_pde_solve_2D(
     """
     chunksize, _ = get_fused_chunksize_2D(t.p, source_term.dtype, 4**t.l)
     if chunksize == 4**t.l:
-        logging.debug("baseline_pde_solve_2D: data is small enough for single chunk.")
+        logging.debug(
+            "baseline_pde_solve_2D: data is small enough for single chunk."
+        )
         t.interior_solns = _fused_all_single_chunk(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -553,10 +559,12 @@ def build_stage(
         # 3D case
         if solver_obj.uniform_grid:
             # Outputs of this function are saved in the solver_obj object.
-            S_arr_lst, DtN_arr_lst, v_int_arr_lst, D_size = _uniform_build_stage_3D_DtN(
-                root=solver_obj.root,
-                DtN_maps=solver_obj.interior_node_DtN_maps[0],
-                v_prime_arr=solver_obj.leaf_node_v_prime_vecs,
+            S_arr_lst, DtN_arr_lst, v_int_arr_lst, D_size = (
+                _uniform_build_stage_3D_DtN(
+                    root=solver_obj.root,
+                    DtN_maps=solver_obj.interior_node_DtN_maps[0],
+                    v_prime_arr=solver_obj.leaf_node_v_prime_vecs,
+                )
             )
             solver_obj.interior_node_S_maps = S_arr_lst
             solver_obj.interior_node_DtN_maps = DtN_arr_lst
@@ -589,14 +597,16 @@ def build_stage(
         else:
             if solver_obj.uniform_grid:
                 # 2D DtN case
-                S_arr_lst,  v_arr_lst = _uniform_build_stage_2D_DtN(
+                S_arr_lst, v_arr_lst = _uniform_build_stage_2D_DtN(
                     solver_obj.interior_node_DtN_maps[0],
                     solver_obj.leaf_node_v_prime_vecs,
                     solver_obj.l,
                 )
             else:
                 _adaptive_build_stage_2D(
-                    solver_obj.root, solver_obj.refinement_op, solver_obj.coarsening_op
+                    solver_obj.root,
+                    solver_obj.refinement_op,
+                    solver_obj.coarsening_op,
                 )
 
     # Set the appropriate attributes in the solver_obj object.
@@ -614,7 +624,6 @@ def down_pass(
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
 ) -> None:
-
     if tree.D_z is not None:
         # 3D case
         if tree.uniform_grid:

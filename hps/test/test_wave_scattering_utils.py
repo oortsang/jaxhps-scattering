@@ -16,7 +16,6 @@ jax.config.update("jax_enable_x64", True)
 
 class Test_get_uin:
     def test_0(self) -> None:
-
         n = 16
         n_src = 7
         k = 2.0
@@ -37,7 +36,6 @@ class Test_get_uin:
 
 class Test_get_uin_and_normals:
     def test_0(self) -> None:
-
         n = 16
         n_src = 7
         k = 2.0
@@ -49,7 +47,9 @@ class Test_get_uin_and_normals:
             np.random.randn(n_src).astype(np.float64), dtype=jnp.float64
         )
 
-        uin, normals = get_uin_and_normals(k, gauss_bdry_pts, source_directions)
+        uin, normals = get_uin_and_normals(
+            k, gauss_bdry_pts, source_directions
+        )
 
         assert uin.shape == (n, n_src)
         assert uin.dtype == jnp.complex128

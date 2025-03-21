@@ -3,7 +3,6 @@ import jax
 import jax.numpy as jnp
 
 
-
 @jax.jit
 def assemble_merge_outputs_ItI(
     A_lst: List[jnp.array],
@@ -381,7 +380,18 @@ def _oct_merge_from_submatrices(
     # Set up indexes for the blocks; we don't know the shape of the blocks a priori
     n_ext_pts = n_1 + n_2 + n_3 + n_4 + n_5 + n_6 + n_7 + n_8
     n_int_pts = (
-        n_9 + n_10 + n_11 + n_12 + n_13 + n_14 + n_15 + n_16 + n_17 + n_18 + n_19 + n_20
+        n_9
+        + n_10
+        + n_11
+        + n_12
+        + n_13
+        + n_14
+        + n_15
+        + n_16
+        + n_17
+        + n_18
+        + n_19
+        + n_20
     )
     idx_1 = n_1
     idx_2 = n_1 + n_2
@@ -402,9 +412,32 @@ def _oct_merge_from_submatrices(
     idx_16 = n_9 + n_10 + n_11 + n_12 + n_13 + n_14 + n_15 + n_16
     idx_17 = n_9 + n_10 + n_11 + n_12 + n_13 + n_14 + n_15 + n_16 + n_17
     idx_18 = n_9 + n_10 + n_11 + n_12 + n_13 + n_14 + n_15 + n_16 + n_17 + n_18
-    idx_19 = n_9 + n_10 + n_11 + n_12 + n_13 + n_14 + n_15 + n_16 + n_17 + n_18 + n_19
+    idx_19 = (
+        n_9
+        + n_10
+        + n_11
+        + n_12
+        + n_13
+        + n_14
+        + n_15
+        + n_16
+        + n_17
+        + n_18
+        + n_19
+    )
     idx_20 = (
-        n_9 + n_10 + n_11 + n_12 + n_13 + n_14 + n_15 + n_16 + n_17 + n_18 + n_19 + n_20
+        n_9
+        + n_10
+        + n_11
+        + n_12
+        + n_13
+        + n_14
+        + n_15
+        + n_16
+        + n_17
+        + n_18
+        + n_19
+        + n_20
     )
 
     # B is a block matrix with an array of (8x12) blocks.
@@ -560,7 +593,16 @@ def _oct_merge_from_submatrices(
     D = D.at[idx_19:idx_20, idx_15:idx_16].set(T_h_20_16)
     D = D.at[idx_19:idx_20, idx_19:idx_20].set(T_h_20_20 + T_d_20_20)
 
-    A_lst = [T_a_1_1, T_b_2_2, T_c_3_3, T_d_4_4, T_e_5_5, T_f_6_6, T_g_7_7, T_h_8_8]
+    A_lst = [
+        T_a_1_1,
+        T_b_2_2,
+        T_c_3_3,
+        T_d_4_4,
+        T_e_5_5,
+        T_f_6_6,
+        T_g_7_7,
+        T_h_8_8,
+    ]
     delta_v_prime_int = jnp.concatenate(
         [
             v_prime_a_9 + v_prime_b_9,

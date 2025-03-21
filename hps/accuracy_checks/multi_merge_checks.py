@@ -68,7 +68,13 @@ def check_l_inf_error_convergence_fixed_p_increasing_l(
 
         # Set up the Tree
         root = Node(
-            xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+            xmin=west,
+            xmax=east,
+            ymin=south,
+            ymax=north,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         tree = create_solver_obj_2D(p=p, q=q, root=root, uniform_levels=l)
 
@@ -81,7 +87,10 @@ def check_l_inf_error_convergence_fixed_p_increasing_l(
 
         source = source_fn(tree.leaf_cheby_points)
         local_solve_stage(
-            tree, source_term=source, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            tree,
+            source_term=source,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
 
         # Do the upward pass
@@ -100,8 +109,14 @@ def check_l_inf_error_convergence_fixed_p_increasing_l(
                 [
                     # S boundary
                     -1 * dudy_fn(tree.root_boundary_points[:n_per_side]),
-                    dudx_fn(tree.root_boundary_points[n_per_side : 2 * n_per_side]),
-                    dudy_fn(tree.root_boundary_points[2 * n_per_side : 3 * n_per_side]),
+                    dudx_fn(
+                        tree.root_boundary_points[n_per_side : 2 * n_per_side]
+                    ),
+                    dudy_fn(
+                        tree.root_boundary_points[
+                            2 * n_per_side : 3 * n_per_side
+                        ]
+                    ),
                     # W boundary
                     -1 * dudx_fn(tree.root_boundary_points[3 * n_per_side :]),
                 ]
@@ -125,7 +140,8 @@ def check_l_inf_error_convergence_fixed_p_increasing_l(
 
             if particular_soln_fn is not None:
                 expected_soln_vals = (
-                    expected_soln_vals + particular_soln_fn(all_cheby_pts).flatten()
+                    expected_soln_vals
+                    + particular_soln_fn(all_cheby_pts).flatten()
                 )
 
             # plot_soln_from_cheby_nodes(
@@ -223,7 +239,10 @@ def check_l_inf_error_convergence_fixed_l_increasing_p(
         source = source_fn(tree.leaf_cheby_points)
         # Do the local solve stage
         local_solve_stage(
-            tree, source_term=source, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            tree,
+            source_term=source,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
 
         # Do the upward pass
@@ -240,7 +259,9 @@ def check_l_inf_error_convergence_fixed_l_increasing_p(
         # all_soln_vals = jnp.reshape(tree.interior_solns, (-1))
         all_soln_vals = tree.interior_solns.flatten()
 
-        expected_soln_vals = dirichlet_data_fn(tree.leaf_cheby_points).flatten()
+        expected_soln_vals = dirichlet_data_fn(
+            tree.leaf_cheby_points
+        ).flatten()
 
         error_vals = error_vals.at[i].set(
             jnp.max(jnp.abs(all_soln_vals - expected_soln_vals))
@@ -264,7 +285,9 @@ def check_l_inf_error_convergence_fixed_l_increasing_p(
         yvals = np.exp(m * xvals + b)
 
     fig, ax = plt.subplots()
-    ax.set_title(f"Error convergence for Poisson BVP split into {2**l} patches")
+    ax.set_title(
+        f"Error convergence for Poisson BVP split into {2**l} patches"
+    )
     ax.set_xlabel("p = Order of Chebyshev grid for each patch")
     ax.set_ylabel("L_inf error at Chebyshev nodes")
     ax.plot(p_values, error_vals, "o-")
@@ -315,7 +338,9 @@ def check_l_inf_error_convergence_fixed_l_increasing_p_ItI(
 
         # Set up the Tree
         root = Node(xmin=west, xmax=east, ymin=south, ymax=north, depth=0)
-        tree = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=eta)
+        tree = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=eta
+        )
 
         # Create coeffs for Laplacian
         d_xx_coeffs = d_xx_coeff_fn(tree.leaf_cheby_points)
@@ -404,7 +429,8 @@ def check_l_inf_error_convergence_fixed_l_increasing_p_ItI(
             expected_soln = dirichlet_data_fn(tree.leaf_cheby_points).flatten()
             if part_soln_fn is not None:
                 expected_soln = (
-                    expected_soln + part_soln_fn(tree.leaf_cheby_points).flatten()
+                    expected_soln
+                    + part_soln_fn(tree.leaf_cheby_points).flatten()
                 )
 
             # Plot the expected and computed solutions

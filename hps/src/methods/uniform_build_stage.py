@@ -45,11 +45,15 @@ def _uniform_build_stage_3D_DtN(
     DtN_lst = []
     v_int_lst = []
 
-    logging.debug("_uniform_build_stage_3D_DtN: DtN_maps.device %s", DtN_maps.devices())
+    logging.debug(
+        "_uniform_build_stage_3D_DtN: DtN_maps.device %s", DtN_maps.devices()
+    )
 
     DtN_arr = jax.device_put(DtN_arr, device)
     v_prime_arr = jax.device_put(v_prime_arr, device)
-    logging.debug("_uniform_build_stage_3D_DtN: DtN_arr.device %s", DtN_arr.devices())
+    logging.debug(
+        "_uniform_build_stage_3D_DtN: DtN_arr.device %s", DtN_arr.devices()
+    )
 
     q = int(jnp.sqrt(DtN_arr.shape[-1] // 6))
     # print("_build_stage_3D: DtN_arr shape: ", DtN_arr.shape)
@@ -147,9 +151,12 @@ def _uniform_build_stage_2D_DtN(
             v_int_lst: List of particular solution boundary fluxes at each level of the quadtree. Each v_int matrix has shape (n_quad_merges, 4, n_int).
     """
     logging.debug("_uniform_build_stage_2D_DtN: started")
-    logging.debug("_uniform_build_stage_2D_DtN: DtN_maps shape: %s", DtN_maps.shape)
     logging.debug(
-        "_uniform_build_stage_2D_DtN: input DtN_maps.device %s", DtN_maps.devices()
+        "_uniform_build_stage_2D_DtN: DtN_maps shape: %s", DtN_maps.shape
+    )
+    logging.debug(
+        "_uniform_build_stage_2D_DtN: input DtN_maps.device %s",
+        DtN_maps.devices(),
     )
     logging.debug("_uniform_build_stage_2D_DtN: host_device: %s", host_device)
     # print("_build_stage_2D: device: ", device)
@@ -231,7 +238,9 @@ def _uniform_build_stage_2D_DtN(
     else:
         # In this branch, we are returning S_lst, g_tilde_lst, and optionally
         # T_last
-        S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
+        S_lst.append(
+            jax.device_put(jnp.expand_dims(S_last, axis=0), host_device)
+        )
         g_tilde_lst.append(
             jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device)
         )
@@ -289,8 +298,8 @@ def _uniform_build_stage_2D_ItI(
         # logging.debug("_build_stage_2D_ItI: T_arr.shape = %s", T_arr.shape)
         # logging.debug("_build_stage_2D_ItI: h_arr.shape = %s", h_arr.shape)
 
-        S_arr, T_arr_new, h_arr_new, g_tilde_arr = vmapped_uniform_quad_merge_ItI(
-            T_arr, h_arr
+        S_arr, T_arr_new, h_arr_new, g_tilde_arr = (
+            vmapped_uniform_quad_merge_ItI(T_arr, h_arr)
         )
         # T_arr.delete()
         # h_arr.delete()
@@ -340,7 +349,9 @@ def _uniform_build_stage_2D_ItI(
     else:
         # In this branch, we are returning S_lst, g_tilde_lst, and optionally
         # T_last
-        S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
+        S_lst.append(
+            jax.device_put(jnp.expand_dims(S_last, axis=0), host_device)
+        )
         g_tilde_lst.append(
             jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device)
         )
@@ -363,7 +374,6 @@ def _uniform_quad_merge(
     v_prime_c: jnp.ndarray,
     v_prime_d: jnp.ndarray,
 ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-
     (
         v_prime_a_1,
         v_prime_a_5,
@@ -480,7 +490,9 @@ def _uniform_quad_merge(
     )
     # v_int = neg_D_inv @ delta_v_prime
 
-    v_prime_ext = jnp.concatenate([v_prime_a_1, v_prime_b_2, v_prime_c_3, v_prime_d_4])
+    v_prime_ext = jnp.concatenate(
+        [v_prime_a_1, v_prime_b_2, v_prime_c_3, v_prime_d_4]
+    )
     # v_prime_ext_out = v_prime_ext + B @ v_int
 
     T, S, v_prime_ext_out, v_int = assemble_merge_outputs_DtN(
@@ -497,7 +509,9 @@ def _uniform_quad_merge(
 
 
 _vmapped_uniform_quad_merge = jax.vmap(
-    _uniform_quad_merge, in_axes=(0, 0, 0, 0, 0, 0, 0, 0), out_axes=(0, 0, 0, 0)
+    _uniform_quad_merge,
+    in_axes=(0, 0, 0, 0, 0, 0, 0, 0),
+    out_axes=(0, 0, 0, 0),
 )
 
 
@@ -521,7 +535,6 @@ def _uniform_oct_merge(
     v_prime_g: jnp.ndarray,
     v_prime_h: jnp.ndarray,
 ) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
-
     a_submatrices_subvecs = get_a_submatrices(T_a, v_prime_a)
     del T_a, v_prime_a
 
@@ -641,7 +654,6 @@ def _uniform_quad_merge_ItI(
     h_c: jnp.array,
     h_d: jnp.array,
 ) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
-
     # print("_quad_merge_ItI: h_a", h_a.shape)
     # First, find all of the necessary submatrices and sub-vectors
     (
@@ -790,7 +802,9 @@ def _uniform_quad_merge_ItI(
         ]
     )
 
-    h_int = jnp.concatenate([h_b_5, h_d_8, h_b_6, h_d_7, h_a_5, h_c_6, h_c_7, h_a_8])
+    h_int = jnp.concatenate(
+        [h_b_5, h_d_8, h_b_6, h_d_7, h_a_5, h_c_6, h_c_7, h_a_8]
+    )
     h_ext = jnp.concatenate([h_a_1, h_b_2, h_c_3, h_d_4])
     A_lst = [R_a_11, R_b_22, R_c_33, R_d_44]
 
