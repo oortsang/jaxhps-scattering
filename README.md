@@ -43,7 +43,7 @@ plot_hp_convergence_experiment.py
 
 ### Wave Scattering Self-Convergence
 
-![Showing the total wave field of a scattering problem where k=100 and the scattering potential is a sum of randomly-placed Gaussian bumps.](.github/assets/k_100_gauss_bumps_utot_ground_truth_real.svg)
+![Showing the total wave field of a scattering problem where k=200 and the scattering potential is a sum of randomly-placed Gaussian bumps.](.github/assets/k_200_gauss_bumps_utot_ground_truth_real.svg)
 
 This experiment measures the self-convergence of our HPS solver on a variable-medium wave scattering problem with 33 or 66 wavelengths across the computational domain.
 
