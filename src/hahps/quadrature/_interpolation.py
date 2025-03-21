@@ -5,13 +5,8 @@ It has utilites for interpolation maps between different quadratures, as well
 as 1D differentiation matrices defined over 2D Chebyshev grids.
 """
 
-from functools import partial
-
-from typing import Tuple
-
 import jax.numpy as jnp
 import jax
-import numpy as np
 
 
 jax.config.update("jax_enable_x64", True)
@@ -20,125 +15,7 @@ EPS = jnp.finfo(jnp.float64).eps
 
 
 @jax.jit
-def differentiation_matrix_1d(
-    points: jnp.ndarray,
-) -> jnp.ndarray:
-    """Creates a 1-D Chebyshev differentiation matrix as described in (T00) Ch 6. Expects points are Chebyshev points on [-1, 1].
-
-    Args:
-        points (jnp.ndarray): Has shape (p,)
-
-    Returns:
-        jnp.ndarray: Has shape (p,p)
-    """
-    p = points.shape[0]
-    # print(p)
-
-    # Here's the code from the MATLAB recipe book
-    # c = [2; ones(N-1,1); 2].*(-1).^(0:N)';
-    # X = repmat(x,1,N+1);
-    # dX = X-X';
-    # D = (c*(1./c)')./(dX+(eye(N+1))); % off-diagonal entries
-    # D = D - diag(sum(D'));
-
-    # Here's the jax version Owen wrote
-    c = jnp.ones(p)
-    c = c.at[0].set(2)
-    c = c.at[-1].set(2)
-    for i in range(1, p, 2):
-        c = c.at[i].set(-1 * c[i])
-    x = jnp.expand_dims(points, -1).repeat(p, axis=1)
-    dx = x - jnp.transpose(x)
-    coeff = jnp.outer(c, 1 / c)
-    d = coeff / (dx + jnp.eye(p))
-    dd = jnp.diag(jnp.sum(d, axis=1))
-
-    d = d - dd
-
-    return d
-
-
-def _chebyshev_points(n: int) -> jnp.ndarray:
-    """Returns n Chebyshev points over the interval [-1, 1]
-
-    out[i] = cos(pi * i / (n-1)) for i={0,...,n-1}
-
-    Actually I return the reversed array so the smallest points come first.
-
-    Args:
-        n (int): number of Chebyshev points to return
-
-    Returns:
-        jnp.ndarray: The sampled points in [-1, 1] and the corresponding angles in [0, pi]
-    """
-    cos_args = jnp.arange(n, dtype=jnp.float64) / (n - 1)
-    angles = jnp.flipud(jnp.pi * cos_args)
-    pts = jnp.cos(angles)
-
-    # Normalize by 1 / sqrt(1 - x^2)
-    weights = jnp.sin(angles) ** 2 / (n - 1) * np.pi
-    nrms = jnp.sqrt(1 - pts**2)
-    weights = weights / nrms
-    weights = weights.at[0].set(0.0)
-    weights = weights.at[-1].set(0.0)
-    return pts, weights
-
-
-chebyshev_points = jax.jit(_chebyshev_points, static_argnums=(0,))
-
-
-@partial(jax.jit, static_argnums=(0,))
-def chebyshev_weights(n: int, bounds: jnp.array) -> jnp.array:
-    """
-    Generates weights for a Chebyshev quadrature rule with n points over the interval [a, b].
-
-    Uses the Clenshaw-Curtis quadrature rule, specifically the version used in Chebfun:
-    https://github.com/chebfun/chebfun/blob/f44234100d8af189d60e4bc533f5e98a0442a4c1/%40chebtech2/quadwts.m
-
-    Args:
-        n (int): Number of quadrature points
-        bounds (jnp.array): Has shape (2,) and contains the interval endpoints [a, b]
-
-    Returns:
-        jnp.array: Has shape (n,) and contains the quadrature weights
-    """
-    a, b = bounds
-    interval_len = b - a
-
-    c = 2.0 / jnp.concatenate(
-        [jnp.array([1.0]), 1.0 - jnp.arange(2, n, 2) ** 2]
-    )
-
-    if n % 2:
-        # # Mirror for DCT via FFT
-        start = n // 2
-        c_slice = jnp.flip(c[1:start])
-        c = jnp.concatenate([c, c_slice])
-
-        w = jnp.fft.ifft(c).real
-        w_out = jnp.concatenate([w, jnp.array([w[0] / 2])])
-        w_out = w_out.at[0].set(w[0] / 2)
-    else:
-        c = 2.0 / jnp.concatenate(
-            [jnp.array([1.0]), 1.0 - jnp.arange(2, n, 2) ** 2]
-        )
-        # Mirror for DCT via FFT
-        start = n // 2 + 1
-        c_slice = jnp.flip(c[1:start])
-        c = jnp.concatenate([c, c_slice])
-
-        # c = jnp.fft.ifftshift(c)
-        w = jnp.fft.ifft(c).real
-        w_out = jnp.concatenate([w, jnp.array([w[0] / 2])])
-        w_out = w_out.at[0].set(w[0] / 2)
-
-    # Scale by interval length
-    w_out = w_out * interval_len / 2
-    return w_out
-
-
-@jax.jit
-def barycentric_lagrange_interpolation_matrix(
+def barycentric_lagrange_interpolation_matrix_1D(
     from_pts: jnp.ndarray, to_pts: jnp.ndarray
 ) -> jnp.ndarray:
     """
@@ -215,7 +92,7 @@ def barycentric_lagrange_interpolation_matrix(
 
 
 @jax.jit
-def barycentric_lagrange_2d_interpolation_matrix(
+def barycentric_lagrange_interpolation_matrix_2D(
     from_pts_x: jnp.ndarray,
     from_pts_y: jnp.ndarray,
     to_pts_x: jnp.ndarray,
@@ -268,7 +145,7 @@ def barycentric_lagrange_2d_interpolation_matrix(
 
 
 @jax.jit
-def barycentric_lagrange_3d_interpolation_matrix(
+def barycentric_lagrange_interpolation_matrix_3D(
     from_pts_x: jnp.ndarray,
     from_pts_y: jnp.ndarray,
     from_pts_z: jnp.ndarray,
@@ -336,79 +213,3 @@ def barycentric_lagrange_3d_interpolation_matrix(
     mat_shape = (p**3, n**3)
     matrix = matrix.reshape(mat_shape)
     return matrix
-
-
-@jax.jit
-def affine_transform(pts: jnp.ndarray, ab: jnp.ndarray) -> jnp.ndarray:
-    """Affine transforms the points pts, which are assumed to be
-    in the interval [-1, 1], to the interval [a, b].
-
-    Args:
-        pts (jnp.ndarray): Has shape (n,)
-        ab (jnp.ndarray): Has shape (2,)
-    Returns:
-        jnp.ndarray: Has shape (n,)
-    """
-    a, b = ab
-    return 0.5 * (b - a) * pts + 0.5 * (a + b)
-
-
-def check_current_discretization(
-    f_evals: jnp.ndarray,
-    f_evals_refined: jnp.ndarray,
-    refinement_op: jnp.ndarray,
-    tol: float,
-) -> bool:
-    """Implements the check performed in section 3.1 of the Geldermans Gillman
-    2019 paper.
-
-    Takes the f_evals, interpolates them to the refined grid, and compares the
-    interpolated values to the f_evals_refined. If the difference is less than
-    tol, returns True. Else, returns False.
-
-
-    Args:
-        f_evals (jnp.ndarray): Has shape (n,)
-        f_evals_refined (jnp.ndarray): Has shape (4n,) or in the 3D case (8n,)
-        refinement_op (jnp.ndarray): Has shape (4n, n) or in the 3D case (8n, n)
-        tol (float): Tolerance for the check
-
-    Returns:
-        bool: True if the current discretization is good, False otherwise
-    """
-    f_interp = refinement_op @ f_evals
-    f_evals_nrm = jnp.linalg.norm(f_evals_refined)
-    diff_nrm = jnp.linalg.norm(f_interp - f_evals_refined)
-    err = diff_nrm / f_evals_nrm
-    return err < tol
-
-
-@jax.jit
-def check_current_discretization_global_linf_norm(
-    f_evals: jnp.ndarray,
-    f_evals_refined: jnp.ndarray,
-    refinement_op: jnp.ndarray,
-    tol: float,
-    global_linf_norm: float,
-) -> Tuple[bool, float]:
-    """Takes the f_evals, interpolates them to the refined grid, and computes the
-    L_inf norm of the difference.
-
-    Args:
-        f_evals (jnp.ndarray): Has shape (n,)
-        f_evals_refined (jnp.ndarray): Has shape (4n,) or in the 3D case (8n,)
-        refinement_op (jnp.ndarray): Has shape (4n, n) or in the 3D case (8n, n)
-        tol (float): Tolerance for the check
-        global_linf_norm (float): The global L_inf norm of the function
-
-    Returns:
-        Tuple[bool, float]: True if the current discretization is good, False otherwise,
-        and max(global_linf_norm, L_inf(f_evals_refined))
-    """
-
-    f_interp = refinement_op @ f_evals
-    ref_max = jnp.max(jnp.abs(f_evals_refined))
-    diff_nrm = jnp.max(jnp.abs(f_interp - f_evals_refined))
-    nrm_const = jnp.max(jnp.array([global_linf_norm, ref_max]))
-    err = diff_nrm / nrm_const
-    return err < tol, nrm_const
