@@ -23,5 +23,5 @@ jobs:
         conda env update --file env.yaml --name base
     - name: Test with pytest
       run: |
-        python -m pytest hps/test/
+        pytest
 

@@ -10,6 +10,7 @@ from ._interpolation import (
     barycentric_lagrange_interpolation_matrix_2D,
     barycentric_lagrange_interpolation_matrix_3D,
 )
+from ._utils import meshgrid_to_lst_of_pts
 
 
 __all__ = [
@@ -21,4 +22,5 @@ __all__ = [
     "barycentric_lagrange_interpolation_matrix_1D",
     "barycentric_lagrange_interpolation_matrix_2D",
     "barycentric_lagrange_interpolation_matrix_3D",
+    "meshgrid_to_lst_of_pts",
 ]

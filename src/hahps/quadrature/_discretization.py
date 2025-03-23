@@ -27,13 +27,13 @@ def chebyshev_points(n: int) -> jax.Array:
     angles = jnp.flipud(jnp.pi * cos_args)
     pts = jnp.cos(angles)
 
-    # Normalize by 1 / sqrt(1 - x^2)
-    weights = jnp.sin(angles) ** 2 / (n - 1) * np.pi
-    nrms = jnp.sqrt(1 - pts**2)
-    weights = weights / nrms
-    weights = weights.at[0].set(0.0)
-    weights = weights.at[-1].set(0.0)
-    return pts, weights
+    # # Normalize by 1 / sqrt(1 - x^2)
+    # weights = jnp.sin(angles) ** 2 / (n - 1) * np.pi
+    # nrms = jnp.sqrt(1 - pts**2)
+    # weights = weights / nrms
+    # weights = weights.at[0].set(0.0)
+    # weights = weights.at[-1].set(0.0)
+    return pts
 
 
 @partial(jax.jit, static_argnums=(0,))

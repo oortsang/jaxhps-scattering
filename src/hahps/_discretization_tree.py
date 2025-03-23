@@ -147,7 +147,7 @@ def unflatten_discretizationnode2D(d: Tuple, c: Tuple) -> DiscretizationNode2D:
         ymax=d[3],
         depth=d[4],
         data=d[5],
-        children=c,
+        children=c[0],
     )
     z.n_0 = d[6]
     z.n_1 = d[7]
@@ -253,3 +253,30 @@ def unflatten_discretizationnode3D(d: Tuple, c: Tuple) -> DiscretizationNode3D:
     z.n_5 = d[13]
 
     return z
+
+
+@jax.jit
+def get_discretization_node_area(
+    node: DiscretizationNode2D | DiscretizationNode3D,
+) -> float:
+    # Check if it's a 3D node
+    if isinstance(node, DiscretizationNode3D):
+        return (
+            (node.xmax - node.xmin)
+            * (node.ymax - node.ymin)
+            * (node.zmax - node.zmin)
+        )
+    else:
+        return (node.xmax - node.xmin) * (node.ymax - node.ymin)
+
+
+def get_all_leaves(
+    node: DiscretizationNode2D | DiscretizationNode3D,
+) -> Tuple[DiscretizationNode2D | DiscretizationNode3D]:
+    if not len(node.children):
+        return (node,)
+    else:
+        leaves = ()
+        for child in node.children:
+            leaves += get_all_leaves(child)
+        return leaves
