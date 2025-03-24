@@ -5,6 +5,7 @@ from hahps._interpolation_methods import (
     interp_from_hps_2D,
     interp_from_hps_3D,
     interp_to_single_Chebyshev_panel_2D,
+    interp_to_single_Chebyshev_panel_3D,
 )
 from hahps._discretization_tree import (
     DiscretizationNode2D,
@@ -344,3 +345,27 @@ class Test_interp_to_single_Chebyshev_panel_2D:
             samples=samples,
         )
         assert out.shape == (p**2,)
+
+
+class Test_interp_to_single_Chebyshev_panel_3D:
+    def test_0(self) -> None:
+        """Check that interpolation to a single Chebyshev panel is correct."""
+        p = 4
+        n_x = 5
+
+        node_bounds = jnp.array([0.0, 1.0, 0.0, 1.0, 0.0, 1.0])
+        samples = jnp.ones((n_x, n_x, n_x), dtype=jnp.float64)
+
+        x_vals = jnp.linspace(0.0, 1.0, n_x)
+        y_vals = jnp.linspace(0.0, 1.0, n_x)
+        z_vals = jnp.linspace(0.0, 1.0, n_x)
+
+        out = interp_to_single_Chebyshev_panel_3D(
+            node_bounds=node_bounds,
+            p=p,
+            from_x=x_vals,
+            from_y=y_vals,
+            from_z=z_vals,
+            samples=samples,
+        )
+        assert out.shape == (p**3,)

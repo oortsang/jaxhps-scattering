@@ -304,7 +304,7 @@ interp_to_hps_2D = jax.vmap(
 
 @partial(jax.jit, static_argnums=(2,))
 def interp_to_single_Chebyshev_panel_3D(
-    node: DiscretizationNode2D,
+    node_bounds: jax.Array,
     samples: jax.Array,
     p: int,
     from_x: jax.Array,
@@ -313,19 +313,19 @@ def interp_to_single_Chebyshev_panel_3D(
 ) -> jax.Array:
     # Get the points for this node
     c = chebyshev_points(p)
-    to_x = affine_transform(c, jnp.array([node.xmin, node.xmax]))
-    to_y = affine_transform(c, jnp.array([node.ymin, node.ymax]))
-    to_z = affine_transform(c, jnp.array([node.zmin, node.zmax]))
+    to_x = affine_transform(c, node_bounds[:2])
+    to_y = affine_transform(c, node_bounds[2:4])
+    to_z = affine_transform(c, node_bounds[4:])
 
     # Create the interpolation matrix
     I = barycentric_lagrange_interpolation_matrix_3D(
-        to_x, to_y, to_z, from_x, from_y, from_z
+        from_x, from_y, from_z, to_x, to_y, to_z
     )
     rearrange_idxes = rearrange_indices_ext_int_3D(p)
     I = I[rearrange_idxes, :]
 
     # Now we can evaluate the function at the sample points
-    return I @ samples
+    return I @ samples.flatten()
 
 
 interp_to_hps_3D = jax.vmap(

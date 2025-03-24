@@ -260,9 +260,9 @@ class Test_to_interior_points:
         p = 6
         q = 4
 
-        xmin = -1.0
+        xmin = 0.0
         xmax = 1.0
-        ymin = -1.0
+        ymin = 0.0
         ymax = 1.0
 
         root = DiscretizationNode2D(
@@ -297,6 +297,86 @@ class Test_to_interior_points:
 
         samples_on_hps = domain.to_interior_points(
             values=f_samples, sample_points_x=xvals, sample_points_y=yvals
+        )
+        f_expected = f(domain.interior_points)
+
+        assert samples_on_hps.shape == f_expected.shape
+
+        # Uncomment to plot the computed and expected solutions.
+
+        # plot_soln_from_cheby_nodes(
+        #     cheby_nodes=domain.interior_points.reshape(
+        #         -1, 2
+        #     ),  # Flatten for plotting
+        #     computed_soln=samples_on_hps.reshape(-1),  # Flatten for plotting
+        #     expected_soln=f_expected.reshape(-1),  # Flatten for plotting
+        #     corners=None,
+        # )
+
+        assert jnp.allclose(samples_on_hps, f_expected)
+
+    def test_2(self, caplog) -> None:
+        """Makes sure low-order polynomial interp is exact in non-uniform 3D case."""
+        caplog.set_level(logging.DEBUG)
+
+        p = 6
+        q = 4
+
+        xmin = -1.0
+        xmax = 1.0
+        ymin = -1.0
+        ymax = 1.0
+        zmin = -1.0
+        zmax = 1.0
+
+        root = DiscretizationNode3D(
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax,
+            zmin=zmin,
+            zmax=zmax,
+        )
+        add_eight_children(root, root=root, q=q)
+        add_eight_children(root.children[0], root=root, q=q)
+        domain = Domain(p=p, q=q, root=root)
+
+        # Use different number of points to catch errors
+        # confusing x and y axes.
+        n_x = 10
+        n_y = 11
+        n_z = 7
+        xvals = jnp.linspace(xmin, xmax, n_x)
+        yvals = jnp.linspace(ymin, ymax, n_y)
+        zvals = jnp.linspace(zmin, zmax, n_z)
+        # yvals = jnp.flip(yvals)  # Flip yvals to match the expected orientation
+        X, Y, Z = jnp.meshgrid(xvals, yvals, zvals, indexing="ij")
+        logging.debug("X.shape: %s", X.shape)
+        logging.debug("Y.shape: %s", Y.shape)
+        logging.debug("Z.shape: %s", Z.shape)
+        pts = jnp.concatenate(
+            (
+                jnp.expand_dims(X, 3),
+                jnp.expand_dims(Y, 3),
+                jnp.expand_dims(Z, 3),
+            ),
+            axis=3,
+        )
+        # pts = jnp.concatenate(
+        #     (jnp.expand_dims(X, 2), jnp.expand_dims(Y, 2)), axis=2
+        # )
+        logging.debug("pts.shape: %s", pts.shape)
+
+        def f(x: jax.Array) -> jax.Array:  # x^2 - 3y + z
+            return x[..., 0] ** 2 - 3 * x[..., 1] + x[..., 2]
+
+        f_samples = f(pts)
+
+        samples_on_hps = domain.to_interior_points(
+            values=f_samples,
+            sample_points_x=xvals,
+            sample_points_y=yvals,
+            sample_points_z=zvals,
         )
         f_expected = f(domain.interior_points)
 

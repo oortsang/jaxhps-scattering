@@ -126,8 +126,22 @@ class Domain:
                 leaves = get_all_uniform_leaves_3D(self.root, self.L)
             else:
                 leaves = get_all_leaves(self.root)
+
+            leaf_bounds = jnp.array(
+                [
+                    [
+                        leaf.xmin,
+                        leaf.xmax,
+                        leaf.ymin,
+                        leaf.ymax,
+                        leaf.zmin,
+                        leaf.zmax,
+                    ]
+                    for leaf in leaves
+                ]
+            )
             return interp_to_hps_3D(
-                leaves,
+                leaf_bounds,
                 values,
                 self.p,
                 sample_points_x,

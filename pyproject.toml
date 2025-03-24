@@ -7,3 +7,8 @@ line-length = 79
 # overlap with the use of a formatter, like Black, but we can override this behavior by
 # explicitly adding the rule.
 ignore = ["E741"]
+
+[tool.coverage.run]
+disable_warnings = ["no-data-collected"]
+source = ["src"]
+omit = ["src/hahps/_utils.py"]
