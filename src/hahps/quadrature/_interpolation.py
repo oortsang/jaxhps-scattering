@@ -98,18 +98,25 @@ def barycentric_lagrange_interpolation_matrix_2D(
     to_pts_x: jnp.ndarray,
     to_pts_y: jnp.ndarray,
 ) -> jnp.ndarray:
-    n = from_pts_x.shape[0]
-    p = to_pts_x.shape[0]
+    n_x = from_pts_x.shape[0]
+    p_x = to_pts_x.shape[0]
+    n_y = from_pts_y.shape[0]
+    p_y = to_pts_y.shape[0]
     # print("barycentric_lagrange_2d_interpolation_matrix: n, p", n, p)
 
     # Compute the inverses of the barycentric weights for x and y dimensions.
     # w_x[j] = \prod_{k != j} (from_pts_x[j] - from_pts_x[k])
-    w_x = jnp.ones(n, dtype=jnp.float64)
-    w_y = jnp.ones(n, dtype=jnp.float64)
-    for j in range(n):
-        for k in range(n):
+    w_x = jnp.ones(n_x, dtype=jnp.float64)
+    w_y = jnp.ones(n_y, dtype=jnp.float64)
+
+    for j in range(n_x):
+        for k in range(n_x):
             if j != k:
                 w_x = w_x.at[j].mul(from_pts_x[j] - from_pts_x[k])
+
+    for j in range(n_y):
+        for k in range(n_y):
+            if j != k:
                 w_y = w_y.at[j].mul(from_pts_y[j] - from_pts_y[k])
 
     # Compute matrix of distances between x and y points.
@@ -129,7 +136,7 @@ def barycentric_lagrange_interpolation_matrix_2D(
     norm_factors_y = jnp.sum(1 / (w_y[:, None] * (ydist)), axis=0)
 
     # Compute the matrix, iterating over the y_pts first.
-    i, j, k, l = jnp.indices((p, p, n, n))
+    i, j, k, l = jnp.indices((p_x, p_y, n_x, n_y))
     matrix = 1 / (
         xdist[k, i]
         * ydist[l, j]
@@ -139,7 +146,7 @@ def barycentric_lagrange_interpolation_matrix_2D(
         * norm_factors_y[j]
     )
 
-    matrix = matrix.reshape(p * p, n * n)
+    matrix = matrix.reshape(p_x * p_y, n_x * n_y)
 
     return matrix
 
@@ -167,18 +174,30 @@ def barycentric_lagrange_interpolation_matrix_3D(
         jnp.ndarray: Has shape (p**3, n**3)
     """
 
-    n = from_pts_x.shape[0]
-    p = to_pts_x.shape[0]
+    n_x = from_pts_x.shape[0]
+    p_x = to_pts_x.shape[0]
+
+    n_y = from_pts_y.shape[0]
+    p_y = to_pts_y.shape[0]
+
+    n_z = from_pts_z.shape[0]
+    p_z = to_pts_z.shape[0]
 
     # Compute the inverses of the barycentric weights for x, y, and z dimensions.
-    w_x = jnp.ones(n, dtype=jnp.float64)
-    w_y = jnp.ones(n, dtype=jnp.float64)
-    w_z = jnp.ones(n, dtype=jnp.float64)
-    for j in range(n):
-        for k in range(n):
+    w_x = jnp.ones(n_x, dtype=jnp.float64)
+    for j in range(n_x):
+        for k in range(n_x):
             if j != k:
                 w_x = w_x.at[j].mul(from_pts_x[j] - from_pts_x[k])
+    w_y = jnp.ones(n_y, dtype=jnp.float64)
+    for j in range(n_y):
+        for k in range(n_y):
+            if j != k:
                 w_y = w_y.at[j].mul(from_pts_y[j] - from_pts_y[k])
+    w_z = jnp.ones(n_z, dtype=jnp.float64)
+    for j in range(n_z):
+        for k in range(n_z):
+            if j != k:
                 w_z = w_z.at[j].mul(from_pts_z[j] - from_pts_z[k])
 
     # Compute the normalization factors for x, y, and z dimensions.
@@ -196,7 +215,7 @@ def barycentric_lagrange_interpolation_matrix_3D(
     norm_factors_z = jnp.sum(1 / (w_z[:, None] * zdist), axis=0)
 
     # Compute the matrix, iterating over the z_pts first.
-    i, j, k, l, m, o = jnp.indices((p, p, p, n, n, n))
+    i, j, k, l, m, o = jnp.indices((p_x, p_y, p_z, n_x, n_y, n_z))
 
     matrix = 1 / (
         xdist[l, i]
@@ -210,6 +229,6 @@ def barycentric_lagrange_interpolation_matrix_3D(
         * norm_factors_z[k]
     )
 
-    mat_shape = (p**3, n**3)
+    mat_shape = (p_x * p_y * p_z, n_x * n_y * n_z)
     matrix = matrix.reshape(mat_shape)
     return matrix

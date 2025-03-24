@@ -66,22 +66,27 @@ class Test_barycentric_lagrange_interpolation_matrix_2D:
         assert mat_2.shape == (p**2, q**2)
 
     def test_1(self):
-        """Tests accuracy of interpolation on the polynomial function f(x,y) = x^2 + y^2."""
-        p = 5
-        q = 3
+        """Tests accuracy of interpolation on the polynomial function f(x,y) = x^2 + y^2.
+        Different numbers of x and y from points"""
+        p_x = 5
+        p_y = 4
+        q_x = 3
+        q_y = 6
 
-        cheby_pts = chebyshev_points(p)
-        gauss_pts = gauss_points(q)
+        cheby_pts_x = chebyshev_points(p_x)
+        cheby_pts_y = chebyshev_points(p_y)
+        gauss_pts_x = gauss_points(q_x)
+        gauss_pts_y = gauss_points(q_y)
 
         mat = barycentric_lagrange_interpolation_matrix_2D(
-            cheby_pts, cheby_pts, gauss_pts, gauss_pts
+            cheby_pts_x, cheby_pts_y, gauss_pts_x, gauss_pts_y
         )
 
-        from_X, from_Y = jnp.meshgrid(cheby_pts, cheby_pts, indexing="ij")
+        from_X, from_Y = jnp.meshgrid(cheby_pts_x, cheby_pts_y, indexing="ij")
         from_pts = jnp.stack((from_X.flatten(), from_Y.flatten()), axis=-1)
         # print("test_1: from_pts = ", from_pts)
 
-        to_X, to_Y = jnp.meshgrid(gauss_pts, gauss_pts, indexing="ij")
+        to_X, to_Y = jnp.meshgrid(gauss_pts_x, gauss_pts_y, indexing="ij")
         to_pts = jnp.stack((to_X.flatten(), to_Y.flatten()), axis=-1)
         # print("test_1: to_pts = ", to_pts)
 
@@ -158,6 +163,23 @@ class Test_barycentric_lagrange_interpolation_matrix_2D:
         print("test_2: diffs: ", f_interp - f_evals_target)
         assert jnp.allclose(f_interp, f_evals_target)
 
+    # @pytest.mark.skip(reason="Not yet supported.")
+    def test_4(self) -> None:
+        """Tests that shapes are correct when from_x and from_y have different lengths."""
+        n_x = 5
+        n_y = 7
+        from_x = jnp.linspace(0.0, 1.0, n_x)
+        from_y = jnp.linspace(0.0, 1.0, n_y)
+        to_x = jnp.array([0.0, 0.5, 1.0])
+        to_y = jnp.array([0.0, 0.5, 1.0])
+
+        mat = barycentric_lagrange_interpolation_matrix_2D(
+            from_x, from_y, to_x, to_y
+        )
+        assert not jnp.any(jnp.isnan(mat))
+        assert not jnp.any(jnp.isinf(mat))
+        assert mat.shape == (9, n_x * n_y)
+
 
 class Test_barycentric_lagrange_interpolation_matrix_3D:
     def test_0(self) -> None:
@@ -182,19 +204,32 @@ class Test_barycentric_lagrange_interpolation_matrix_3D:
 
     def test_1(self) -> None:
         """Tests accuracy of interpolation on the polynomial function f(x,y,z) = x^2 + y^2 + 3z"""
-        p = 5
-        q = 4
+        p_x = 5
+        p_y = 4
+        p_z = 3
+        q_x = 7
+        q_y = 6
+        q_z = 5
 
-        cheby_pts = chebyshev_points(p)
-        gauss_pts = gauss_points(q)
+        cheby_pts_x = chebyshev_points(p_x)
+        cheby_pts_y = chebyshev_points(p_y)
+        cheby_pts_z = chebyshev_points(p_z)
+        gauss_pts_x = gauss_points(q_x)
+        gauss_pts_y = gauss_points(q_y)
+        gauss_pts_z = gauss_points(q_z)
 
         mat = barycentric_lagrange_interpolation_matrix_3D(
-            cheby_pts, cheby_pts, cheby_pts, gauss_pts, gauss_pts, gauss_pts
+            cheby_pts_x,
+            cheby_pts_y,
+            cheby_pts_z,
+            gauss_pts_x,
+            gauss_pts_y,
+            gauss_pts_z,
         )
         print("test_1: mat = ", mat)
 
         from_X, from_Y, from_Z = jnp.meshgrid(
-            cheby_pts, cheby_pts, cheby_pts, indexing="ij"
+            cheby_pts_x, cheby_pts_y, cheby_pts_z, indexing="ij"
         )
         from_pts = jnp.stack(
             (from_X.flatten(), from_Y.flatten(), from_Z.flatten()), axis=-1
@@ -202,7 +237,7 @@ class Test_barycentric_lagrange_interpolation_matrix_3D:
         # print("test_1: from_pts = ", from_pts)
 
         to_X, to_Y, to_Z = jnp.meshgrid(
-            gauss_pts, gauss_pts, gauss_pts, indexing="ij"
+            gauss_pts_x, gauss_pts_y, gauss_pts_z, indexing="ij"
         )
         to_pts = jnp.stack(
             (to_X.flatten(), to_Y.flatten(), to_Z.flatten()), axis=-1
