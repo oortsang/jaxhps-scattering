@@ -71,7 +71,7 @@ class Test_compute_boundary_Gauss_points_uniform_2D:
     def test_0(self) -> None:
         """Checks output shapes are correct on uniform refinement of 2 levels."""
         # p = 16
-        q = 14
+        q = 8
         L = 2
 
         root = DiscretizationNode2D(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
@@ -83,7 +83,7 @@ class Test_compute_boundary_Gauss_points_uniform_2D:
     def test_1(self) -> None:
         """Checks that outputs pass basic sanity checks on uniform refinement of 3 levels."""
         # p = 16
-        q = 14
+        q = 6
         L = 3
         corners = jnp.array([[-1, -1], [1, -1], [1, 1], [-1, 1]])
         west, south = corners[0]
@@ -118,7 +118,7 @@ class Test_compute_boundary_Gauss_points_adaptive_2D:
     def test_0(self) -> None:
         """Checks output shapes are correct on uniform refinement of 2 levels."""
         # p = 16
-        q = 14
+        q = 4
         root = DiscretizationNode2D(
             xmin=-1.0,
             xmax=1.0,
@@ -139,7 +139,7 @@ class Test_compute_boundary_Gauss_points_adaptive_2D:
     def test_1(self) -> None:
         """Checks that outputs pass basic sanity checks on uniform refinement of 3 levels."""
         # p = 16
-        q = 14
+        q = 6
         corners = jnp.array([[-1, -1], [1, -1], [1, 1], [-1, 1]])
         west, south = corners[0]
         east, north = corners[2]

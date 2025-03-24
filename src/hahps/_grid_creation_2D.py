@@ -10,6 +10,7 @@ from .quadrature import (
 )
 import jax
 import jax.numpy as jnp
+from typing import List
 import numpy as np
 from functools import partial
 
@@ -121,7 +122,7 @@ def compute_boundary_Gauss_points_uniform_2D(
     return gauss_nodes
 
 
-@partial(jax.jit, static_argnums=(1,))
+# @partial(jax.jit, static_argnums=(1,))
 def compute_interior_Chebyshev_points_adaptive_2D(
     root: DiscretizationNode2D, p: int
 ) -> jax.Array:
@@ -228,3 +229,18 @@ def rearrange_indices_ext_int(n: int) -> jnp.ndarray:
             continue
 
     return jnp.array(idxes)
+
+
+def get_all_uniform_leaves_2D(
+    root: DiscretizationNode2D, L: int
+) -> List[DiscretizationNode2D]:
+    bounds = jnp.array([[root.xmin, root.xmax, root.ymin, root.ymax]])
+
+    for _ in range(L):
+        bounds = vmapped_bounds_2D(bounds).reshape(-1, 4)
+
+    node_lst = [
+        DiscretizationNode2D(xmin=x[0], xmax=x[1], ymin=x[2], ymax=x[3])
+        for x in bounds
+    ]
+    return node_lst

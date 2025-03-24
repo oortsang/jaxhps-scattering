@@ -243,7 +243,7 @@ def unflatten_discretizationnode3D(d: Tuple, c: Tuple) -> DiscretizationNode3D:
         zmax=d[5],
         depth=d[6],
         data=d[7],
-        children=c,
+        children=c[0],
     )
     z.n_0 = d[8]
     z.n_1 = d[9]
@@ -253,6 +253,13 @@ def unflatten_discretizationnode3D(d: Tuple, c: Tuple) -> DiscretizationNode3D:
     z.n_5 = d[13]
 
     return z
+
+
+jax.tree_util.register_pytree_node(
+    DiscretizationNode3D,
+    flatten_discretizationnode3D,
+    unflatten_discretizationnode3D,
+)
 
 
 @jax.jit
