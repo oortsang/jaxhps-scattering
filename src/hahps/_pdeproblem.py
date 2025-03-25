@@ -17,6 +17,7 @@ from ._precompute_operators_3D import (
     precompute_P_3D_DtN,
     precompute_Q_3D_DtN,
 )
+from typing import List
 
 
 class PDEProblem:
@@ -168,3 +169,9 @@ class PDEProblem:
             self.Q = precompute_Q_3D_DtN(
                 domain.p, domain.q, self.D_x, self.D_y, self.D_z
             )
+
+        # Set up containers for the solution operators.
+        self.Y: jax.Array = None
+        self.v: jax.Array = None
+        self.S_lst: List[jax.Array] = []
+        self.g_tilde_lst: List[jax.Array] = []

@@ -287,3 +287,19 @@ def get_all_leaves(
         for child in node.children:
             leaves += get_all_leaves(child)
         return leaves
+
+
+def get_depth(node: DiscretizationNode2D | DiscretizationNode3D) -> int:
+    return jnp.max(jnp.array([child.depth for child in get_all_leaves(node)]))
+
+
+def get_nodes_at_level(
+    node: DiscretizationNode2D | DiscretizationNode3D, level: int
+) -> Tuple[DiscretizationNode2D | DiscretizationNode3D]:
+    if node.depth == level:
+        return (node,)
+    else:
+        nodes = ()
+        for child in node.children:
+            nodes += get_nodes_at_level(child, level)
+        return nodes

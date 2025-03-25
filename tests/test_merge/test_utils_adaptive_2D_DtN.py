@@ -1,37 +1,32 @@
 import pytest
 import jax.numpy as jnp
 
-from hps.src.quadrature.trees import (
-    Node,
-    add_four_children,
+from hahps._discretization_tree import DiscretizationNode2D
+from hahps._discretization_tree_operations_2D import add_four_children
+
+
+from hahps.merge._utils_adaptive_2D_DtN import (
+    _find_projection_list_5,
+    _find_projection_list_6,
+    find_projection_lists_2D,
 )
 
 
-from hps.src.methods.adaptive_merge_utils_2D import (
-    _find_compression_list_5,
-    _find_compression_list_6,
-    find_compression_lists_2D,
-)
-
-
-class Test__find_compression_list_5:
+class Test__find_projection_list_5:
     def test_0(self) -> None:
         """
         Test that we can find the compression list for a simple case.
         """
         # Create a tree with 1 node
-        root = Node(
+        root = DiscretizationNode2D(
             xmin=0.0,
             xmax=1.0,
             ymin=0.0,
             ymax=1.0,
-            depth=0,
-            zmin=None,
-            zmax=None,
         )
         add_four_children(root)
 
-        out_a, out_b = _find_compression_list_5(
+        out_a, out_b = _find_projection_list_5(
             root.children[0], root.children[1]
         )
 
@@ -49,14 +44,11 @@ class Test__find_compression_list_5:
 
         print("test_3: q = ", q)
 
-        root = Node(
+        root = DiscretizationNode2D(
             xmin=0.0,
             xmax=1.0,
             ymin=0.0,
             ymax=1.0,
-            depth=0,
-            zmin=None,
-            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         for child in root.children:
@@ -66,7 +58,7 @@ class Test__find_compression_list_5:
 
         # Expect out_a to look like [False, True, True]
         # # and out_b to look like [False, False]
-        out_a, out_b = _find_compression_list_5(
+        out_a, out_b = _find_projection_list_5(
             root.children[0], root.children[1]
         )
 
@@ -85,14 +77,11 @@ class Test__find_compression_list_5:
 
         print("test_3: q = ", q)
 
-        root = Node(
+        root = DiscretizationNode2D(
             xmin=0.0,
             xmax=1.0,
             ymin=0.0,
             ymax=1.0,
-            depth=0,
-            zmin=None,
-            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         for child in root.children:
@@ -111,7 +100,7 @@ class Test__find_compression_list_5:
             add_to=root.children[0].children[2].children[1], root=root, q=q
         )
 
-        out_a, out_b = _find_compression_list_5(
+        out_a, out_b = _find_projection_list_5(
             root.children[0], root.children[1]
         )
 
@@ -133,14 +122,11 @@ class Test__find_compression_lst_6:
 
         print("test_3: q = ", q)
 
-        root = Node(
+        root = DiscretizationNode2D(
             xmin=0.0,
             xmax=1.0,
             ymin=0.0,
             ymax=1.0,
-            depth=0,
-            zmin=None,
-            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         for child in root.children:
@@ -150,7 +136,7 @@ class Test__find_compression_lst_6:
 
         # Expect out_b to look like [False, True, True]
         # # and out_c to look like [False, False]
-        out_b, out_c = _find_compression_list_6(
+        out_b, out_c = _find_projection_list_6(
             root.children[1], root.children[2]
         )
 
@@ -164,27 +150,24 @@ class Test__find_compression_lst_6:
         assert jnp.all(out_c == expected_out_c)
 
 
-class Test_find_compression_lists_2D:
+class Test_find_projection_lists_2D:
     def test_0(self) -> None:
         """
         Test that we can find the compression list for a simple case.
         """
         # Create a tree with 1 node
         q = 2
-        root = Node(
+        root = DiscretizationNode2D(
             xmin=0.0,
             xmax=1.0,
             ymin=0.0,
             ymax=1.0,
-            depth=0,
-            zmin=None,
-            zmax=None,
         )
         add_four_children(root, root=root, q=q)
         for child in root.children:
             add_four_children(add_to=child, root=root, q=q)
 
-        out_arrs = find_compression_lists_2D(
+        out_arrs = find_projection_lists_2D(
             root.children[0],
             root.children[1],
             root.children[2],
