@@ -38,8 +38,8 @@ def bounds_for_quad_subdivision(bounds: jax.Array) -> jax.Array:
         [
             [xmin, x_mid, ymin, y_mid],  # SW
             [x_mid, xmax, ymin, y_mid],  # SE
-            [xmin, x_mid, y_mid, ymax],  # NE
-            [x_mid, xmax, y_mid, ymax],  # NW
+            [x_mid, xmax, y_mid, ymax],  # NE
+            [xmin, x_mid, y_mid, ymax],  # NW
         ]
     )
 

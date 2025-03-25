@@ -3,7 +3,7 @@ import numpy as np
 import jax.numpy as jnp
 
 from hahps.merge._uniform_2D_DtN import (
-    build_stage_uniform_2D_DtN,
+    merge_stage_uniform_2D_DtN,
     _uniform_quad_merge_DtN,
 )
 
@@ -15,9 +15,9 @@ from hahps._domain import Domain
 from hahps._pdeproblem import PDEProblem
 
 
-class Test__uniform_build_stage_2D_DtN:
+class Test__uniform_merge_stage_2D_DtN:
     def test_0(self, caplog) -> None:
-        """Tests the _uniform_build_stage_2D_DtN function returns without error."""
+        """Tests the _uniform_merge_stage_2D_DtN function returns without error."""
         caplog.set_level(logging.DEBUG)
 
         p = 8
@@ -52,7 +52,7 @@ class Test__uniform_build_stage_2D_DtN:
             h_arr,
         ) = local_solve_stage_uniform_2D_DtN(pde_problem=t)
 
-        S_arr_lst, g_tilde_lst = build_stage_uniform_2D_DtN(
+        S_arr_lst, g_tilde_lst = merge_stage_uniform_2D_DtN(
             T_arr=T_arr, h_arr=h_arr, l=l
         )
 

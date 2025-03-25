@@ -11,7 +11,7 @@ from ._schur_complement import (
 from .._device_config import DEVICE_ARR, HOST_DEVICE
 
 
-def build_stage_uniform_2D_DtN(
+def merge_stage_uniform_2D_DtN(
     T_arr: jnp.array,
     h_arr: jnp.array,
     l: int,
@@ -37,7 +37,7 @@ def build_stage_uniform_2D_DtN(
 
     # Working on merging the merge pairs at level i
     for i in range(l - 1):
-        logging.debug("_uniform_build_stage_2D_DtN: i: %i", i)
+        logging.debug("_uniform_merge_stage_2D_DtN: i: %i", i)
         (
             S_arr,
             T_arr_new,
@@ -51,7 +51,7 @@ def build_stage_uniform_2D_DtN(
         # the data on the CPU.
         if host_device != device:
             if not subtree_recomp:
-                logging.debug("_build_stage_2D: Moving data to CPU")
+                logging.debug("_merge_stage_2D: Moving data to CPU")
                 S_host = jax.device_put(S_arr, host_device)
                 S_lst.append(S_host)
 

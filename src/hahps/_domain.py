@@ -42,11 +42,13 @@ class Domain:
         self.root = root
         self.L = L
 
+        self.bool_2D = isinstance(root, DiscretizationNode2D)
+
         if self.L is not None:
             self.bool_uniform = True
             # Depending on whether root is a DiscretizationNode2D or
             # DiscretizationNode3D, we compute the grid points differently
-            if isinstance(root, DiscretizationNode2D):
+            if self.bool_2D:
                 self.interior_points = (
                     compute_interior_Chebyshev_points_uniform_2D(root, L, p)
                 )
@@ -64,7 +66,7 @@ class Domain:
         else:
             # If L is None, we're using an adaptive discretization
             self.bool_uniform = False
-            if isinstance(root, DiscretizationNode2D):
+            if self.bool_2D:
                 self.interior_points = (
                     compute_interior_Chebyshev_points_adaptive_2D(root, p)
                 )
@@ -201,3 +203,58 @@ class Domain:
                 y_vals=eval_points_y,
                 z_vals=eval_points_z,
             )
+
+    def get_adaptive_boundary_data_lst(
+        self, f: Callable[[jax.Array], jax.Array]
+    ) -> list[jax.Array]:
+        if self.bool_2D:
+            side_0_pts = self.boundary_points[
+                self.boundary_points[:, 1] == self.root.ymin
+            ]
+
+            side_1_pts = self.boundary_points[
+                self.boundary_points[:, 0] == self.root.xmax
+            ]
+            side_2_pts = self.boundary_points[
+                self.boundary_points[:, 1] == self.root.ymax
+            ]
+            side_3_pts = self.boundary_points[
+                self.boundary_points[:, 0] == self.root.xmin
+            ]
+
+            bdry_data_lst = [
+                f(side_0_pts),
+                f(side_1_pts),
+                f(side_2_pts),
+                f(side_3_pts),
+            ]
+        else:
+            face_1_pts = self.boundary_points[
+                self.boundary_points[:, 0] == self.root.xmin
+            ]
+            face_2_pts = self.boundary_points[
+                self.boundary_points[:, 0] == self.root.xmax
+            ]
+            face_3_pts = self.boundary_points[
+                self.boundary_points[:, 1] == self.root.ymin
+            ]
+            face_4_pts = self.boundary_points[
+                self.boundary_points[:, 1] == self.root.ymax
+            ]
+            face_5_pts = self.boundary_points[
+                self.boundary_points[:, 2] == self.root.zmin
+            ]
+            face_6_pts = self.boundary_points[
+                self.boundary_points[:, 2] == self.root.zmax
+            ]
+
+            bdry_data_lst = [
+                f(face_1_pts),
+                f(face_2_pts),
+                f(face_3_pts),
+                f(face_4_pts),
+                f(face_5_pts),
+                f(face_6_pts),
+            ]
+
+        return bdry_data_lst

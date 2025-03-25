@@ -6,6 +6,7 @@ from .quadrature import (
     differentiation_matrix_1D,
     chebyshev_points,
     gauss_points,
+    affine_transform,
     barycentric_lagrange_interpolation_matrix_1D,
 )
 from functools import partial
@@ -261,3 +262,38 @@ def precompute_G_2D_ItI(N_tilde: jnp.array, eta: float) -> jnp.array:
     )
 
     return F
+
+
+@partial(jax.jit, static_argnums=(0,))
+def precompute_projection_ops_2D(
+    q: int,
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    """
+    Precomputes a "refining" interpolation operator which maps from one
+    Gauss-Legendre panel to two Gauss-Legendre panels, and a "coarsening"
+    interpolation operator which maps from two Gauss-Legendre panels to one.
+
+    Args:
+        q (int): Number of Gauss-Legendre points on one panel
+
+    Returns:
+        Tuple[jnp.ndarray, jnp.ndarray]: The refining and coarsening operators
+            refining operator has shape (2*q, q)
+            coarsening operator has shape (q, 2*q)
+    """
+    gauss_pts = gauss_points(q)
+    gauss_pts_refined = jnp.concatenate(
+        [
+            affine_transform(gauss_pts, jnp.array([-1.0, 0.0])),
+            affine_transform(gauss_pts, jnp.array([0.0, 1.0])),
+        ]
+    )
+
+    L_2f1 = barycentric_lagrange_interpolation_matrix_1D(
+        gauss_pts, gauss_pts_refined
+    )
+    L_1f2 = barycentric_lagrange_interpolation_matrix_1D(
+        gauss_pts_refined, gauss_pts
+    )
+
+    return L_2f1, L_1f2

@@ -24,21 +24,12 @@ class NodeData:
         self.u: jnp.array = None
         self.g: jnp.array = None
 
+        # This is set when doing 3D DtN adaptive merging
+        self.L_4f1: jax.Array = None
+        self.L_1f4: jax.Array = None
+
         # This is set when performing adaptive meshing using an L2 criterion
         self.l2_nrm: float = 0.0
-
-        # Keeping track of indexing
-        # in 2D, self.n_i is the number of quadrature points along the boundary of
-        # side i of the patch. i = 0, 1, 2, 3 corresponds to the bottom, right,
-        # top, and left, or (S, E, N, W), sides of the patch, respectively.
-        # in 3D, self.n_i is the number of quadrature points along the boundary of
-        # each face of the voxel. See notes for ordering of the faces of voxels.
-        self.n_0: int = None
-        self.n_1: int = None
-        self.n_2: int = None
-        self.n_3: int = None
-        self.n_4: int = None
-        self.n_5: int = None
 
 
 def flatten_nodedata(nodedata: NodeData) -> Tuple:
@@ -48,13 +39,13 @@ def flatten_nodedata(nodedata: NodeData) -> Tuple:
         nodedata.h,
         nodedata.S,
         nodedata.g_tilde,
-        # nodedata.L_2f1,
-        # nodedata.L_1f2,
         nodedata.Y,
         nodedata.v,
         nodedata.u,
         nodedata.g,
         nodedata.l2_nrm,
+        nodedata.L_4f1,
+        nodedata.L_1f4,
     )
     return (c, d)
 
@@ -72,6 +63,8 @@ def unflatten_nodedata(aux_data: Tuple, children: Tuple) -> NodeData:
     z.u = aux_data[6]
     z.g = aux_data[7]
     z.l2_nrm = aux_data[8]
+    z.L_4f1 = aux_data[9]
+    z.L_1f4 = aux_data[10]
 
     return z
 
@@ -89,7 +82,6 @@ class DiscretizationNode2D:
         ymin: float,
         ymax: float,
         depth: int = 0,
-        data: NodeData = NodeData(),
         children: Tuple["DiscretizationNode2D"] = (),
     ):
         # Here is the auxiliary data
@@ -98,7 +90,7 @@ class DiscretizationNode2D:
         self.ymin = ymin
         self.ymax = ymax
         self.depth = depth
-        self.data = data
+        self.data: NodeData = NodeData()
 
         # Keeping track of indexing
         # in 2D, self.n_i is the number of quadrature points along the boundary of
@@ -146,13 +138,13 @@ def unflatten_discretizationnode2D(d: Tuple, c: Tuple) -> DiscretizationNode2D:
         ymin=d[2],
         ymax=d[3],
         depth=d[4],
-        data=d[5],
         children=c[0],
     )
     z.n_0 = d[6]
     z.n_1 = d[7]
     z.n_2 = d[8]
     z.n_3 = d[9]
+    z.data = d[5]
 
     return z
 

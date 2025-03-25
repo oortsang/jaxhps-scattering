@@ -8,11 +8,12 @@ from .._discretization_tree import (
     get_depth,
     get_nodes_at_level,
 )
+from .._pdeproblem import PDEProblem
 from ._schur_complement import (
     assemble_merge_outputs_DtN,
 )
 from ._utils_adaptive_2D_DtN import (
-    find_projection_lists_2D,
+    find_compression_lists_2D,
     get_quadmerge_blocks_a,
     get_quadmerge_blocks_b,
     get_quadmerge_blocks_c,
@@ -20,11 +21,7 @@ from ._utils_adaptive_2D_DtN import (
 )
 
 
-def build_stage_adaptive_2D_DtN(
-    root: DiscretizationNode2D,
-    refinement_op: jnp.array,
-    coarsening_op: jnp.array,
-) -> None:
+def merge_stage_adaptive_2D_DtN(pde_problem: PDEProblem) -> None:
     """Implements the upward pass, without the Tree interface.
 
     Args:
@@ -35,9 +32,11 @@ def build_stage_adaptive_2D_DtN(
     Returns:
         None. Sets outputs in the tree object.
     """
-    logging.debug("_build_stage_2D: started")
+    logging.debug("merge_stage_adaptive_2D_DtN: started")
 
+    root = pde_problem.domain.root
     depth = get_depth(root)
+    logging.debug("merge_stage_adaptive_2D_DtN: depth = %d", depth)
 
     # Perform a merge operation for each level of the tree. Start at the leaves
     # and continue until the root.
@@ -45,45 +44,63 @@ def build_stage_adaptive_2D_DtN(
     for j, i in enumerate(range(depth, 0, -1)):
         # Get the inputs to the merge operation from the tree.
         nodes_this_level = get_nodes_at_level(root, i)
-        DtN_this_level = [n.DtN for n in nodes_this_level]
-        v_prime_this_level = [n.v_prime for n in nodes_this_level]
+        T_this_level = [n.data.T for n in nodes_this_level]
+        h_this_level = [n.data.h for n in nodes_this_level]
 
         # The leaves in need of refinement are those who have more children than the min number
         # of children among siblings.
         # Has shape (m // 4, 8)
 
         # Expect DtN_arr to be a list of length (m // 4) where each element is a matrix.
-        S_arr_lst, DtN_arr_lst, v_prime_arr_lst, v_int_arr_lst = (
+        S_arr_lst, T_arr_lst, h_lst, g_tilde_lst = (
             quad_merge_nonuniform_whole_level(
-                DtN_this_level,
-                v_prime_this_level,
-                refinement_op,
-                coarsening_op,
+                T_this_level,
+                h_this_level,
+                pde_problem.L_2f1,
+                pde_problem.L_1f2,
                 nodes_this_level,
             )
         )
+        logging.debug("merge_stage_adaptive_2D_DtN: just merged level %s", i)
+        logging.debug(
+            "merge_stage_adaptive_2D_DtN: T_arr_lst[0].shape = %s",
+            T_arr_lst[0].shape,
+        )
 
-        # print("_build_stage_2D: S_arr_lst len = ", len(S_arr_lst))
+        # print("_merge_stage_2D: S_arr_lst len = ", len(S_arr_lst))
 
         # Set the output in the tree object.
         nodes_next_level = get_nodes_at_level(root, i - 1)
-        # print("_build_stage_2D: nodes_next_level len = ", len(nodes_next_level))
+        # print("_merge_stage_2D: nodes_next_level len = ", len(nodes_next_level))
 
         # Filter out the nodes which are leaves.
         nodes_next_level = [
             node for node in nodes_next_level if len(node.children)
         ]
-        # print("_build_stage_2D: nodes_next_level len = ", len(nodes_next_level))
+        # print("_merge_stage_2D: nodes_next_level len = ", len(nodes_next_level))
         for k, node in enumerate(nodes_next_level):
-            node.DtN = DtN_arr_lst[k]
-            node.v_prime = v_prime_arr_lst[k]
-            node.S = S_arr_lst[k]
-            node.v_int = v_int_arr_lst[k]
+            node.data.T = T_arr_lst[k]
+            node.data.h = h_lst[k]
+            node.data.S = S_arr_lst[k]
+            node.data.g_tilde = g_tilde_lst[k]
+            if k == 0:
+                logging.debug(
+                    "merge_stage_adaptive_2D_DtN: setting data for node %s",
+                    node,
+                )
+                logging.debug(
+                    "merge_stage_adaptive_2D_DtN: node.data.T.shape = %s",
+                    node.data.T.shape,
+                )
+                logging.debug(
+                    "merge_stage_adaptive_2D_DtN: id(node.data.T) = %s",
+                    id(node.data.T),
+                )
 
 
 def quad_merge_nonuniform_whole_level(
     T_in: List[jnp.ndarray],
-    v_prime: List[jnp.ndarray],
+    h_in: List[jnp.ndarray],
     L_2f1: jnp.ndarray,
     L_1f2: jnp.ndarray,
     nodes_this_level: List[DiscretizationNode2D],
@@ -115,8 +132,8 @@ def quad_merge_nonuniform_whole_level(
     """
     S_lst = []
     T_lst = []
-    v_prime_ext_lst = []
-    v_lst = []
+    h_lst = []
+    g_tilde_lst = []
     n_merges = len(T_in) // 4
 
     for i in range(n_merges):
@@ -142,7 +159,7 @@ def quad_merge_nonuniform_whole_level(
             dtype=jnp.int32,
         )
 
-        need_interp_lsts = find_projection_lists_2D(
+        need_interp_lsts = find_compression_lists_2D(
             node_a, node_b, node_c, node_d
         )
         # print(
@@ -153,15 +170,15 @@ def quad_merge_nonuniform_whole_level(
         #     len(need_interp_lsts),
         # )
 
-        S, T, v_prime_ext, v = _adaptive_quad_merge_2D_DtN(
+        S, T, h_out, g_tilde = _adaptive_quad_merge_2D_DtN(
             T_in[4 * i],
             T_in[4 * i + 1],
             T_in[4 * i + 2],
             T_in[4 * i + 3],
-            v_prime[4 * i],
-            v_prime[4 * i + 1],
-            v_prime[4 * i + 2],
-            v_prime[4 * i + 3],
+            h_in[4 * i],
+            h_in[4 * i + 1],
+            h_in[4 * i + 2],
+            h_in[4 * i + 3],
             L_2f1,
             L_1f2,
             need_interp_lsts=need_interp_lsts,
@@ -173,10 +190,10 @@ def quad_merge_nonuniform_whole_level(
         # print("quad_merge_whole_level: v_prime_ext shape", v_prime_ext.shape)
         S_lst.append(S)
         T_lst.append(T)
-        v_prime_ext_lst.append(v_prime_ext)
-        v_lst.append(v)
+        h_lst.append(h_out)
+        g_tilde_lst.append(g_tilde)
 
-    return S_lst, T_lst, v_prime_ext_lst, v_lst
+    return S_lst, T_lst, h_lst, g_tilde_lst
 
 
 def _adaptive_quad_merge_2D_DtN(

@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 import jax
-from hahps._discretization_tree import DiscretizationNode3D, get_all_leaves
+from ._discretization_tree import DiscretizationNode3D, get_all_leaves
 from typing import Tuple, List
 
 

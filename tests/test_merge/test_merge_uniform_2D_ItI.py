@@ -2,7 +2,7 @@ import numpy as np
 
 
 from hahps.merge._uniform_2D_ItI import (
-    build_stage_uniform_2D_ItI,
+    merge_stage_uniform_2D_ItI,
     _uniform_quad_merge_ItI,
 )
 
@@ -14,7 +14,7 @@ from hahps._domain import Domain
 from hahps._pdeproblem import PDEProblem
 
 
-class Test_build_stage_uniform_2D_ItI:
+class Test_merge_stage_uniform_2D_ItI:
     def test_0(self) -> None:
         """Tests the function returns without error."""
         p = 6
@@ -44,7 +44,7 @@ class Test_build_stage_uniform_2D_ItI:
             eta=eta,
         )
 
-        T_arr, Y_arr, h_arr, v_arr = local_solve_stage_uniform_2D_ItI(
+        Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
             pde_problem=t
         )
 
@@ -53,7 +53,7 @@ class Test_build_stage_uniform_2D_ItI:
         # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
         # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
 
-        S_arr_lst, f_arr_lst = build_stage_uniform_2D_ItI(
+        S_arr_lst, f_arr_lst = merge_stage_uniform_2D_ItI(
             T_arr=T_arr, h_arr=h_arr, l=l
         )
         print(

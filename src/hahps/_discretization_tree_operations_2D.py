@@ -1,5 +1,5 @@
 from typing import Tuple, List
-from hahps._discretization_tree import DiscretizationNode2D
+from ._discretization_tree import DiscretizationNode2D
 import jax.numpy as jnp
 import jax
 

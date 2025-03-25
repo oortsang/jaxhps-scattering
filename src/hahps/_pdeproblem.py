@@ -11,13 +11,16 @@ from ._precompute_operators_2D import (
     precompute_N_matrix_2D,
     precompute_G_2D_ItI,
     precompute_QH_2D_ItI,
+    precompute_projection_ops_2D,
 )
 from ._precompute_operators_3D import (
     precompute_diff_operators_3D,
     precompute_P_3D_DtN,
     precompute_Q_3D_DtN,
+    precompute_projection_ops_3D,
 )
 from typing import List
+import logging
 
 
 class PDEProblem:
@@ -124,6 +127,10 @@ class PDEProblem:
             # In this version of the code, the diff operators are scaled separately by the sidelen of each leaf.
             half_side_len = 1.0
 
+        logging.debug(
+            "PDEProblem.__init__: using half_side_len = %s", half_side_len
+        )
+
         # Pre-compute spectral differentiation and interpolation matrices
         if bool_2D:
             # Differentiation operators
@@ -150,6 +157,10 @@ class PDEProblem:
                 # QH always appear together so we can precompute their product.
                 N = precompute_N_matrix_2D(self.D_x, self.D_y, domain.p)
                 self.QH = precompute_QH_2D_ItI(N, domain.p, domain.q, self.eta)
+
+            # For adaptive case, we need to precompute projection ops
+            if not domain.bool_uniform:
+                self.L_2f1, self.L_1f2 = precompute_projection_ops_2D(domain.q)
         else:
             # Differentiation operators
             (
@@ -169,6 +180,10 @@ class PDEProblem:
             self.Q = precompute_Q_3D_DtN(
                 domain.p, domain.q, self.D_x, self.D_y, self.D_z
             )
+
+            # For adaptive case, we need to precompute projection ops
+            if not domain.bool_uniform:
+                self.L_4f1, self.L_1f4 = precompute_projection_ops_3D(domain.q)
 
         # Set up containers for the solution operators.
         self.Y: jax.Array = None

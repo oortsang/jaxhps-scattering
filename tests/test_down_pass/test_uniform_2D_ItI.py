@@ -1,0 +1,85 @@
+import numpy as np
+import jax.numpy as jnp
+
+from hahps.merge._uniform_2D_ItI import (
+    merge_stage_uniform_2D_ItI,
+)
+
+from hahps.local_solve._uniform_2D_ItI import (
+    local_solve_stage_uniform_2D_ItI,
+)
+from hahps.down_pass._uniform_2D_ItI import (
+    down_pass_uniform_2D_ItI,
+    _propogate_down_2D_ItI,
+)
+from hahps._discretization_tree import DiscretizationNode2D
+from hahps._domain import Domain
+from hahps._pdeproblem import PDEProblem
+
+
+class Test__propogate_down_2D_ItI:
+    def test_0(self) -> None:
+        """Tests to make sure returns without error."""
+        n_child = 8
+        n_src = 3
+        S_arr = np.random.normal(size=(8 * n_child, 8 * n_child))
+        bdry_data = np.random.normal(size=(8 * n_child, n_src))
+        f = np.random.normal(size=(8 * n_child, n_src))
+
+        out = _propogate_down_2D_ItI(S_arr, bdry_data, f)
+        expected_out_shape = (4, 4 * n_child, n_src)
+        assert out.shape == expected_out_shape
+
+
+class Test__uniform_down_pass_2D_ItI:
+    def test_0(self) -> None:
+        p = 6
+        q = 4
+        l = 3
+        eta = 4.0
+
+        root = DiscretizationNode2D(
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+        )
+        domain = Domain(p=p, q=q, root=root, L=l)
+        n_leaves = 4**l
+
+        d_xx_coeffs = np.random.normal(size=(n_leaves, p**2))
+        source_term = np.random.normal(size=(n_leaves, p**2))
+        print("test_0: d_xx_coeffs = ", d_xx_coeffs.shape)
+        print("test_0: source_term = ", source_term.shape)
+
+        t = PDEProblem(
+            domain=domain,
+            source=source_term,
+            D_xx_coefficients=d_xx_coeffs,
+            use_ItI=True,
+            eta=eta,
+        )
+
+        Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
+            pde_problem=t
+        )
+
+        assert Y_arr.shape == (n_leaves, p**2, 4 * q)
+        # n_leaves, n_bdry, _ = DtN_arr.shape
+        # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
+        # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
+
+        S_arr_lst, g_tilde_lst = merge_stage_uniform_2D_ItI(
+            T_arr=T_arr, h_arr=h_arr, l=l
+        )
+
+        boundary_data = jnp.ones_like(t.domain.boundary_points[..., 0])
+
+        leaf_solns = down_pass_uniform_2D_ItI(
+            boundary_data,
+            S_arr_lst,
+            g_tilde_lst,
+            Y_arr,
+            v_arr,
+        )
+        assert leaf_solns.shape == (n_leaves, p**2)

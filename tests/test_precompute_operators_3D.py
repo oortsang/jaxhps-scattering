@@ -1,18 +1,19 @@
 import numpy as np
 import jax.numpy as jnp
 
-
 from hahps.quadrature import chebyshev_points
 from hahps._grid_creation_3D import (
     bounds_to_cheby_points_3D,
     compute_boundary_Gauss_points_adaptive_3D,
 )
 from hahps._discretization_tree import DiscretizationNode3D
+from hahps._discretization_tree_operations_3D import add_eight_children
 from hahps._precompute_operators_3D import (
     precompute_diff_operators_3D,
     precompute_P_3D_DtN,
     precompute_Q_3D_DtN,
     get_face_1_idxes,
+    precompute_projection_ops_3D,
 )
 
 
@@ -382,3 +383,413 @@ class Test_precompute_Q_3D_DtN:
         # )
 
         # assert jnp.allclose(df_dn_gauss_interp, df_dn_gauss_expected)
+
+
+class Test_precompute_refining_coarsening_op:
+    def test_0(self) -> None:
+        q = 4
+
+        L_2f1, L_1f2 = precompute_projection_ops_3D(q)
+
+        assert L_2f1.shape == (4 * q**2, q**2)
+        assert L_1f2.shape == (q**2, 4 * q**2)
+
+        assert not jnp.any(jnp.isnan(L_2f1))
+        assert not jnp.any(jnp.isnan(L_1f2))
+
+        assert not jnp.any(jnp.isinf(L_2f1))
+        assert not jnp.any(jnp.isinf(L_1f2))
+
+    def test_1(self) -> None:
+        """Make sure things are accurate with low-degree polynomial interpolation on face 5."""
+        q = 4
+
+        L_2f1, L_1f2 = precompute_projection_ops_3D(q)
+
+        max_val = 1.0
+        min_val = 0.0
+
+        root_0 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+
+        root_1 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+        add_eight_children(root_1)
+
+        n_per_face_0 = q**2
+        n_per_face_1 = 4 * q**2
+
+        # Get the boundary points for the first face, which is the face in the (x,y) plane farthest in the +z direction.
+        root_0_pts = compute_boundary_Gauss_points_adaptive_3D(root_0, q)[
+            4 * n_per_face_0 : 5 * n_per_face_0
+        ]
+        root_1_pts = compute_boundary_Gauss_points_adaptive_3D(root_1, q)[
+            4 * n_per_face_1 : 5 * n_per_face_1
+        ]
+
+        # Check to make sure all of the points have x_vals equal to 0.0
+        assert jnp.allclose(root_0_pts[:, 2], 0.0)
+        assert jnp.allclose(root_1_pts[:, 2], 0.0)
+
+        # Define a low-degree polynomial function
+        def f(x: jnp.array) -> jnp.ndarray:
+            # f(x,y,z) = 3 y + y^2 - 4x
+            return 3 * x[:, 1] + x[:, 1] ** 2 - 4 * x[:, 0]
+
+        root_0_evals = f(root_0_pts)
+        root_1_evals = f(root_1_pts)
+
+        root_1_interp = L_2f1 @ root_0_evals
+
+        assert jnp.allclose(root_1_interp, root_1_evals)
+
+        root_0_interp = L_1f2 @ root_1_evals
+
+        print("test_1: root_0_interp: ", root_0_interp)
+        print("test_1: root_0_evals: ", root_0_evals)
+        print("test_1: diffs: ", root_0_interp - root_0_evals)
+
+        assert jnp.allclose(root_0_interp, root_0_evals)
+
+    def test_2(self) -> None:
+        """Make sure things are accurate with low-degree polynomial interpolation on face 4."""
+        q = 4
+
+        L_2f1, L_1f2 = precompute_projection_ops_3D(q)
+
+        max_val = 1.0
+        min_val = 0.0
+
+        root_0 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+
+        root_1 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+        add_eight_children(root_1)
+
+        n_per_face_0 = q**2
+        n_per_face_1 = 4 * q**2
+
+        # Get the boundary points for the first face, which is the face in the (x,y) plane farthest in the +z direction.
+        root_0_pts = compute_boundary_Gauss_points_adaptive_3D(root_0, q)[
+            5 * n_per_face_0 : 6 * n_per_face_0
+        ]
+        root_1_pts = compute_boundary_Gauss_points_adaptive_3D(root_1, q)[
+            5 * n_per_face_1 : 6 * n_per_face_1
+        ]
+
+        # Check to make sure all of the points have x_vals equal to max_val
+        assert jnp.allclose(root_0_pts[:, 2], max_val)
+        assert jnp.allclose(root_1_pts[:, 2], max_val)
+
+        # Define a low-degree polynomial function
+        def f(x: jnp.array) -> jnp.ndarray:
+            # f(x,y,z) = 3 y + y^2 - 4x
+            return 3 * x[:, 1] + x[:, 1] ** 2 - 4 * x[:, 0]
+
+        root_0_evals = f(root_0_pts)
+        root_1_evals = f(root_1_pts)
+
+        root_1_interp = L_2f1 @ root_0_evals
+
+        assert jnp.allclose(root_1_interp, root_1_evals)
+
+        root_0_interp = L_1f2 @ root_1_evals
+
+        print("test_1: root_0_interp: ", root_0_interp)
+        print("test_1: root_0_evals: ", root_0_evals)
+        print("test_1: diffs: ", root_0_interp - root_0_evals)
+
+        assert jnp.allclose(root_0_interp, root_0_evals)
+
+    def test_3(self) -> None:
+        """Make sure things are accurate with low-degree polynomial interpolation in the face 3"""
+        q = 4
+
+        L_2f1, L_1f2 = precompute_projection_ops_3D(q)
+
+        max_val = 1.0
+        min_val = 0.0
+
+        root_0 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+
+        root_1 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+        add_eight_children(root_1)
+
+        n_per_face_0 = q**2
+        n_per_face_1 = 4 * q**2
+
+        # Get the boundary points for the first face, which is the face in the (x,z) plane farthest in the +y direction.
+        root_0_pts = compute_boundary_Gauss_points_adaptive_3D(root_0, q)[
+            3 * n_per_face_0 : 4 * n_per_face_0
+        ]
+        root_1_pts = compute_boundary_Gauss_points_adaptive_3D(root_1, q)[
+            3 * n_per_face_1 : 4 * n_per_face_1
+        ]
+
+        # Check to make sure all of the points have y_vals equal to 1.0
+        assert jnp.allclose(root_0_pts[:, 1], max_val)
+        assert jnp.allclose(root_1_pts[:, 1], max_val)
+
+        # Define a low-degree polynomial function
+        def f(x: jnp.array) -> jnp.ndarray:
+            # f(x,y,z) = 3 z + z^2 - 4x
+            return 3 * x[:, 2] + x[:, 2] ** 2 - 4 * x[:, 0]
+
+        root_0_evals = f(root_0_pts)
+        root_1_evals = f(root_1_pts)
+
+        root_1_interp = L_2f1 @ root_0_evals
+
+        print("test_2: root_1_interp: ", root_1_interp)
+        print("test_2: root_1_evals: ", root_1_evals)
+        print("test_2: diffs: ", root_1_interp - root_1_evals)
+
+        assert jnp.allclose(root_1_interp, root_1_evals), "Refining op failed"
+
+        root_0_interp = L_1f2 @ root_1_evals
+
+        print("test_2: root_0_interp: ", root_0_interp)
+        print("test_2: root_0_evals: ", root_0_evals)
+        print("test_2: diffs: ", root_0_interp - root_0_evals)
+
+        assert jnp.allclose(root_0_interp, root_0_evals), (
+            "Coarsening op failed"
+        )
+
+    def test_4(self) -> None:
+        """Make sure things are accurate with low-degree polynomial interpolation in the face 2"""
+        q = 4
+
+        L_2f1, L_1f2 = precompute_projection_ops_3D(q)
+
+        max_val = 1.0
+        min_val = 0.0
+
+        root_0 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+
+        root_1 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+        add_eight_children(root_1)
+
+        n_per_face_0 = q**2
+        n_per_face_1 = 4 * q**2
+
+        # Get the boundary points for the first face, which is the face in the (x,z) plane farthest in the +y direction.
+        root_0_pts = compute_boundary_Gauss_points_adaptive_3D(root_0, q)[
+            2 * n_per_face_0 : 3 * n_per_face_0
+        ]
+        root_1_pts = compute_boundary_Gauss_points_adaptive_3D(root_1, q)[
+            2 * n_per_face_1 : 3 * n_per_face_1
+        ]
+
+        # Check to make sure all of the points have y_vals equal to 0.0
+        assert jnp.allclose(root_0_pts[:, 1], min_val)
+        assert jnp.allclose(root_1_pts[:, 1], min_val)
+
+        # Define a low-degree polynomial function
+        def f(x: jnp.array) -> jnp.ndarray:
+            # f(x,y,z) = 3 z + z^2 - 4x
+            return 3 * x[:, 2] + x[:, 2] ** 2 - 4 * x[:, 0]
+
+        root_0_evals = f(root_0_pts)
+        root_1_evals = f(root_1_pts)
+
+        root_1_interp = L_2f1 @ root_0_evals
+
+        print("test_2: root_1_interp: ", root_1_interp)
+        print("test_2: root_1_evals: ", root_1_evals)
+        print("test_2: diffs: ", root_1_interp - root_1_evals)
+
+        assert jnp.allclose(root_1_interp, root_1_evals), "Refining op failed"
+
+        root_0_interp = L_1f2 @ root_1_evals
+
+        print("test_2: root_0_interp: ", root_0_interp)
+        print("test_2: root_0_evals: ", root_0_evals)
+        print("test_2: diffs: ", root_0_interp - root_0_evals)
+
+        assert jnp.allclose(root_0_interp, root_0_evals), (
+            "Coarsening op failed"
+        )
+
+    def test_5(self) -> None:
+        """Make sure things are accurate with low-degree polynomial interpolation in face 1"""
+        q = 4
+
+        L_2f1, L_1f2 = precompute_projection_ops_3D(q)
+
+        max_val = 1.0
+        min_val = 0.0
+
+        root_0 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+
+        root_1 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+        add_eight_children(root_1)
+
+        n_per_face_0 = q**2
+        n_per_face_1 = 4 * q**2
+
+        # Get the boundary points for the first face, which is the face in the (y,z) plane farthest in the +z direction.
+        root_0_pts = compute_boundary_Gauss_points_adaptive_3D(root_0, q)[
+            1 * n_per_face_0 : 2 * n_per_face_0
+        ]
+        root_1_pts = compute_boundary_Gauss_points_adaptive_3D(root_1, q)[
+            1 * n_per_face_1 : 2 * n_per_face_1
+        ]
+
+        # Check to make sure all of the points have x_vals equal to 1.0
+        assert jnp.allclose(root_0_pts[:, 0], max_val)
+        assert jnp.allclose(root_1_pts[:, 0], max_val)
+
+        # Define a low-degree polynomial function
+        def f(x: jnp.array) -> jnp.ndarray:
+            # f(x,y,z) = 3 z + z^2 - 4y
+            return 3 * x[:, 2] + x[:, 2] ** 2 - 4 * x[:, 1]
+
+        root_0_evals = f(root_0_pts)
+        root_1_evals = f(root_1_pts)
+
+        root_1_interp = L_2f1 @ root_0_evals
+
+        assert jnp.allclose(root_1_interp, root_1_evals), "Refining op failed"
+
+        root_0_interp = L_1f2 @ root_1_evals
+
+        print("test_2: root_0_interp: ", root_0_interp)
+        print("test_2: root_0_evals: ", root_0_evals)
+        print("test_2: diffs: ", root_0_interp - root_0_evals)
+
+        assert jnp.allclose(root_0_interp, root_0_evals), (
+            "Coarsening op failed"
+        )
+
+    def test_6(self) -> None:
+        """Make sure things are accurate with low-degree polynomial interpolation in face 0"""
+        q = 4
+
+        L_2f1, L_1f2 = precompute_projection_ops_3D(q)
+
+        max_val = 1.0
+        min_val = 0.0
+
+        root_0 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+
+        root_1 = DiscretizationNode3D(
+            xmin=min_val,
+            xmax=max_val,
+            ymin=min_val,
+            ymax=max_val,
+            zmin=min_val,
+            zmax=max_val,
+        )
+        add_eight_children(root_1)
+
+        n_per_face_0 = q**2
+        n_per_face_1 = 4 * q**2
+
+        # Get the boundary points for the first face, which is the face in the (y,z) plane farthest in the +z direction.
+        root_0_pts = compute_boundary_Gauss_points_adaptive_3D(root_0, q)[
+            :n_per_face_0
+        ]
+        root_1_pts = compute_boundary_Gauss_points_adaptive_3D(root_1, q)[
+            :n_per_face_1
+        ]
+
+        # Check to make sure all of the points have x_vals equal to 0.0
+        assert jnp.allclose(root_0_pts[:, 0], min_val)
+        assert jnp.allclose(root_1_pts[:, 0], min_val)
+
+        # Define a low-degree polynomial function
+        def f(x: jnp.array) -> jnp.ndarray:
+            # f(x,y,z) = 3 z + z^2 - 4y
+            return 3 * x[:, 2] + x[:, 2] ** 2 - 4 * x[:, 1]
+
+        root_0_evals = f(root_0_pts)
+        root_1_evals = f(root_1_pts)
+
+        root_1_interp = L_2f1 @ root_0_evals
+
+        assert jnp.allclose(root_1_interp, root_1_evals), "Refining op failed"
+
+        root_0_interp = L_1f2 @ root_1_evals
+
+        print("test_2: root_0_interp: ", root_0_interp)
+        print("test_2: root_0_evals: ", root_0_evals)
+        print("test_2: diffs: ", root_0_interp - root_0_evals)
+
+        assert jnp.allclose(root_0_interp, root_0_evals), (
+            "Coarsening op failed"
+        )

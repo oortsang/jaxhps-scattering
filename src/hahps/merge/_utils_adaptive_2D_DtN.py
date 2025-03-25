@@ -8,7 +8,7 @@ from .._discretization_tree import get_all_leaves
 
 
 # @jax.jit
-def _find_projection_list_5(
+def _find_compression_list_5(
     node_a: DiscretizationNode2D, node_b: DiscretizationNode2D
 ) -> Tuple[jax.Array, jax.Array]:
     # First, get a list of leaves of a lying along merge interface 5
@@ -54,7 +54,7 @@ def _find_projection_list_5(
 
 
 # @jax.jit
-def _find_projection_list_6(
+def _find_compression_list_6(
     node_b: DiscretizationNode2D, node_c: DiscretizationNode2D
 ) -> Tuple[jax.Array, jax.Array]:
     # First, get a list of leaves of b lying along merge interface 6
@@ -102,7 +102,7 @@ def _find_projection_list_6(
 
 
 # @jax.jit
-def _find_projection_list_7(
+def _find_compression_list_7(
     node_c: DiscretizationNode2D, node_d: DiscretizationNode2D
 ) -> Tuple[jax.Array, jax.Array]:
     # First, get a list of leaves of c lying along merge interface 7
@@ -150,7 +150,7 @@ def _find_projection_list_7(
 
 
 # @jax.jit
-def _find_projection_list_8(
+def _find_compression_list_8(
     node_d: DiscretizationNode2D, node_a: DiscretizationNode2D
 ) -> Tuple[jax.Array, jax.Array]:
     # First, get a list of leaves of d lying along merge interface 8
@@ -196,7 +196,7 @@ def _find_projection_list_8(
 
 
 # @jax.jit
-def find_projection_lists_2D(
+def find_compression_lists_2D(
     node_a: DiscretizationNode2D,
     node_b: DiscretizationNode2D,
     node_c: DiscretizationNode2D,
@@ -219,16 +219,16 @@ def find_projection_lists_2D(
         jax.Array: Output has shape shape (n // 4, 12)
     """
 
-    compression_lst_a5, compression_lst_b5 = _find_projection_list_5(
+    compression_lst_a5, compression_lst_b5 = _find_compression_list_5(
         node_a, node_b
     )
-    compression_lst_b6, compression_lst_c6 = _find_projection_list_6(
+    compression_lst_b6, compression_lst_c6 = _find_compression_list_6(
         node_b, node_c
     )
-    compression_lst_c7, compression_lst_d7 = _find_projection_list_7(
+    compression_lst_c7, compression_lst_d7 = _find_compression_list_7(
         node_c, node_d
     )
-    compression_lst_d8, compression_lst_a8 = _find_projection_list_8(
+    compression_lst_d8, compression_lst_a8 = _find_compression_list_8(
         node_d, node_a
     )
 

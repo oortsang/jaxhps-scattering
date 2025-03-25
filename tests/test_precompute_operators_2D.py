@@ -7,12 +7,14 @@ from hahps._precompute_operators_2D import (
     precompute_G_2D_ItI,
     precompute_N_tilde_matrix_2D,
     precompute_QH_2D_ItI,
+    precompute_projection_ops_2D,
 )
 from hahps._discretization_tree import DiscretizationNode2D
 from hahps._grid_creation_2D import (
     compute_interior_Chebyshev_points_adaptive_2D,
     compute_boundary_Gauss_points_adaptive_2D,
 )
+from hahps.quadrature import affine_transform, gauss_points
 
 
 class Test_precompute_P_2D_ItI:
@@ -362,3 +364,43 @@ class Test_precompute_G_2D_ItI:
         # plt.show()
 
         assert jnp.allclose(computed_inc_imp, expected_inc_imp)
+
+
+class Test_precompute_projection_ops_2D:
+    def test_0(self) -> None:
+        q = 4
+
+        ref, coarse = precompute_projection_ops_2D(q)
+
+        assert ref.shape == (2 * q, q)
+        assert coarse.shape == (q, 2 * q)
+
+        assert not jnp.any(jnp.isnan(ref))
+        assert not jnp.any(jnp.isinf(ref))
+        assert not jnp.any(jnp.isnan(coarse))
+        assert not jnp.any(jnp.isinf(coarse))
+
+    def test_1(self) -> None:
+        q = 12
+        ref, coarse = precompute_projection_ops_2D(q)
+
+        def f(x: jnp.array) -> jnp.array:
+            """f(x) = 3 + 4x - 5x**2"""
+            return 3 + 4 * x - 5 * x**2
+
+        gauss_panel = gauss_points(q)
+        double_gauss_panel = jnp.concatenate(
+            [
+                affine_transform(gauss_panel, [-1.0, 0.0]),
+                affine_transform(gauss_panel, [0.0, 1.0]),
+            ]
+        )
+        f_vals = f(gauss_panel)
+        f_ref = ref @ f_vals
+        f_ref_expected = f(double_gauss_panel)
+
+        assert jnp.allclose(f_ref, f_ref_expected)
+
+        f_coarse = coarse @ f_ref_expected
+        f_coarse_expected = f_vals
+        assert jnp.allclose(f_coarse, f_coarse_expected)

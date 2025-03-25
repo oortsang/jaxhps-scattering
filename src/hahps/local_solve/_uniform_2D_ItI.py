@@ -116,10 +116,10 @@ def local_solve_stage_uniform_2D_ItI(
     v_arr_host = jax.device_put(v, host_device)[..., 0]
 
     return (
-        R_arr_host,
         Y_arr_host,
-        h_arr_host,
+        R_arr_host,
         v_arr_host,
+        h_arr_host,
     )
 
 

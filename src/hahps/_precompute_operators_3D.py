@@ -9,6 +9,7 @@ from .quadrature import (
     gauss_points,
     differentiation_matrix_1D,
     barycentric_lagrange_interpolation_matrix_2D,
+    affine_transform,
 )
 
 
@@ -316,3 +317,92 @@ def get_face_6_idxes(p: int) -> jax.Array:
         counter += 1
 
     return out
+
+
+def precompute_projection_ops_3D(
+    q: int,
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
+    """
+    The refining operator maps from a Gauss-Legendre grid to four Gauss-Legendre grids on
+    the same domain.
+
+    For reference in this section, imagine the four panesl are laid out like this:
+
+    --------
+    | D | C |
+    --------
+    | A | B |
+    --------
+
+    The coarsening operator maps from four Gauss-Legendre grids to a single Gauss-Legendre grid.
+    """
+
+    if q % 2:
+        raise ValueError("q must be even.")
+
+    gauss_pts = gauss_points(q)
+
+    idxes = jnp.arange(q**2)
+
+    first_half = affine_transform(gauss_pts, jnp.array([-1, 0]))
+    second_half = affine_transform(gauss_pts, jnp.array([0, 1]))
+
+    # Refining operator
+
+    to_A = barycentric_lagrange_interpolation_matrix_2D(
+        gauss_pts, gauss_pts, first_half, first_half
+    )
+    to_B = barycentric_lagrange_interpolation_matrix_2D(
+        gauss_pts, gauss_pts, second_half, first_half
+    )
+    to_C = barycentric_lagrange_interpolation_matrix_2D(
+        gauss_pts, gauss_pts, second_half, second_half
+    )
+    to_D = barycentric_lagrange_interpolation_matrix_2D(
+        gauss_pts, gauss_pts, first_half, second_half
+    )
+    refining_operator = jnp.concatenate([to_A, to_B, to_C, to_D], axis=0)
+
+    L_4f1 = refining_operator
+
+    # Coarsening operator
+    coarsening_op_out = jnp.zeros((q**2, 4 * q**2), dtype=jnp.float64)
+
+    gauss_pts_first_half = gauss_pts[: q // 2]
+    gauss_pts_second_half = gauss_pts[q // 2 :]
+
+    from_A = barycentric_lagrange_interpolation_matrix_2D(
+        first_half, first_half, gauss_pts_first_half, gauss_pts_first_half
+    )
+    A_bools = idxes % q < q / 2
+    A_bools = jnp.logical_and(A_bools, idxes < q**2 / 2)
+    coarsening_op_out = coarsening_op_out.at[A_bools, 0 : q**2].set(from_A)
+
+    from_B = barycentric_lagrange_interpolation_matrix_2D(
+        second_half, first_half, gauss_pts_second_half, gauss_pts_first_half
+    )
+    B_bools = idxes % q < q / 2
+    B_bools = jnp.logical_and(B_bools, idxes >= q**2 / 2)
+    coarsening_op_out = coarsening_op_out.at[B_bools, q**2 : 2 * (q**2)].set(
+        from_B
+    )
+
+    from_C = barycentric_lagrange_interpolation_matrix_2D(
+        second_half, second_half, gauss_pts_second_half, gauss_pts_second_half
+    )
+    C_bools = idxes % q >= q / 2
+    C_bools = jnp.logical_and(C_bools, idxes >= q**2 / 2)
+    coarsening_op_out = coarsening_op_out.at[
+        C_bools, 2 * q**2 : 3 * (q**2)
+    ].set(from_C)
+
+    from_D = barycentric_lagrange_interpolation_matrix_2D(
+        first_half, second_half, gauss_pts_first_half, gauss_pts_second_half
+    )
+    D_bools = idxes % q >= q / 2
+    D_bools = jnp.logical_and(D_bools, idxes < q**2 / 2)
+    coarsening_op_out = coarsening_op_out.at[D_bools, 3 * q**2 :].set(from_D)
+
+    L_1f4 = coarsening_op_out
+
+    return L_4f1, L_1f4

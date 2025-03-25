@@ -14,9 +14,10 @@ from ._uniform_2D_DtN import (
     get_quadmerge_blocks_c,
     get_quadmerge_blocks_d,
 )
+import logging
 
 
-def build_stage_uniform_2D_ItI(
+def merge_stage_uniform_2D_ItI(
     T_arr: jnp.array,
     h_arr: jnp.array,
     l: int,
@@ -47,6 +48,9 @@ def build_stage_uniform_2D_ItI(
     h_arr = jax.device_put(h_arr, device)
 
     if len(T_arr.shape) < 4:
+        logging.debug(
+            "merge_stage_uniform_2D_ItI: T_arr.shape = %s", T_arr.shape
+        )
         n_leaves, n_ext, _ = T_arr.shape
         T_arr = T_arr.reshape(n_leaves // 4, 4, n_ext, n_ext)
         h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext)

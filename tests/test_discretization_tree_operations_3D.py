@@ -101,7 +101,7 @@ class Test_add_eight_children:
                 add_eight_children(add_to=gchild, root=root, q=q)
         # for leaf in get_all_leaves(root):
         #     add_eight_children(add_to=leaf, root=root, q=q)
-        print("test_1: expected_n: ", 8 * q**2)
+        print("test_1: expected_n: ", 64 * q**2)
 
         assert root.n_0 == 64 * q**2
         assert root.n_1 == 64 * q**2
