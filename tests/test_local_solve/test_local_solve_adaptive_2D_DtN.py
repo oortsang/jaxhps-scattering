@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-
+import jax
 from hahps.local_solve._adaptive_2D_DtN import (
     _prep_nonuniform_refinement_diff_operators_2D,
     vmapped_prep_nonuniform_refinement_diff_operators_2D,
@@ -216,6 +216,7 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
             resid_i = op_i @ f[i]
             print("test_4: resid_i max = ", jnp.max(jnp.abs(resid_i)))
             assert jnp.allclose(op_i @ f[i], jnp.zeros_like(f[i]))
+        jax.clear_caches()
 
 
 class Test_vmapped_prep_nonuniform_refinement_diff_operators_2D:
@@ -245,3 +246,4 @@ class Test_vmapped_prep_nonuniform_refinement_diff_operators_2D:
 
         assert diff_operators.shape == (n_leaves, n_cheby_pts, n_cheby_pts)
         assert Q_Ds.shape == (n_leaves, n_gauss_bdry, n_cheby_pts)
+        jax.clear_caches()

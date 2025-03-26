@@ -1,5 +1,6 @@
 import logging
 import jax.numpy as jnp
+import jax
 import numpy as np
 
 from hahps.down_pass._uniform_2D_DtN import (
@@ -59,6 +60,7 @@ class Test_down_pass_uniform_2D_DtN:
             v_arr=v_arr,
         )
         assert leaf_solns.shape == (num_leaves, p**2)
+        jax.clear_caches()
 
 
 class Test__propagate_down_2D_DtN:
@@ -104,3 +106,4 @@ class Test__propagate_down_2D_DtN:
         assert jnp.allclose(
             g_d[:n_child], jnp.flipud(g_a[2 * n_child : 3 * n_child])
         )
+        jax.clear_caches()

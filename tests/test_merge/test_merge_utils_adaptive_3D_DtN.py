@@ -1,5 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
+import jax
 import logging
 from hahps.merge._utils_adaptive_3D_DtN import (
     get_a_submatrices,
@@ -276,6 +277,7 @@ class Test_get_a_submatrices:
         v_a_1 = return_tuple[16]
         assert jnp.all(v_a_1[: 2 * n_per_face_refined] != zmax)
         assert jnp.all(v_a_1[2 * n_per_face_refined :] == zmax)
+        jax.clear_caches()
 
 
 class Test_get_c_submatrices:
@@ -370,6 +372,7 @@ class Test_get_c_submatrices:
         v_c_3 = return_tuple[16]
         assert jnp.all(v_c_3[2 * n_per_face : 3 * n_per_face] == zmax)
         assert jnp.all(v_c_3[: 2 * n_per_face] != zmax)
+        jax.clear_caches()
 
 
 class Test_get_d_submatrices:
@@ -462,6 +465,7 @@ class Test_get_d_submatrices:
         v_d_4 = return_tuple[16]
         assert jnp.all(v_d_4[2 * n_per_face : 3 * n_per_face] == zmax)
         assert jnp.all(v_d_4[: 2 * n_per_face] != zmax)
+        jax.clear_caches()
 
 
 class Test_get_h_submatrices:
@@ -553,6 +557,7 @@ class Test_get_h_submatrices:
         v_h_8 = return_tuple[16]
         assert jnp.all(v_h_8[2 * n_per_face : 3 * n_per_face] == zmin)
         assert jnp.all(v_h_8[: 2 * n_per_face] != zmin)
+        jax.clear_caches()
 
 
 class Test_get_rearrange_indices:
@@ -1074,3 +1079,4 @@ class Test_get_rearrange_indices:
                     print("test_1: diffs: ", expected_face_j - computed_face_j)
                 assert v
         # assert False
+        jax.clear_caches()

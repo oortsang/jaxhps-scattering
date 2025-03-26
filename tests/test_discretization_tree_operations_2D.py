@@ -11,6 +11,7 @@ from hahps._discretization_tree_operations_2D import (
     find_path_from_root_2D,
     get_four_children,
 )
+import jax
 
 
 class Test_get_four_children:
@@ -29,6 +30,7 @@ class Test_get_four_children:
             # Check that children is a tuple
             assert isinstance(c[i].children, tuple)
             assert len(c[0].children) == 0
+        jax.clear_caches()
 
 
 class Test_add_four_children:
@@ -180,6 +182,8 @@ class Test_add_four_children:
         assert root.n_2 == (2**l) * q
         assert root.n_3 == (2**l) * q
 
+        jax.clear_caches()
+
 
 class Test_find_node_at_corner:
     def test_0(self) -> None:
@@ -226,6 +230,7 @@ class Test_find_node_at_corner:
             node, xmax=expected_e.xmax, ymax=expected_e.ymax
         )
         assert tree_equal(found_e, expected_e)
+        jax.clear_caches()
 
 
 class Test_node_at:
@@ -241,6 +246,7 @@ class Test_node_at:
 
         y = node_at(a, ymin=1.0)
         assert not y
+        jax.clear_caches()
 
 
 class Test_find_path_from_root_2D:
@@ -274,3 +280,4 @@ class Test_find_path_from_root_2D:
                 assert tree_equal(
                     current_node.children[current_child_idx], node
                 )
+        jax.clear_caches()

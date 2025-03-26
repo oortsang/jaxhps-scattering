@@ -21,7 +21,22 @@ jobs:
     - name: Install dependencies
       run: |
         conda env update --file env.yaml --name base
-    - name: Test with pytest
+# Run tests in small chunks to avoid hanging.
+    - name: Test accuracy
       run: |
-        pytest
-
+        pytest tests/test_accuracy
+    - name: Test down_pass
+      run: |
+        pytest tests/test_down_pass
+    - name: Test local_solve
+      run: |
+        pytest tests/test_local_solve
+    - name: Test merge
+      run: |
+        pytest tests/test_merge
+    - name: Test quadrature
+      run: |
+        pytest tests/test_quadrature
+    - name: Test others
+      run: |
+        pytest tests/test_*.py

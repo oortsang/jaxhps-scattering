@@ -1,5 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
+import jax
 
 from hahps.local_solve._uniform_2D_ItI import (
     local_solve_stage_uniform_2D_ItI,
@@ -41,7 +42,7 @@ class Test__local_solve_stage_2D_ItI:
             eta=eta,
         )
 
-        R_arr, Y_arr, g_arr, v_arr = local_solve_stage_uniform_2D_ItI(
+        Y_arr, R_arr, v_arr, g_arr = local_solve_stage_uniform_2D_ItI(
             pde_problem=t
         )
 
@@ -49,6 +50,7 @@ class Test__local_solve_stage_2D_ItI:
         assert R_arr.shape == (n_leaves, 4 * q, 4 * q)
         assert v_arr.shape == (n_leaves, p**2)
         assert g_arr.shape == (n_leaves, 4 * q)
+        jax.clear_caches()
 
 
 class Test_get_ItI:
@@ -90,6 +92,7 @@ class Test_get_ItI:
         assert R.shape == (4 * q, 4 * q)
         assert g_part.shape == (4 * q,)
         assert part_soln.shape == (n_cheby,)
+        jax.clear_caches()
 
     def test_1(self) -> None:
         """Makes sure shapes are correct when using multiple source terms."""
@@ -130,6 +133,8 @@ class Test_get_ItI:
         assert R.shape == (4 * q, 4 * q)
         assert g_part.shape == (4 * q, n_src)
         assert part_soln.shape == (n_cheby, n_src)
+
+        jax.clear_caches()
 
     # def test_2(self) -> None:
     #     """Checks the accuracy of the ItI operator when solving a Laplace problem with zero source and

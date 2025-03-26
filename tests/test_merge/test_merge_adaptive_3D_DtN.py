@@ -1,5 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
+import jax
 from hahps.local_solve._adaptive_3D_DtN import (
     local_solve_stage_adaptive_3D_DtN,
 )
@@ -168,6 +169,7 @@ class Test_merge_stage_adaptive_3D_DtN:
 
         for node in get_nodes_at_level(t.domain.root, 1):
             check_node_data(node)
+        jax.clear_caches()
 
 
 class Test__oct_merge:
@@ -308,6 +310,7 @@ class Test__oct_merge:
         assert T.shape == (n_faces_out * n_per_face, n_faces_out * n_per_face)
         assert v_prime_ext.shape == (n_faces_out * n_per_face,)
         assert v_int.shape == (12 * q**2,)
+        jax.clear_caches()
 
 
 class Test_node_to_oct_merge_outputs:
@@ -341,6 +344,8 @@ class Test_node_to_oct_merge_outputs:
         assert T.shape == (24 * n_per_panel, 24 * n_per_panel)
         assert S.shape == (12 * n_per_panel, 24 * n_per_panel)
 
+        jax.clear_caches()
+
 
 class Test_oct_merge_nonuniform_whole_level:
     def test_0(self) -> None:
@@ -371,6 +376,7 @@ class Test_oct_merge_nonuniform_whole_level:
             L_4f1=L_2f1,
             nodes_this_level=nodes_level_1,
         )
+        jax.clear_caches()
 
 
 class Test_is_node_type:
@@ -382,3 +388,4 @@ class Test_is_node_type:
 
         assert is_node_type(x)
         assert not is_node_type(x.data.T)
+        jax.clear_caches()

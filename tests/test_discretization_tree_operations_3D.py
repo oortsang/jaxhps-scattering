@@ -9,6 +9,7 @@ from hahps._discretization_tree_operations_3D import (
     find_nodes_along_interface_3D,
     find_path_from_root_3D,
 )
+import jax
 
 
 class Test_get_all_leaves_special_ordering_3D:
@@ -61,6 +62,7 @@ class Test_get_all_leaves_special_ordering_3D:
         # assert leaves[7].depth == 3
         # assert leaves[8].depth == 3
         # assert leaves[9].depth == 3
+        jax.clear_caches()
 
 
 class Test_add_eight_children:
@@ -135,6 +137,7 @@ class Test_add_eight_children:
         assert root.n_0 == 10 * q**2
         assert root.n_2 == 10 * q**2
         assert root.n_5 == 10 * q**2
+        jax.clear_caches()
 
 
 class Test_find_path_from_root_3D:
@@ -173,6 +176,7 @@ class Test_find_path_from_root_3D:
         #         assert tree_equal(
         #             current_node.children[current_child_idx], node
         #         )
+        jax.clear_caches()
 
 
 class Test_find_nodes_along_interface_3D:
@@ -210,6 +214,7 @@ class Test_find_nodes_along_interface_3D:
             assert node.ymax == y_interface
         for node in nodes[1]:
             assert node.ymin == y_interface
+        jax.clear_caches()
 
     def test_1(self) -> None:
         # Non-uniform case
@@ -231,3 +236,4 @@ class Test_find_nodes_along_interface_3D:
         assert len(nodes) == 2
         assert len(nodes[0]) == 7
         assert len(nodes[1]) == 4
+        jax.clear_caches()

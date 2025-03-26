@@ -1,6 +1,7 @@
 import logging
 from typing import Dict
 import jax.numpy as jnp
+import jax
 import pytest
 from hahps._discretization_tree import DiscretizationNode2D
 from hahps._domain import Domain
@@ -281,6 +282,7 @@ class Test_accuracy_single_merge_2D_DtN_uniform:
         check_merge_accuracy_2D_DtN_uniform(
             DOMAIN_DTN, TEST_CASE_POLY_PART_HOMOG
         )
+        jax.clear_caches()
 
 
 class Test_accuracy_single_merge_2D_ItI_uniform:
@@ -291,6 +293,7 @@ class Test_accuracy_single_merge_2D_ItI_uniform:
         check_merge_accuracy_2D_ItI_uniform(
             DOMAIN_ITI, TEST_CASE_POLY_ZERO_SOURCE
         )
+        jax.clear_caches()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import logging
 from typing import Dict
 import jax.numpy as jnp
+import jax
 import pytest
 from hahps._discretization_tree import DiscretizationNode2D
 from hahps._domain import Domain
@@ -391,6 +392,7 @@ class Test_accuracy_local_solve_stage_uniform_2D_ItI:
         domain = DOMAIN_ITI
 
         check_leaf_accuracy_ItI(domain, test_case)
+        jax.clear_caches()
 
 
 class Test_accuracy_local_solve_stage_uniform_2D_DtN:
@@ -426,6 +428,8 @@ class Test_accuracy_local_solve_stage_uniform_2D_DtN:
 
         check_leaf_accuracy_DtN(domain, test_case)
 
+        jax.clear_caches()
+
 
 class Test_accuracy_local_solutions_2D_DtN_uniform:
     @pytest.mark.skip("Not implemented yet")
@@ -455,6 +459,7 @@ class Test_accuracy_local_solutions_2D_DtN_uniform:
 
         assert False
         # check_solution_accuracy_DtN(domain, test_case)
+        jax.clear_caches()
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import numpy as np
-
+import jax
 from hahps.local_solve._adaptive_3D_DtN import (
     local_solve_stage_adaptive_3D_DtN,
 )
@@ -43,3 +43,4 @@ class Test__local_solve_stage_adaptive_3D_DtN:
         assert T_arr.shape == (n_leaves, n_gauss_bdry, n_gauss_bdry)
         assert v.shape == (n_leaves, p**3)
         assert h.shape == (n_leaves, n_gauss_bdry)
+        jax.clear_caches()

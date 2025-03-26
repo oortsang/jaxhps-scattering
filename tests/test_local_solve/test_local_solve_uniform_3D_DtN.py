@@ -1,5 +1,5 @@
 import numpy as np
-
+import jax
 from hahps.local_solve._uniform_3D_DtN import (
     local_solve_stage_uniform_3D_DtN,
     _gather_coeffs_3D,
@@ -42,6 +42,7 @@ class Test_local_solve_stage_uniform_3D_DtN:
         assert T_arr.shape == (n_leaves, n_gauss_bdry, n_gauss_bdry)
         assert v.shape == (n_leaves, p**3)
         assert h.shape == (n_leaves, n_gauss_bdry)
+        jax.clear_caches()
 
 
 class Test__gather_coeffs_3D:
@@ -69,3 +70,4 @@ class Test__gather_coeffs_3D:
         assert out_bools[7].item() is False
         assert out_bools[8].item() is False
         assert out_bools[9].item() is True
+        jax.clear_caches()

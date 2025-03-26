@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-
+import jax
 from hahps.local_solve._uniform_2D_DtN import (
     local_solve_stage_uniform_2D_DtN,
     _gather_coeffs_2D,
@@ -47,6 +47,7 @@ class Test_gather_coeffs_2D:
         )
         assert jnp.all(out_coeffs[0] == 1)
         assert jnp.all(out_coeffs[1] == 0)
+        jax.clear_caches()
 
 
 class Test_assemble_diff_operator:
@@ -67,6 +68,7 @@ class Test_assemble_diff_operator:
             coeffs_arr, which_coeffs, stacked_diff_operators
         )
         assert out.shape == (p**2, p**2)
+        jax.clear_caches()
 
 
 class Test__local_solve_stage_2D:
@@ -109,6 +111,7 @@ class Test__local_solve_stage_2D:
         assert T_arr.shape == (n_leaves, 4 * q, 4 * q)
         assert v_arr.shape == (n_leaves, p**2)
         assert h_arr.shape == (n_leaves, 4 * q)
+        jax.clear_caches()
 
 
 class Test_get_DtN:
@@ -134,3 +137,4 @@ class Test_get_DtN:
         assert DtN.shape == (4 * q, 4 * q)
         assert v.shape == (p**2,)
         assert v_prime.shape == (4 * q,)
+        jax.clear_caches()

@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import jax.numpy as jnp
+import jax
 
 from hahps.merge._uniform_2D_DtN import (
     merge_stage_uniform_2D_DtN,
@@ -91,6 +92,7 @@ class Test__uniform_merge_stage_2D_DtN:
             1,
             n_root_interface,
         )
+        jax.clear_caches()
 
 
 class Test__uniform_quad_merge:
@@ -115,3 +117,4 @@ class Test__uniform_quad_merge:
         assert T.shape == (4 * n_bdry_ext, 4 * n_bdry_ext)
         assert v_prime_ext.shape == (4 * n_bdry_ext,)
         assert v_int.shape == (4 * n_bdry_int,)
+        jax.clear_caches()

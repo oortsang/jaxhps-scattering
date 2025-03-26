@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-
+import jax
 
 from hahps._discretization_tree import (
     DiscretizationNode2D,
@@ -212,6 +212,7 @@ class Test_merge_stage_adaptive_2D_DtN:
             assert node.data.h is not None
             if len(node.children):
                 assert node.data.S is not None
+        jax.clear_caches()
 
 
 class Test__adaptive_quad_merge_2D_DtN:
@@ -418,6 +419,7 @@ class Test__adaptive_quad_merge_2D_DtN:
         assert T.shape == (8 * q + 6 * q, 8 * q + 6 * q)
         assert v_prime_ext.shape == (8 * q + 6 * q,)
         assert v_int.shape == (4 * q + 2 * q,)
+        jax.clear_caches()
 
 
 class Test_quad_merge_nonuniform_whole_level:
@@ -468,3 +470,4 @@ class Test_quad_merge_nonuniform_whole_level:
         assert len(T) == n_out_quads
         assert len(v_prime_ext) == n_out_quads
         assert len(v_int) == n_out_quads
+        jax.clear_caches()

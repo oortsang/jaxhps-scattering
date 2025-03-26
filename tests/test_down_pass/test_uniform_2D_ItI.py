@@ -15,6 +15,7 @@ from hahps.down_pass._uniform_2D_ItI import (
 from hahps._discretization_tree import DiscretizationNode2D
 from hahps._domain import Domain
 from hahps._pdeproblem import PDEProblem
+import jax
 
 
 class Test__propogate_down_2D_ItI:
@@ -29,13 +30,14 @@ class Test__propogate_down_2D_ItI:
         out = _propogate_down_2D_ItI(S_arr, bdry_data, f)
         expected_out_shape = (4, 4 * n_child, n_src)
         assert out.shape == expected_out_shape
+        jax.clear_caches()
 
 
 class Test__uniform_down_pass_2D_ItI:
     def test_0(self) -> None:
         p = 6
         q = 4
-        l = 3
+        l = 2
         eta = 4.0
 
         root = DiscretizationNode2D(
@@ -83,3 +85,4 @@ class Test__uniform_down_pass_2D_ItI:
             v_arr,
         )
         assert leaf_solns.shape == (n_leaves, p**2)
+        jax.clear_caches()

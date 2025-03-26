@@ -1,5 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
+import jax
 from hahps.local_solve._adaptive_3D_DtN import (
     local_solve_stage_adaptive_3D_DtN,
 )
@@ -133,6 +134,7 @@ class Test_down_pass_adaptive_3D_DtN:
             pde_problem=t, boundary_data=boundary_data_lst
         )
         assert leaf_solns.shape == (num_leaves, p**3)
+        jax.clear_caches()
 
 
 class Test__propagate_down_oct:
@@ -182,3 +184,4 @@ class Test__propagate_down_oct:
             for j, y in enumerate(x):
                 print("test_0: j = ", j, " y.shape = ", y.shape)
                 assert y.shape == expected_out_shape
+        jax.clear_caches()

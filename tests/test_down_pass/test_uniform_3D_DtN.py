@@ -1,7 +1,7 @@
 import logging
 import jax.numpy as jnp
 import numpy as np
-
+import jax
 from hahps.merge._uniform_3D_DtN import (
     merge_stage_uniform_3D_DtN,
 )
@@ -61,6 +61,7 @@ class Test_down_pass_uniform_3D_DtN:
             v_arr=v,
         )
         assert solns.shape == (n_leaves, p**3)
+        jax.clear_caches()
 
 
 class Test__propogate_down_oct_DtN:
@@ -73,3 +74,4 @@ class Test__propogate_down_oct_DtN:
         out = _propogate_down_oct_DtN(S_arr, bdry_data, v_int_data)
         expected_out_shape = (8, 6 * n_per_face)
         assert out.shape == expected_out_shape
+        jax.clear_caches()

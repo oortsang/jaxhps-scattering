@@ -4,6 +4,7 @@ from hahps.merge._uniform_3D_DtN import (
     merge_stage_uniform_3D_DtN,
     _uniform_oct_merge_DtN,
 )
+import jax
 
 from hahps.local_solve._uniform_3D_DtN import (
     local_solve_stage_uniform_3D_DtN,
@@ -49,6 +50,7 @@ class Test_merge_stage_uniform_3D_DtN:
         assert len(g_tilde_lst) == l
         for i in range(l):
             assert S_arr_lst[i].shape[-2] == g_tilde_lst[i].shape[-1]
+        jax.clear_caches()
 
 
 class Test__uniform_oct_merge_DtN:
@@ -96,3 +98,4 @@ class Test__uniform_oct_merge_DtN:
         assert T.shape == (24 * q**2, 24 * q**2)
         assert v_prime_ext.shape == (24 * q**2,)
         assert v_int.shape == (12 * q**2,)
+        jax.clear_caches()

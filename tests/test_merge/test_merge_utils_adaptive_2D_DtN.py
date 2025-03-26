@@ -1,6 +1,6 @@
 import pytest
 import jax.numpy as jnp
-
+import jax
 from hahps._discretization_tree import DiscretizationNode2D
 from hahps._discretization_tree_operations_2D import add_four_children
 
@@ -111,6 +111,7 @@ class Test__find_compression_list_5:
         print("test_2: out_b: ", out_b)
         assert jnp.all(out_a == expected_out_a)
         assert jnp.all(out_b == expected_out_b)
+        jax.clear_caches()
 
 
 class Test__find_compression_lst_6:
@@ -148,6 +149,7 @@ class Test__find_compression_lst_6:
 
         assert jnp.all(out_b == expected_out_b)
         assert jnp.all(out_c == expected_out_c)
+        jax.clear_caches()
 
 
 class Test_find_compression_lists_2D:
@@ -179,6 +181,7 @@ class Test_find_compression_lists_2D:
 
         for i in range(8):
             assert jnp.all(out_arrs[i] == expected_arr)
+        jax.clear_caches()
 
 
 if __name__ == "__main__":

@@ -149,11 +149,11 @@ class Test_compute_boundary_Gauss_points_adaptive_2D:
             ymin=south,
             ymax=north,
         )
-        add_four_children(root, root=root, q=q)
+        add_four_children(root)
         for c in root.children:
-            add_four_children(c, root=root, q=q)
+            add_four_children(c)
             for gc in c.children:
-                add_four_children(gc, root=root, q=q)
+                add_four_children(gc)
 
         y = compute_boundary_Gauss_points_adaptive_2D(root, q)
 

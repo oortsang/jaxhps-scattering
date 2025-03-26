@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-
+import jax
 from hahps._discretization_tree import (
     DiscretizationNode2D,
     get_all_leaves,
@@ -185,6 +185,7 @@ class Test_down_pass_adaptive_2D_DtN:
         assert solns.shape == (num_leaves, p**2)
         assert not jnp.any(jnp.isnan(solns))
         assert not jnp.any(jnp.isinf(solns))
+        jax.clear_caches()
 
 
 class Test__propogate_down_quad:
@@ -267,3 +268,4 @@ class Test__propogate_down_quad:
         assert jnp.allclose(g_c[3], jnp.flipud(g_d[1]))
         # Edge 8
         assert jnp.allclose(g_d[0], jnp.flipud(g_a[2]))
+        jax.clear_caches()
