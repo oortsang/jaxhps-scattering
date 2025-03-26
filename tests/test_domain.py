@@ -127,9 +127,9 @@ class Test_Domain_init:
         assert domain.boundary_points.shape == (n_gauss_panels * (q**2), 3)
 
 
-class Test_from_interior_points:
+class Test_interp_from_interior_points:
     def test_0(self, caplog) -> None:
-        """Initializes a uniform 2D domain and checks the from_interior_points method."""
+        """Initializes a uniform 2D domain and checks the interp_from_interior_points method."""
         p = 6
         q = 4
         L = 2
@@ -155,12 +155,14 @@ class Test_from_interior_points:
         xvals = jnp.linspace(xmin, xmax, n_x)
         yvals = jnp.linspace(ymin, ymax, n_x)
 
-        samples, pts = domain.from_interior_points(f_samples, xvals, yvals)
+        samples, pts = domain.interp_from_interior_points(
+            f_samples, xvals, yvals
+        )
         f_expected = f(pts)
         assert jnp.allclose(samples, f_expected)
 
     def test_1(self, caplog) -> None:
-        """Initializes an adaptive 2D domain and checks the from_interior_points method."""
+        """Initializes an adaptive 2D domain and checks the interp_from_interior_points method."""
         p = 6
         q = 4
         L = 2
@@ -188,14 +190,16 @@ class Test_from_interior_points:
         xvals = jnp.linspace(xmin, xmax, n_x)
         yvals = jnp.linspace(ymin, ymax, n_x)
 
-        samples, pts = domain.from_interior_points(f_samples, xvals, yvals)
+        samples, pts = domain.interp_from_interior_points(
+            f_samples, xvals, yvals
+        )
         f_expected = f(pts)
         assert jnp.allclose(samples, f_expected)
 
 
-class Test_to_interior_points:
+class Test_interp_to_interior_points:
     def test_0(self, caplog) -> None:
-        """Initializes a uniform 2D domain and checks the to_interior_points method."""
+        """Initializes a uniform 2D domain and checks the interp_to_interior_points method."""
         caplog.set_level(logging.DEBUG)
         p = 6
         q = 4
@@ -234,7 +238,7 @@ class Test_to_interior_points:
 
         f_samples = f(pts)
 
-        samples_on_hps = domain.to_interior_points(
+        samples_on_hps = domain.interp_to_interior_points(
             values=f_samples, sample_points_x=xvals, sample_points_y=yvals
         )
         f_expected = f(domain.interior_points)
@@ -255,7 +259,7 @@ class Test_to_interior_points:
         assert jnp.allclose(samples_on_hps, f_expected)
 
     def test_1(self, caplog) -> None:
-        """Initializes a non-uniform 2D domain and checks the to_interior_points method."""
+        """Initializes a non-uniform 2D domain and checks the interp_to_interior_points method."""
         caplog.set_level(logging.DEBUG)
         p = 6
         q = 4
@@ -295,7 +299,7 @@ class Test_to_interior_points:
 
         f_samples = f(pts)
 
-        samples_on_hps = domain.to_interior_points(
+        samples_on_hps = domain.interp_to_interior_points(
             values=f_samples, sample_points_x=xvals, sample_points_y=yvals
         )
         f_expected = f(domain.interior_points)
@@ -372,7 +376,7 @@ class Test_to_interior_points:
 
         f_samples = f(pts)
 
-        samples_on_hps = domain.to_interior_points(
+        samples_on_hps = domain.interp_to_interior_points(
             values=f_samples,
             sample_points_x=xvals,
             sample_points_y=yvals,
@@ -394,3 +398,32 @@ class Test_to_interior_points:
         # )
 
         assert jnp.allclose(samples_on_hps, f_expected)
+
+
+class Test_init_from_adaptive_discretization:
+    def test_0(self, caplog) -> None:
+        """3D adaptive discretization test."""
+        caplog.set_level(logging.DEBUG)
+
+        p = 6
+        q = 4
+        tol = 1e-05  # Chosen so we get exactly 1 level of refinement. If you change this, also change expected shape.
+
+        def f(x: jnp.array) -> jnp.array:
+            """f(x,y) = sin(y) + x**2"""
+            return jnp.sin(x[..., 1] ** 2) + x[..., 0] ** 2
+
+        root = DiscretizationNode3D(
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=0.0,
+            zmax=1.0,
+        )
+
+        domain = Domain.from_adaptive_discretization(
+            p=p, q=q, root=root, f=f, tol=tol
+        )
+
+        assert domain.interior_points.shape == (8, p**3, 3)

@@ -8,6 +8,7 @@ from .quadrature import (
     gauss_points,
     affine_transform,
     barycentric_lagrange_interpolation_matrix_1D,
+    barycentric_lagrange_interpolation_matrix_2D,
 )
 from functools import partial
 
@@ -297,3 +298,82 @@ def precompute_projection_ops_2D(
     )
 
     return L_2f1, L_1f2
+
+
+def precompute_L_4f1(p: int) -> jnp.array:
+    """This is an interpolation matrix that maps from a pxp Chebyshev grid points to
+    4 copies of a pxp Chebyshev grid. i.e. the refinement of the grid.
+
+    Args:
+        p (int): Number of Chebyshev grid points in one direction
+    Returns:
+        jnp.array: Interpolation matrix with shape (4*p**2, p**2)
+    """
+    cheby_pts_1d = chebyshev_points(p)
+    cheby_pts_refined = jnp.concatenate(
+        [
+            affine_transform(cheby_pts_1d, jnp.array([-1, 0])),
+            affine_transform(cheby_pts_1d, jnp.array([0, 1])),
+        ]
+    )
+
+    I_refined = barycentric_lagrange_interpolation_matrix_2D(
+        cheby_pts_1d, cheby_pts_1d, cheby_pts_refined, cheby_pts_refined
+    )
+
+    r, c = indexing_for_refinement_operator(p)
+
+    I_refined = I_refined[r, :]
+    I_refined = I_refined[:, c]
+    return I_refined
+
+
+def indexing_for_refinement_operator(p: int) -> jnp.array:
+    """Returns row and column indexing to rearrange the refinement_operator matrix.
+
+    Before reordering, that matrix has rows corresponding to a meshgrid of (cheby_pts_1d, cheby_pts_1d)
+    and cols corresponding to a meshgrid of (cheby_pts_refined, cheby_pts_refined). After reordering,
+    we want the rows to be ordered in the standard way, putting the exterior points first and then the
+    interior points. We also want the columns to be ordered in the standard way, putting each of the
+    four blocks of the meshgrid together and then ordering the points in each block so that the exterior
+    points come first.
+
+    Returns:
+        jnp.array: r: row indices to rearrange the rows of the matrix
+                   c: column indices to rearrange the columns of the matrix
+    """
+    col_idxes = rearrange_indices_ext_int(p)
+
+    ii = jnp.arange(4 * p**2)
+
+    # a is where x is in the first half and y is in the first half
+    a_bools = jnp.logical_and(ii % (2 * p) >= p, (ii // (2 * p)) % (2 * p) < p)
+    a_idxes = ii[a_bools]
+    a_idxes = a_idxes[col_idxes]
+
+    # b is where x is in the second half and y is in the first half
+    b_bools = jnp.logical_and(
+        ii % (2 * p) >= p, (ii // (2 * p)) % (2 * p) >= p
+    )
+    b_idxes = ii[b_bools]
+    b_idxes = b_idxes[col_idxes]
+
+    # c is where x is in the second half and y is in the second half
+    c_bools = jnp.logical_and(ii % (2 * p) < p, (ii // (2 * p)) % (2 * p) >= p)
+    c_idxes = ii[c_bools]
+    c_idxes = c_idxes[col_idxes]
+
+    # d is where x is in the first half and y is in the second half
+    d_bools = jnp.logical_and(ii % (2 * p) < p, (ii // (2 * p)) % (2 * p) < p)
+    d_idxes = ii[d_bools]
+    d_idxes = d_idxes[col_idxes]
+
+    row_idxes = jnp.concatenate(
+        [
+            a_idxes,
+            b_idxes,
+            c_idxes,
+            d_idxes,
+        ]
+    )
+    return row_idxes, col_idxes

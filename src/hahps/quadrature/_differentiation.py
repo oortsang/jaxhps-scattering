@@ -9,7 +9,10 @@ jax.config.update("jax_enable_x64", True)
 def differentiation_matrix_1D(
     points: jnp.ndarray,
 ) -> jnp.ndarray:
-    """Creates a 1-D Chebyshev differentiation matrix as described in (T00) Ch 6. Expects points are Chebyshev points on [-1, 1].
+    """
+    Creates a 1-D Chebyshev differentiation matrix as described in [SpectralMATLAB]_ Ch 6.
+
+    Expects Chebyshev points on the interval [-1, 1].
 
     Args:
         points (jnp.ndarray): Has shape (p,)

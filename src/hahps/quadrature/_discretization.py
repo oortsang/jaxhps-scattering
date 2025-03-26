@@ -11,7 +11,8 @@ jax.config.update("jax_enable_x64", True)
 
 @partial(jax.jit, static_argnums=(0,))
 def chebyshev_points(n: int) -> jax.Array:
-    """Returns n Chebyshev points over the interval [-1, 1]
+    """
+    Returns n Chebyshev points over the interval [-1, 1]
 
     out[i] = cos(pi * (n-1 - i) / (n-1)) for i={0,...,n-1}
 
@@ -41,8 +42,7 @@ def chebyshev_weights(n: int, bounds: jnp.array) -> jnp.array:
     """
     Generates weights for a Chebyshev quadrature rule with n points over the interval [a, b].
 
-    Uses the Clenshaw-Curtis quadrature rule, specifically the version used in Chebfun:
-    https://github.com/chebfun/chebfun/blob/f44234100d8af189d60e4bc533f5e98a0442a4c1/%40chebtech2/quadwts.m
+    Uses the Clenshaw-Curtis quadrature rule, specifically the version used in Chebfun. See [Chebfun]_.
 
     Args:
         n (int): Number of quadrature points
@@ -103,5 +103,14 @@ def affine_transform(pts: jax.Array, ab: jax.Array) -> jax.Array:
 
 @partial(jax.jit, static_argnums=(0,))
 def gauss_points(n: int) -> jax.Array:
+    """
+    Returns n Gauss-Legendre points over the interval [-1, 1]. This is a wrapper for ``numpy.polynomial.legendre.leggauss``.
+
+    Args:
+        n (int): Number of points
+
+    Returns:
+        jax.Array: Has shape (n,)
+    """
     gauss_pts_1d = np.polynomial.legendre.leggauss(n)[0]
     return jnp.array(gauss_pts_1d)

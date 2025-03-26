@@ -85,24 +85,29 @@ class DiscretizationNode2D:
         children: Tuple["DiscretizationNode2D"] = (),
     ):
         # Here is the auxiliary data
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax
-        self.depth = depth
+        self.xmin: float = xmin  #:
+        self.xmax: float = xmax  #:
+        self.ymin: float = ymin  #:
+        self.ymax: float = ymax  #:
+        self.depth: int = depth  #:
         self.data: NodeData = NodeData()
 
         # Keeping track of indexing
         # in 2D, self.n_i is the number of quadrature points along the boundary of
         # side i of the patch. i = 0, 1, 2, 3 corresponds to the bottom, right,
-        # top, and left, or (S, E, N, W), sides of the patch, respectively.
+        # top, and left, or (S, E, N, W), sides of t
+
+        #: Number of quadrature points on the boundary of face 0.he patch, respectively.
         self.n_0: int = None
+        #: Number of quadrature points on the boundary of face 0.he patch, respectively.
         self.n_1: int = None
+        #: Number of quadrature points on the boundary of face 0.he patch, respectively.
         self.n_2: int = None
+        #: Number of quadrature points on the boundary of face 0.he patch, respectively.
         self.n_3: int = None
 
-        # Here is the child pytrees
-        self.children = children
+        #: Child discretization nodes. Initialized to an empty tuple.
+        self.children: Tuple[DiscretizationNode2D] = children
 
     def __repr__(self) -> str:
         return "DiscretizationNode2D(xmin={}, xmax={}, ymin={}, ymax={}, depth={})".format(
@@ -169,26 +174,33 @@ class DiscretizationNode3D:
         children: Tuple["DiscretizationNode3D"] = (),
     ):
         # Here is the auxiliary data
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax
-        self.zmin = zmin
-        self.zmax = zmax
-        self.depth = depth
+        self.xmin: float = xmin  #:
+        self.xmax: float = xmax  #:
+        self.ymin: float = ymin  #:
+        self.ymax: float = ymax  #:
+        self.zmin: float = zmin  #:
+        self.zmax: float = zmax  #:
+        self.depth: int = depth  #:
         self.data: NodeData = NodeData()
 
         # Keeping track of indexing
         # in 3D, self.n_i is the number of quadrature points along the boundary of
         # each face of the voxel. See notes for ordering of the faces of voxels.
+
+        #: Number of quadrature points on the boundary of face 0.
         self.n_0: int = None
+        #: Number of quadrature points on the boundary of face 1.
         self.n_1: int = None
+        #: Number of quadrature points on the boundary of face 2.
         self.n_2: int = None
+        #: Number of quadrature points on the boundary of face 3.
         self.n_3: int = None
+        #: Number of quadrature points on the boundary of face 4.
         self.n_4: int = None
+        #: Number of quadrature points on the boundary of face 5.
         self.n_5: int = None
 
-        # Here is the child pytrees
+        #: Child discretization nodes. Initialized to an empty tuple.
         self.children = children
 
     def __repr__(self):
@@ -270,6 +282,15 @@ def get_discretization_node_area(
 def get_all_leaves(
     node: DiscretizationNode2D | DiscretizationNode3D,
 ) -> Tuple[DiscretizationNode2D | DiscretizationNode3D]:
+    """
+    Returns all of the leaf descendants of the given node.
+
+    Args:
+        node (DiscretizationNode2D | DiscretizationNode3D): Root of the tree.
+
+    Returns:
+        Tuple[DiscretizationNode2D | DiscretizationNode3D]: All of the leaves.
+    """
     if not len(node.children):
         return (node,)
     else:

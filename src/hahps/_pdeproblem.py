@@ -41,7 +41,7 @@ class PDEProblem:
         use_ItI: bool = False,
         eta: float = None,
     ):
-        self.domain = domain
+        self.domain: Domain = domain  #: The domain, which contains information about the discretization.
 
         # Input validation
         # 2D problems shouldn't specify D_z_coefficients
@@ -99,19 +99,32 @@ class PDEProblem:
                     )
 
         # Store coefficients
-        self.D_xx_coefficients = D_xx_coefficients
-        self.D_xy_coefficients = D_xy_coefficients
-        self.D_xz_coefficients = D_xz_coefficients
-        self.D_yy_coefficients = D_yy_coefficients
-        self.D_yz_coefficients = D_yz_coefficients
-        self.D_zz_coefficients = D_zz_coefficients
-        self.D_x_coefficients = D_x_coefficients
-        self.D_y_coefficients = D_y_coefficients
-        self.D_z_coefficients = D_z_coefficients
-        self.I_coefficients = I_coefficients
-        self.source = source
-        self.use_ItI = use_ItI
-        self.eta = eta
+
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_xx_coefficients: jax.Array | None = D_xx_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_xy_coefficients: jax.Array | None = D_xy_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_xz_coefficients: jax.Array | None = D_xz_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_yy_coefficients: jax.Array | None = D_yy_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_yz_coefficients: jax.Array | None = D_yz_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_zz_coefficients: jax.Array | None = D_zz_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_x_coefficients: jax.Array | None = D_x_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_y_coefficients: jax.Array | None = D_y_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.D_z_coefficients: jax.Array | None = D_z_coefficients
+        #: Coefficient array with shape (n_leaves, p^d).
+        self.I_coefficients: jax.Array | None = I_coefficients
+        #: Source function array with shape (n_leaves, p^d).
+        self.source: jax.Array | None = source
+        self.use_ItI: bool = use_ItI  #: Whether to use ItI merges.
+        #: Parameter for ItI matrices and Robin boundary condition.
+        self.eta: float | None = eta
 
         if domain.bool_uniform:
             # In this version of the code, we know the side len of each leaf is the same, so we can scale the diff
@@ -134,6 +147,16 @@ class PDEProblem:
         # Pre-compute spectral differentiation and interpolation matrices
         if bool_2D:
             # Differentiation operators
+            #: Spectral differentiation matrix in x direction. Has shape (p^d, p^d).
+            self.D_x: jax.Array = None
+            #: Spectral differentiation matrix in y direction. Has shape (p^d, p^d).
+            self.D_y: jax.Array = None
+            #: Spectral differentiation matrix in xx direction. Has shape (p^d, p^d).
+            self.D_xx: jax.Array = None
+            #: Spectral differentiation matrix in xy direction. Has shape (p^d, p^d).
+            self.D_xy: jax.Array = None
+            #: Spectral differentiation matrix in yy direction. Has shape (p^d, p^d).
+            self.D_yy: jax.Array = None
             self.D_x, self.D_y, self.D_xx, self.D_yy, self.D_xy = (
                 precompute_diff_operators_2D(domain.p, half_side_len)
             )
@@ -163,6 +186,14 @@ class PDEProblem:
                 self.L_2f1, self.L_1f2 = precompute_projection_ops_2D(domain.q)
         else:
             # Differentiation operators
+            #: Spectral differentiation matrix in z direction. Has shape (p^d, p^d).
+            self.D_z: jax.Array = None
+            #: Spectral differentiation matrix in zz direction. Has shape (p^d, p^d).
+            self.D_zz: jax.Array = None
+            #: Spectral differentiation matrix in xz direction. Has shape (p^d, p^d).
+            self.D_xz: jax.Array = None
+            #: Spectral differentiation matrix in yz direction. Has shape (p^d, p^d).
+            self.D_yz: jax.Array = None
             (
                 self.D_x,
                 self.D_y,
@@ -186,7 +217,11 @@ class PDEProblem:
                 self.L_4f1, self.L_1f4 = precompute_projection_ops_3D(domain.q)
 
         # Set up containers for the solution operators.
-        self.Y: jax.Array = None
-        self.v: jax.Array = None
-        self.S_lst: List[jax.Array] = []
-        self.g_tilde_lst: List[jax.Array] = []
+        self.Y: jax.Array = None  #: (jax.Array) Stores pre-computed interior solution operators.
+        self.v: jax.Array = None  #: (jax.Array) Stores pre-computed interior particular solutions.
+        self.S_lst: List[
+            jax.Array
+        ] = []  #: (jax.Array) Stores pre-computed propagation operators when performing uniform merges.
+        self.g_tilde_lst: List[
+            jax.Array
+        ] = []  #: (jax.Array) Stores pre-computed incoming data along merge interfaces when performing uniform merges.

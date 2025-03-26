@@ -9,6 +9,7 @@ from .quadrature import (
     gauss_points,
     differentiation_matrix_1D,
     barycentric_lagrange_interpolation_matrix_2D,
+    barycentric_lagrange_interpolation_matrix_3D,
     affine_transform,
 )
 
@@ -406,3 +407,144 @@ def precompute_projection_ops_3D(
     L_1f4 = coarsening_op_out
 
     return L_4f1, L_1f4
+
+
+def precompute_L_8f1(p: int) -> jnp.array:
+    cheby_pts_1d = chebyshev_points(p)
+    cheby_pts_refined = jnp.concatenate(
+        [
+            affine_transform(cheby_pts_1d, jnp.array([-1, 0])),
+            affine_transform(cheby_pts_1d, jnp.array([0, 1])),
+        ]
+    )
+
+    # This thing is scale and translation invariant so no need
+    # to worry about recomputing it for different sizes
+    I_refined = barycentric_lagrange_interpolation_matrix_3D(
+        cheby_pts_1d,
+        cheby_pts_1d,
+        cheby_pts_1d,
+        cheby_pts_refined,
+        cheby_pts_refined,
+        cheby_pts_refined,
+    )
+
+    r, c = indexing_for_refinement_operator(p)
+
+    # I_refined has cols that are a standard meshgrid of (cheby_pts_1d, cheby_pts_1d, cheby_pts_1d).
+    # We want to rearrange the columns so that the first p**3 - (p-2)**3 columns are the exterior points
+    # and the rest are the interior points.
+    I_refined = I_refined[:, c]
+
+    # I_refined has rows that are a standard meshgrid of (cheby_pts_refined, cheby_pts_refined, cheby_pts_refined).
+    # We first want to rearrange them so that each of the 8 blocks are together. Then we want to rearrange each
+    # block so that the first p**3 - (p-2)**3 rows are the exterior points and the rest are the interior points.
+    I_refined = I_refined[r, :]
+    return I_refined
+
+
+def indexing_for_refinement_operator(p: int) -> jnp.array:
+    col_idxes = rearrange_indices_ext_int(p)
+
+    ii = jnp.arange(8 * p**3)
+
+    # part a is where x is in the first half, y is in the first half, and z is in the second half.
+    a_bools = jnp.logical_and(
+        ii % (2 * p) >= p,
+        jnp.logical_and(
+            (ii // (2 * p)) % (2 * p) < p, (ii // ((2 * p) ** 2)) % (2 * p) < p
+        ),
+    )
+    a_idxes = ii[a_bools]
+    a_idxes = a_idxes[col_idxes]
+
+    # part b is where x is in the second half, y is in the first half, and z is in the second half.
+    b_bools = jnp.logical_and(
+        ii % (2 * p) >= p,
+        jnp.logical_and(
+            (ii // (2 * p)) % (2 * p) < p,
+            (ii // ((2 * p) ** 2)) % (2 * p) >= p,
+        ),
+    )
+    b_idxes = ii[b_bools]
+    b_idxes = b_idxes[col_idxes]
+
+    # part c is where x is in the second half, y is in the second half, and z is in the second half.
+    c_bools = jnp.logical_and(
+        ii % (2 * p) >= p,
+        jnp.logical_and(
+            (ii // (2 * p)) % (2 * p) >= p,
+            (ii // ((2 * p) ** 2)) % (2 * p) >= p,
+        ),
+    )
+    c_idxes = ii[c_bools]
+    c_idxes = c_idxes[col_idxes]
+
+    # part d is where x is in the first half, y is in the second half, and z is in the second half.
+    d_bools = jnp.logical_and(
+        ii % (2 * p) >= p,
+        jnp.logical_and(
+            (ii // (2 * p)) % (2 * p) >= p,
+            (ii // ((2 * p) ** 2)) % (2 * p) < p,
+        ),
+    )
+    d_idxes = ii[d_bools]
+    d_idxes = d_idxes[col_idxes]
+
+    # part e is where x is in the first half, y is in the first half, and z is in the first half.
+    e_bools = jnp.logical_and(
+        ii % (2 * p) < p,
+        jnp.logical_and(
+            (ii // (2 * p)) % (2 * p) < p, (ii // ((2 * p) ** 2)) % (2 * p) < p
+        ),
+    )
+    e_idxes = ii[e_bools]
+    e_idxes = e_idxes[col_idxes]
+
+    # part f is where x is in the second half, y is in the first half, and z is in the first half.
+    f_bools = jnp.logical_and(
+        ii % (2 * p) < p,
+        jnp.logical_and(
+            (ii // (2 * p)) % (2 * p) < p,
+            (ii // ((2 * p) ** 2)) % (2 * p) >= p,
+        ),
+    )
+    f_idxes = ii[f_bools]
+    f_idxes = f_idxes[col_idxes]
+
+    # part g is where x is in the second half, y is in the second half, and z is in the first half.
+    g_bools = jnp.logical_and(
+        ii % (2 * p) < p,
+        jnp.logical_and(
+            (ii // (2 * p)) % (2 * p) >= p,
+            (ii // ((2 * p) ** 2)) % (2 * p) >= p,
+        ),
+    )
+    g_idxes = ii[g_bools]
+    g_idxes = g_idxes[col_idxes]
+
+    # part h is where x is in the first half, y is in the second half, and z is in the first half.
+    h_bools = jnp.logical_and(
+        ii % (2 * p) < p,
+        jnp.logical_and(
+            (ii // (2 * p)) % (2 * p) >= p,
+            (ii // ((2 * p) ** 2)) % (2 * p) < p,
+        ),
+    )
+    h_idxes = ii[h_bools]
+    h_idxes = h_idxes[col_idxes]
+
+    row_idxes = jnp.concatenate(
+        [
+            a_idxes,
+            b_idxes,
+            c_idxes,
+            d_idxes,
+            e_idxes,
+            f_idxes,
+            g_idxes,
+            h_idxes,
+        ]
+    )
+
+    return row_idxes, col_idxes

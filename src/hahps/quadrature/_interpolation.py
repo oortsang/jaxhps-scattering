@@ -22,16 +22,14 @@ def barycentric_lagrange_interpolation_matrix_1D(
     Generates a Lagrange 1D polynomial interpolation matrix, which interpolates
     from the points in from_pts to the points in to_pts.
 
-    This function uses the barycentric formula for Lagrange interpolation, from
-
-    Berrut, J.-P., & Trefethen, L. N. (2004). Barycentric Lagrange Interpolation.
+    This function uses the barycentric formula for Lagrange interpolation, from [BarycentricLagrange]_
 
     Args:
-        from_pts (jnp.ndarray): Has shape (p,)
-        to_pts (jnp.ndarray): Has shape (n,)
+        from_pts (jnp.ndarray): Has shape (n,)
+        to_pts (jnp.ndarray): Has shape (p,)
 
     Returns:
-        jnp.ndarray: Has shape (n,p)
+        jnp.ndarray: Has shape (p,n)
     """
     p = from_pts.shape[0]
     n = to_pts.shape[0]
@@ -98,6 +96,18 @@ def barycentric_lagrange_interpolation_matrix_2D(
     to_pts_x: jnp.ndarray,
     to_pts_y: jnp.ndarray,
 ) -> jnp.ndarray:
+    """
+    2D Barycentric Lagrange interpolation matrix.
+
+    Args:
+        from_pts_x (jnp.ndarray): Has shape (n_x,)
+        from_pts_y (jnp.ndarray): Has shape (n_y,)
+        to_pts_x (jnp.ndarray): Has shape (p_x,)
+        to_pts_y (jnp.ndarray): Has shape (p_y,)
+
+    Returns:
+        jnp.ndarray: Has shape (p_x * p_y, n_x * n_y)
+    """
     n_x = from_pts_x.shape[0]
     p_x = to_pts_x.shape[0]
     n_y = from_pts_y.shape[0]
@@ -160,18 +170,19 @@ def barycentric_lagrange_interpolation_matrix_3D(
     to_pts_y: jnp.ndarray,
     to_pts_z: jnp.ndarray,
 ) -> jnp.ndarray:
-    """_summary_
+    """
+    3D Barycentric Lagrange interpolation matrix.
 
     Args:
-        from_pts_x (jnp.ndarray): Has shape (n,)
-        from_pts_y (jnp.ndarray): Has shape (n,)
-        from_pts_z (jnp.ndarray): Has shape (n,)
-        to_pts_x (jnp.ndarray): Has shape (p,)
-        to_pts_y (jnp.ndarray): Has shape (p,)
-        to_pts_z (jnp.ndarray): Has shape (p,)
+        from_pts_x (jnp.ndarray): Has shape (n_x,)
+        from_pts_y (jnp.ndarray): Has shape (n_y,)
+        from_pts_z (jnp.ndarray): Has shape (n_z,)
+        to_pts_x (jnp.ndarray): Has shape (p_x,)
+        to_pts_y (jnp.ndarray): Has shape (p_y,)
+        to_pts_z (jnp.ndarray): Has shape (p_z,)
 
     Returns:
-        jnp.ndarray: Has shape (p**3, n**3)
+        jnp.ndarray: Has shape (p_x * p_y * p_z, n_x * n_y * n_z)
     """
 
     n_x = from_pts_x.shape[0]

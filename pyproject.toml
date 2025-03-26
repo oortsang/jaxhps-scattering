@@ -1,6 +1,7 @@
 [tool.ruff]
 # Set the maximum line length to 79.
 line-length = 79
+exclude = ["docs"]
 
 [tool.ruff.lint]
 # Add the `line-too-long` rule to the enforced rule set. By default, Ruff omits rules that

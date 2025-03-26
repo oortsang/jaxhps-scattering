@@ -6,7 +6,9 @@ import jax.numpy as jnp
 
 @jax.jit
 def meshgrid_to_lst_of_pts(X: jnp.ndarray, Y: jnp.ndarray) -> jnp.ndarray:
-    """Given X and Y, which each have shape (n, n) and are
+    """
+    :meta private:
+    Given X and Y, which each have shape (n, n) and are
     the output of a Numpy meshgrid-like function, stacks these points into a tall 2D array of shape (n**2, 2)
 
     Args:

@@ -1,5 +1,4 @@
 import numpy as np
-import jax
 
 from hahps.merge._uniform_2D_ItI import (
     merge_stage_uniform_2D_ItI,

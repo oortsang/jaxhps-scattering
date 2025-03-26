@@ -1,10 +1,11 @@
 import numpy as np
 import jax.numpy as jnp
 
-from hahps.quadrature import chebyshev_points
+from hahps.quadrature import chebyshev_points, affine_transform
 from hahps._grid_creation_3D import (
     bounds_to_cheby_points_3D,
     compute_boundary_Gauss_points_adaptive_3D,
+    compute_interior_Chebyshev_points_adaptive_3D,
 )
 from hahps._discretization_tree import DiscretizationNode3D
 from hahps._discretization_tree_operations_3D import add_eight_children
@@ -14,6 +15,8 @@ from hahps._precompute_operators_3D import (
     precompute_Q_3D_DtN,
     get_face_1_idxes,
     precompute_projection_ops_3D,
+    precompute_L_8f1,
+    indexing_for_refinement_operator,
 )
 
 
@@ -793,3 +796,128 @@ class Test_precompute_refining_coarsening_op:
         assert jnp.allclose(root_0_interp, root_0_evals), (
             "Coarsening op failed"
         )
+
+
+class Test_L_8f1:
+    def test_0(self) -> None:
+        # Test to make sure the shapes are right.
+        p = 2
+        x = precompute_L_8f1(p)
+
+        print("test_0: x", x)
+        assert x.shape == (8 * p**3, p**3)
+        assert not jnp.any(jnp.isnan(x))
+
+    def test_1(self) -> None:
+        """Refinement should be exact on low-degree polynomials"""
+        p = 5
+        x = precompute_L_8f1(p)
+        assert not jnp.any(jnp.isnan(x))
+        root_0 = DiscretizationNode3D(
+            xmin=-1.0,
+            xmax=1.0,
+            ymin=-1.0,
+            ymax=1.0,
+            zmin=-1.0,
+            zmax=1.0,
+        )
+        root_1 = DiscretizationNode3D(
+            xmin=-1.0,
+            xmax=1.0,
+            ymin=-1.0,
+            ymax=1.0,
+            zmin=-1.0,
+            zmax=1.0,
+        )
+        add_eight_children(root_1, root=root_1, q=p - 2)
+
+        # These are the Chebyshev points, ordered to be exterior points, then interior points.
+        pts_0 = compute_interior_Chebyshev_points_adaptive_3D(
+            root_0, p
+        ).reshape((-1, 3))
+
+        # These are four copies of the Cheby points
+        pts_1 = compute_interior_Chebyshev_points_adaptive_3D(root_1, p)
+        print("test_1: pts_1.shape: ", pts_1.shape)
+        pts_1 = pts_1.reshape((-1, 3))
+
+        def f(x: jnp.array) -> jnp.array:
+            """f(x,y,z) = x^2 + 3y - xz"""
+            return x[..., 0] ** 2 + 3 * x[..., 1] - x[..., 0] * x[..., 2]
+
+        # def f(x: jnp.array) -> jnp.array:
+        #     # f(x,y,z) = y
+        #     return x[..., 1]
+
+        f_0 = f(pts_0)
+        f_1 = f(pts_1)
+        f_interp = x @ f_0
+
+        diffs = f_1 - f_interp
+
+        # plt.plot(f_interp, label="f_interp")
+        # plt.plot(f_1, label="f_1")
+        # plt.plot(diffs, label="diffs")
+        # plt.legend()
+        # plt.grid()
+        # plt.show()
+
+        # print("test_1: x: ", x)
+
+        print("test_1: f_0: ", f_0)
+        print("test_1: f_1: ", f_1)
+        print("test_1: f_interp: ", f_interp)
+        print("test_1: diffs: ", diffs)
+
+        assert jnp.allclose(f_1, f_interp)
+
+
+class Test_indexing_for_refinement_operator:
+    def test_0(self) -> None:
+        p = 4
+        row_idxes, col_idxes = indexing_for_refinement_operator(p)
+
+        assert col_idxes.shape == (p**3,)
+        assert row_idxes.shape == (8 * p**3,)
+
+    def test_1(self) -> None:
+        p = 4
+        q = 2
+        cheby_pts_1d = chebyshev_points(p)
+        cheby_pts_refined = jnp.concatenate(
+            [
+                affine_transform(cheby_pts_1d, jnp.array([-1, 0])),
+                affine_transform(cheby_pts_1d, jnp.array([0, 1])),
+            ]
+        )
+
+        col_x, col_y, col_z = jnp.meshgrid(
+            cheby_pts_refined,
+            cheby_pts_refined,
+            cheby_pts_refined,
+            indexing="ij",
+        )
+        col_pts = jnp.stack([col_x, col_y, col_z], axis=-1).reshape(-1, 3)
+        print("test_1: col_pts", col_pts)
+
+        root = DiscretizationNode3D(
+            xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0
+        )
+        add_eight_children(root, root=root, q=q)
+
+        # These are eight copies of the Chebyshev points
+        pts_1 = compute_interior_Chebyshev_points_adaptive_3D(root, p).reshape(
+            (-1, 3)
+        )
+
+        row_idxes, col_idxes = indexing_for_refinement_operator(p)
+
+        col_pts_rearranged = col_pts[row_idxes]
+        print("test_1: col_pts_rearranged", col_pts_rearranged.shape)
+
+        pts_1_trunc = pts_1[: col_pts_rearranged.shape[0]]
+        print("test_1: pts_1", pts_1.shape)
+
+        assert jnp.allclose(col_pts_rearranged, pts_1_trunc)
+
+        assert jnp.allclose(col_pts_rearranged, pts_1)

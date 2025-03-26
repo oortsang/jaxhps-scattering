@@ -140,20 +140,21 @@ class Test_compute_boundary_Gauss_points_adaptive_2D:
         """Checks that outputs pass basic sanity checks on uniform refinement of 3 levels."""
         # p = 16
         q = 6
-        corners = jnp.array([[-1, -1], [1, -1], [1, 1], [-1, 1]])
-        west, south = corners[0]
-        east, north = corners[2]
+        west = -1.0
+        east = 1.0
+        south = -1.0
+        north = 1.0
         root = DiscretizationNode2D(
             xmin=west,
             xmax=east,
             ymin=south,
             ymax=north,
         )
-        add_four_children(root)
+        add_four_children(root, root=root, q=q)
         for c in root.children:
-            add_four_children(c)
+            add_four_children(c, root=root, q=q)
             for gc in c.children:
-                add_four_children(gc)
+                add_four_children(gc, root=root, q=q)
 
         y = compute_boundary_Gauss_points_adaptive_2D(root, q)
 

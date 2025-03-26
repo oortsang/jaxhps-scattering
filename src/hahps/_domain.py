@@ -23,10 +23,13 @@ from ._interpolation_methods import (
     interp_to_hps_2D,
     interp_to_hps_3D,
 )
+from ._adaptive_discretization_3D import (
+    generate_adaptive_mesh_level_restriction,
+)
 import jax
 import jax.numpy as jnp
 import logging
-from typing import Callable
+from typing import Callable, List
 
 
 class Domain:
@@ -37,10 +40,12 @@ class Domain:
         root: DiscretizationNode2D | DiscretizationNode3D,
         L: int | None = None,
     ):
-        self.p = p
-        self.q = q
-        self.root = root
-        self.L = L
+        self.p: int = p  #: Polynomial order for Chebyshev points.
+        self.q: int = q  #:  Polynomial order for Gauss-Legendre points.
+        #: Root node of the discretization tree
+        self.root: DiscretizationNode2D | DiscretizationNode3D = root
+        #: Number of levels of uniform refinement, or None for adaptive refinement.
+        self.L: int | None = L
 
         self.bool_2D = isinstance(root, DiscretizationNode2D)
 
@@ -49,10 +54,12 @@ class Domain:
             # Depending on whether root is a DiscretizationNode2D or
             # DiscretizationNode3D, we compute the grid points differently
             if self.bool_2D:
-                self.interior_points = (
+                #: Interior Chebyshev points with shape (n_leaves, p^d, d)
+                self.interior_points: jax.Array = (
                     compute_interior_Chebyshev_points_uniform_2D(root, L, p)
                 )
-                self.boundary_points = (
+                #: Boundary Gauss points with shape (x q^{d-1}, d), where x is the number of leaves touching the boundary.
+                self.boundary_points: jax.Array = (
                     compute_boundary_Gauss_points_uniform_2D(root, L, q)
                 )
             else:
@@ -81,13 +88,31 @@ class Domain:
                     compute_boundary_Gauss_points_adaptive_3D(root, q)
                 )
 
-    def to_interior_points(
+    def interp_to_interior_points(
         self,
         values: jax.Array,
         sample_points_x: jax.Array,
         sample_points_y: jax.Array,
         sample_points_z: jax.Array = None,
     ) -> jax.Array:
+        """
+        This is a utility for interpolating from values on a rectangular grid to values on
+        the HPS grid. The interpolation method builds a separate barycentric Lagrange interpolation
+        matrix for each leaf on the HPS grid and maps the values to the leaf discretization points.
+
+
+        Args:
+            values (jax.Array): Has shape (n_x, n_y) or (n_x, n_y, n_z), and specifies the values of the function on the rectangular grid.
+
+            sample_points_x (jax.Array): Has shape (n_x,). Specifies the x-coordinates of the rectangular grid.
+
+            sample_points_y (jax.Array): Has shape (n_y,). Specifies the y-coordinates of the rectangular grid.
+
+            sample_points_z (jax.Array, optional): Has shape (n_z,). Specifies the z-coordinates of the rectangular grid. Defaults to None.
+
+        Returns:
+            jax.Array: Samples on the HPS grid. Has shape (n_leaves, p^d), where d is the dimension of the problem.
+        """
         n_x = sample_points_x.shape[0]
         n_y = sample_points_y.shape[0]
         # 2D vs 3D checking
@@ -108,7 +133,7 @@ class Domain:
                 leaves = get_all_uniform_leaves_2D(self.root, self.L)
             else:
                 leaves = get_all_leaves(self.root)
-            logging.debug("to_interior_points: leaves: %s", len(leaves))
+            logging.debug("interp_to_interior_points: leaves: %s", len(leaves))
             leaf_bounds = jnp.array(
                 [
                     [leaf.xmin, leaf.xmax, leaf.ymin, leaf.ymax]
@@ -116,7 +141,7 @@ class Domain:
                 ]
             )
             logging.debug(
-                "to_interior_points: leaf_bounds: %s", leaf_bounds.shape
+                "interp_to_interior_points: leaf_bounds: %s", leaf_bounds.shape
             )
 
             return interp_to_hps_2D(
@@ -151,21 +176,42 @@ class Domain:
                 sample_points_z,
             )
 
-    def to_boundary_points(
+    def interp_to_boundary_points(
         self,
         sample_points: jax.Array,
         sample_values: jax.Array,
         sample_f: Callable,
     ) -> jax.Array:
-        raise NotImplementedError("to_boundary_points is not implemented yet.")
+        raise NotImplementedError(
+            "interp_to_boundary_points is not implemented yet."
+        )
 
-    def from_interior_points(
+    def interp_from_interior_points(
         self,
         samples: jax.Array,
         eval_points_x: jax.Array,
         eval_points_y: jax.Array,
         eval_points_z: jax.Array = None,
     ) -> jax.Array:
+        """
+        This is a method for interpolating from the HPS grid to a rectangular grid. For each point in the rectangular grid,
+        a barycentric Lagrange interpolation matrix is built from the containing leaf to the point, and the function is interpolated
+        from the leaf to that point.
+
+
+
+        Args:
+            samples (jax.Array): Function sampled on the HPS grid. Has shape (n_leaves, p^d).
+
+            eval_points_x (jax.Array): Evaluation points in the x dimension. Has shape (n_x,).
+
+            eval_points_y (jax.Array): Evaluation points in the y dimension. Has shape (n_y,).
+
+            eval_points_z (jax.Array, optional): Evaluation points in the z dimension. Has shape (n_z,). Defaults to None.
+
+        Returns:
+            jax.Array: _description_
+        """
         # 2D vs 3D checking
         if isinstance(self.root, DiscretizationNode2D):
             bool_2D = True
@@ -207,6 +253,18 @@ class Domain:
     def get_adaptive_boundary_data_lst(
         self, f: Callable[[jax.Array], jax.Array]
     ) -> list[jax.Array]:
+        """
+        Given a callable object ``f``, this function evaluates the function at the
+        boundary discretization points, and organizes the results into a list. This
+        is helpful for specifying boundary conditions in the adaptive case,
+        where it is not clear a priori how many points will be on each part of the boundary.
+
+        Args:
+            f (Callable[[jax.Array], jax.Array]): Must have signature [..., d] -> [...].
+
+        Returns:
+            list[jax.Array]: Each element of the list corresponds to a side (2D) or face (3D) of the boundary.
+        """
         if self.bool_2D:
             side_0_pts = self.boundary_points[
                 self.boundary_points[:, 1] == self.root.ymin
@@ -258,3 +316,62 @@ class Domain:
             ]
 
         return bdry_data_lst
+
+    @classmethod
+    def from_adaptive_discretization(
+        cls,
+        p: int,
+        q: int,
+        root: DiscretizationNode2D | DiscretizationNode3D,
+        f: Callable[[jax.Array], jax.Array]
+        | List[Callable[[jax.Array], jax.Array]],
+        tol: float,
+        use_level_restriction: bool = True,
+        use_l_2_norm: bool = False,
+    ) -> "Domain":
+        """
+        This is a constructor for creating a ``Domain`` when using an adaptive discretization.
+        Given the root of the domain and a function ```f`` to be evaluated on the domain, this method
+        will adaptively refine the HPS grid until reaching a specified tolerance ``tol``. Multiple
+        functions for adaptive refinement can be specified in a list.
+
+        Args:
+            p (int): Polynomial order for Chebyshev points.
+
+            q (int): Polynomial order for Gauss-Legendre points.
+
+            root (DiscretizationNode2D | DiscretizationNode3D): Specifies the root of the discretization tree.
+
+            f (Callable[[jax.Array], jax.Array] | List[Callable[[jax.Array], jax.Array]]): Function(s) to be used in the adaptive refinement method.
+
+            tol (float): Tolerance parameter.
+
+            use_level_restriction (bool, optional): Whether to enforce the level restriction criterion. Defaults to True. If set to False, could cause errors in the merge stage.
+
+            use_l_2_norm (bool, optional): If set to True, the refinement uses a relative l_2 criterion instead of the standard l_infty criterion. Defaults to False.
+
+        Returns:
+            Domain: The domain object with an adaptively-refined discretization tree.
+        """
+        # Check if f is a list of functions
+        if not isinstance(f, list):
+            f = [f]
+
+        bool_2D = isinstance(root, DiscretizationNode2D)
+        if bool_2D:
+            raise NotImplementedError(
+                "Adaptive meshing only implemented for 3D."
+            )
+
+        for i, func in enumerate(f):
+            generate_adaptive_mesh_level_restriction(
+                root=root,
+                f_fn=func,
+                tol=tol,
+                p=p,
+                q=q,
+                restrict_bool=use_level_restriction,
+                l2_norm=use_l_2_norm,
+            )
+
+        return cls(p=p, q=q, root=root)
