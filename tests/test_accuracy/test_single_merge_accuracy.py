@@ -11,7 +11,7 @@ from hahps.merge._uniform_2D_DtN import merge_stage_uniform_2D_DtN
 from hahps.merge._uniform_2D_ItI import merge_stage_uniform_2D_ItI
 from hahps.down_pass._uniform_2D_DtN import down_pass_uniform_2D_DtN
 from hahps.down_pass._uniform_2D_ItI import down_pass_uniform_2D_ItI
-from tests.test_accuracy.cases import (
+from .cases import (
     XMIN,
     XMAX,
     YMIN,

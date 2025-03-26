@@ -166,7 +166,6 @@ class DiscretizationNode3D:
         zmin: float,
         zmax: float,
         depth: int = 0,
-        data: NodeData = NodeData(),
         children: Tuple["DiscretizationNode3D"] = (),
     ):
         # Here is the auxiliary data
@@ -177,7 +176,7 @@ class DiscretizationNode3D:
         self.zmin = zmin
         self.zmax = zmax
         self.depth = depth
-        self.data = data
+        self.data: NodeData = NodeData()
 
         # Keeping track of indexing
         # in 3D, self.n_i is the number of quadrature points along the boundary of
@@ -234,7 +233,6 @@ def unflatten_discretizationnode3D(d: Tuple, c: Tuple) -> DiscretizationNode3D:
         zmin=d[4],
         zmax=d[5],
         depth=d[6],
-        data=d[7],
         children=c[0],
     )
     z.n_0 = d[8]
@@ -243,7 +241,7 @@ def unflatten_discretizationnode3D(d: Tuple, c: Tuple) -> DiscretizationNode3D:
     z.n_3 = d[11]
     z.n_4 = d[12]
     z.n_5 = d[13]
-
+    z.data = d[7]
     return z
 
 

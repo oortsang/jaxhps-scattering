@@ -22,6 +22,19 @@ from hahps.merge._adaptive_3D_DtN import (
 )
 
 
+def check_node_data(node: DiscretizationNode3D) -> None:
+    n_bdry = node.n_0 + node.n_1 + node.n_2 + node.n_3 + node.n_4 + node.n_5
+    assert node.data.T is not None
+    assert node.data.T.shape == (n_bdry, n_bdry)
+    assert node.data.h is not None
+    assert node.data.h.shape == (n_bdry,)
+    if len(node.children):
+        assert node.data.S is not None
+        assert node.data.g_tilde is not None
+        assert node.data.S.shape[0] == node.data.g_tilde.shape[0]
+        assert node.data.S.shape[-1] == n_bdry
+
+
 class Test_merge_stage_adaptive_3D_DtN:
     def test_0(self, caplog) -> None:
         """Makes sure things run correctly under uniform refinement."""
@@ -60,20 +73,10 @@ class Test_merge_stage_adaptive_3D_DtN:
         merge_stage_adaptive_3D_DtN(t, T_arr, h)
         # Check that the DtN and v_prime arrays are set in the tree object for levels 0, 1, 2.
         for node in get_nodes_at_level(t.domain.root, 0):
-            assert node.data.T is not None
-            assert node.data.h is not None
-            if len(node.children):
-                assert node.data.S is not None
-                assert node.data.g_tilde is not None
-                assert node.data.S.shape[0] == node.data.g_tilde.shape[0]
+            check_node_data(node)
 
         for node in get_nodes_at_level(t.domain.root, 1):
-            assert node.data.T is not None
-            assert node.data.h is not None
-            if len(node.children):
-                assert node.data.S is not None
-                assert node.data.g_tilde is not None
-                assert node.data.S.shape[0] == node.data.g_tilde.shape[0]
+            check_node_data(node)
 
     def test_1(self, caplog) -> None:
         """Makes sure things run correctly under non-uniform refinement."""
@@ -120,20 +123,10 @@ class Test_merge_stage_adaptive_3D_DtN:
             assert Y_arr.shape == (num_leaves, p**3, 6 * q**2)
             merge_stage_adaptive_3D_DtN(t, T_arr, h)
             for node in get_nodes_at_level(t.domain.root, 0):
-                assert node.data.T is not None
-                assert node.data.h is not None
-                if len(node.children):
-                    assert node.data.S is not None
-                    assert node.data.g_tilde is not None
-                    assert node.data.S.shape[0] == node.data.g_tilde.shape[0]
+                check_node_data(node)
 
             for node in get_nodes_at_level(t.domain.root, 1):
-                assert node.data.T is not None
-                assert node.data.h is not None
-                if len(node.children):
-                    assert node.data.S is not None
-                    assert node.data.g_tilde is not None
-                    assert node.data.S.shape[0] == node.data.g_tilde.shape[0]
+                check_node_data(node)
 
     def test_2(self) -> None:
         """Makes sure things run correctly under non-uniform refinement."""
@@ -171,20 +164,10 @@ class Test_merge_stage_adaptive_3D_DtN:
         merge_stage_adaptive_3D_DtN(t, T_arr, h)
 
         for node in get_nodes_at_level(t.domain.root, 0):
-            assert node.data.T is not None
-            assert node.data.h is not None
-            if len(node.children):
-                assert node.data.S is not None
-                assert node.data.g_tilde is not None
-                assert node.data.S.shape[0] == node.data.g_tilde.shape[0]
+            check_node_data(node)
 
         for node in get_nodes_at_level(t.domain.root, 1):
-            assert node.data.T is not None
-            assert node.data.h is not None
-            if len(node.children):
-                assert node.data.S is not None
-                assert node.data.g_tilde is not None
-                assert node.data.S.shape[0] == node.data.g_tilde.shape[0]
+            check_node_data(node)
 
 
 class Test__oct_merge:

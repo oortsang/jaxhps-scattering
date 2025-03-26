@@ -7,7 +7,7 @@ from hahps._domain import Domain
 from hahps._pdeproblem import PDEProblem
 from hahps.local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
 from hahps.local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
-from tests.test_accuracy.cases import (
+from .cases import (
     XMIN,
     XMAX,
     YMIN,
@@ -260,7 +260,7 @@ def check_leaf_accuracy_ItI(domain: Domain, test_case: Dict) -> None:
 
     ##############################################################
     # Solve the local problem
-    R, Y, h, v = local_solve_stage_uniform_2D_ItI(pde_problem=pde_problem)
+    Y, R, v, h = local_solve_stage_uniform_2D_ItI(pde_problem=pde_problem)
     # logging.debug("v.imag: %s", v.imag)
     R = R[0]
     h = h[0]

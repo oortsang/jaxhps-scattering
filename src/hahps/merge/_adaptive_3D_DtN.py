@@ -66,6 +66,11 @@ def merge_stage_adaptive_3D_DtN(
     T_lowest_level = jax.device_put(T_lowest_level, device)
     h_lowest_level = jax.device_put(h_lowest_level, device)
 
+    logging.debug(
+        "merge_stage_adaptive_3D_DtN: After exiting, T_lowest_level.shape = %s",
+        T_lowest_level.shape,
+    )
+
     # Vmapped code works on the lowest level
     S, T, h, g_tilde = vmapped_uniform_oct_merge_DtN(
         q_idxes, T_lowest_level, h_lowest_level
@@ -83,13 +88,17 @@ def merge_stage_adaptive_3D_DtN(
         if parent.data.T is not None:
             # Filter out the leaves at this level; they already have DtN matrices
             continue
+        logging.debug("Filling parent= %s", parent)
         parent.data.T = T[counter]
         parent.data.h = h[counter]
         parent.data.S = S[counter]
         parent.data.g_tilde = g_tilde[counter]
         counter += 1
+        D_shape = parent.data.S.shape[0]
 
-        D_shape = parent.S.shape[0]
+    logging.debug(
+        "merge_stage_adaptive_3D_DtN: After exiting, counter = %s", counter
+    )
 
     # Perform a merge operation for each level of the tree. Start at the leaves
     # and continue until the root.
@@ -118,7 +127,7 @@ def merge_stage_adaptive_3D_DtN(
 
         # Filter out the nodes which have DtN arrays already set
         nodes_this_level = [
-            node for node in nodes_this_level if node.data.T is not None
+            node for node in nodes_this_level if node.data.T is None
         ]
         logging.debug(
             "merge_stage_adaptive_3D_DtN: len(nodes_this_level) = %s",
@@ -524,7 +533,7 @@ def node_to_oct_merge_outputs(
         node_a, node_b, node_c, node_d, node_e, node_f, node_g, node_h
     )
 
-    S, T, v_prime_ext, v = _oct_merge(
+    S, T, h, g_tilde = _oct_merge(
         T_a=node_a.data.T,
         T_b=node_b.data.T,
         T_c=node_c.data.T,
@@ -553,4 +562,4 @@ def node_to_oct_merge_outputs(
         side_lens_g=side_lens_g,
         side_lens_h=side_lens_h,
     )
-    return S, T, v_prime_ext, v
+    return S, T, h, g_tilde
