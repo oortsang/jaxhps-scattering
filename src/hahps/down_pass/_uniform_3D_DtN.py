@@ -17,6 +17,26 @@ def down_pass_uniform_3D_DtN(
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
 ) -> None:
+    """
+    Computes the downward pass of the HPS algorithm. This function takes the Dirichlet data
+    at the boundary of the domain and propagates it down the tree to the leaf nodes.
+
+
+    If Y_arr is None, the function will exit early after doing all of the downward propagation operations.
+
+    Args:
+        :boundary_data: An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,)
+        :S_lst: A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
+        :g_tilde_lst: A list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+        :Y_arr: Matrices mapping the solution to the interior of the leaf nodes. Has shape (n_leaf, p^3, n_bdry).
+        :v_arr: Particular solutions at the interior of the leaves. Has shape (n_leaf, p^3).
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    Returns:
+        :solns: (jax.Array) Has shape (n_leaf, p^3). Interior solution at the leaf nodes.
+
+    """
     logging.debug("_down_pass_3D: started")
 
     # leaf_Y_maps = jax.device_put(leaf_Y_maps, DEVICE)

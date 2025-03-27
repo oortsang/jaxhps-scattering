@@ -51,6 +51,10 @@ class Domain:
 
         if self.L is not None:
             self.bool_uniform = True
+
+            #: The number of leaves in the discretization tree.
+            self.n_leaves: int = 4**L
+
             # Depending on whether root is a DiscretizationNode2D or
             # DiscretizationNode3D, we compute the grid points differently
             if self.bool_2D:
@@ -73,6 +77,7 @@ class Domain:
         else:
             # If L is None, we're using an adaptive discretization
             self.bool_uniform = False
+            self.n_leaves = len(get_all_leaves(root))
             if self.bool_2D:
                 self.interior_points = (
                     compute_interior_Chebyshev_points_adaptive_2D(root, p)

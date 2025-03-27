@@ -24,19 +24,28 @@ def merge_stage_uniform_2D_ItI(
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
     subtree_recomp: bool = False,
-    return_ItI: bool = False,
+    return_T: bool = False,
 ) -> Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]:
-    """Implements the upward pass for merging ItI maps
+    """
+    Implements uniform 2D merges of ItI matrices. Merges the nodes in the quadtree four at a time.
+    This function uses a Schur complement strategy to reduce the size of matrix inverted in each merge operation.
+    This function returns lists containing :math:`S` and :math:`\\tilde{g}`, giving enough information
+    to propagate boundary data back down the tree in a later part of the algorithm.
+
+    If this function is called with the argument ``return_T=True``, the top-level DtN matrix is also returned.
 
     Args:
-        R_maps (jnp.ndarray): Has shape (n_merge_pairs, 2, p**2, p**2)
-        f_arr (jnp.ndarray): Has shape (n_merge_pairs, 2, 4*q)
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+        :T_arr: Array of ItI matrices from the local solve stage. Has shape (n_leaves, 4q, 4q)
+        :h_arr: Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 4q)
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
 
     Returns:
-        Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]: S_arr, DtN_arr, f_arr.
-            S_arr is a list of arrays containing the S maps for each level.
-            R_arr is a list of arrays containing the ItI maps for each level.
-            f_arr is a list of arrays containing the interface particular soln incoming impedance data for each level.
+        :S_lst: (List[jax.Array]) a list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
+        :g_tilde_lst: (List[jax.Array]) a list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+        :T_last: (jax.Array, Optional) the top-level ItI matrix, which is only returned if ``return_T=True``.
+
     """
 
     if not subtree_recomp:
@@ -118,7 +127,7 @@ def merge_stage_uniform_2D_ItI(
             jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device)
         )
 
-        if return_ItI:
+        if return_T:
             T_last_out = jax.device_put(T_last, host_device)
             return S_lst, g_tilde_lst, T_last_out
         else:

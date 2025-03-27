@@ -16,8 +16,29 @@ def merge_stage_uniform_3D_DtN(
     l: int,
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
-    return_DtN: bool = False,
+    return_T: bool = False,
 ) -> Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]:
+    """
+    Implements uniform 3D merges of DtN matrices. Merges the nodes in the quadtree eight at a time.
+    This function returns lists containing :math:`S` and :math:`\\tilde{g}`, giving enough information
+    to propagate boundary data back down the tree in a later part of the algorithm.
+
+    If this function is called with the argument ``return_T=True``, the top-level DtN matrix is also returned.
+
+    Args:
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+        :T_arr: Array of DtN matrices from the local solve stage. Has shape (n_leaves, 6q^2, 6q^2)
+        :h_arr: Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 6q^2)
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    Returns:
+        :S_lst: (List[jax.Array]) a list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
+        :g_tilde_lst: (List[jax.Array]) a list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+        :T_last: (jax.Array, Optional) the top-level DtN matrix, which is only returned if ``return_T=True``.
+
+
+    """
     # Move the data to the compute device if necessary
     T_arr = jax.device_put(T_arr, device)
     h_arr = jax.device_put(h_arr, device)
@@ -65,11 +86,13 @@ def merge_stage_uniform_3D_DtN(
     )
     # May want to report D shape at a future point.
     D_shape = S_last.shape[0]  # noqa: F841
-    S_lst.append(jax.device_put(S_last, host_device))
-    g_tilde_lst.append(jax.device_put(g_tilde_last, host_device))
+    S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
+    g_tilde_lst.append(
+        jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device)
+    )
 
     # logging.debug("_build_stage: done with merging.")
-    if return_DtN:
+    if return_T:
         T_last_out = jax.device_put(T_last, host_device)
         return S_lst, g_tilde_lst, T_last_out
     else:

@@ -18,14 +18,17 @@ def down_pass_adaptive_2D_DtN(
     boundary_data: List[jax.Array],
 ) -> jax.Array:
     """
-    This function performs the downward pass of the HPS algorithm.
-    Given the tree, which has S maps for the interior nodes and Y maps for
-    the leaf nodes, this function will propogate the Dirichlet boundary data
-    down to the leaf nodes via the S maps and then to the interior of each
-    leaf node via the Y maps.
+    This function performs the downward pass for 2D adaptive discretizations using DtN matrices.
 
-    This function doesn't return anything but it does modify the tree object
-    by setting the following attributes:
+    The boundary data is assumed to be **Dirichlet data**
+
+    Args:
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices. Has the pre-built :math:`S` and :math:`\\tilde{g}` data saved within the tree structure.
+        :boundary_data: A list of arrays specifying the boundary data on each side of the domain.
+
+    Returns:
+        :solns: (jax.Array) Solutions on the interior Chebyshev discretization points. Has shape (n_leaves, p^2).
+
     """
 
     root = pde_problem.domain.root

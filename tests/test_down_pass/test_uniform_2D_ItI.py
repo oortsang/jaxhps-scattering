@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-
+import logging
 from hahps.merge._uniform_2D_ItI import (
     merge_stage_uniform_2D_ItI,
 )
@@ -33,7 +33,7 @@ class Test__propogate_down_2D_ItI:
         jax.clear_caches()
 
 
-class Test__uniform_down_pass_2D_ItI:
+class Test_down_pass_uniform_2D_ItI:
     def test_0(self) -> None:
         p = 6
         q = 4
@@ -86,3 +86,32 @@ class Test__uniform_down_pass_2D_ItI:
         )
         assert leaf_solns.shape == (n_leaves, p**2)
         jax.clear_caches()
+
+    def test_1(self, caplog) -> None:
+        caplog.set_level(logging.DEBUG)
+        p = 6
+        q = 4
+        l = 3
+        root = DiscretizationNode2D(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
+        domain = Domain(p=p, q=q, root=root, L=l)
+
+        n_bdry = domain.boundary_points.shape[0]
+
+        S_lst = []
+        S_lst.insert(0, jnp.ones((1, n_bdry, n_bdry)))
+        S_lst.insert(0, jnp.ones((4, n_bdry // 2, n_bdry // 2)))
+
+        g_tilde_lst = []
+        g_tilde_lst.insert(0, jnp.ones((1, n_bdry)))
+        g_tilde_lst.insert(0, jnp.ones((4, n_bdry // 2)))
+
+        bdry_data = jnp.ones((n_bdry))
+        out = down_pass_uniform_2D_ItI(
+            boundary_imp_data=bdry_data,
+            S_maps_lst=S_lst,
+            g_tilde_lst=g_tilde_lst,
+            Y_arr=None,
+            v_arr=None,
+        )
+        expected_out_shape = (16, n_bdry // 4)
+        assert out.shape == expected_out_shape

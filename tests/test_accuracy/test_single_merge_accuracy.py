@@ -71,7 +71,7 @@ def check_merge_accuracy_2D_DtN_uniform(
     # Do the local solve and build stages
     Y, T, v, h = local_solve_stage_uniform_2D_DtN(pde_problem=pde_problem)
     S_lst, g_tilde_lst, T_last = merge_stage_uniform_2D_DtN(
-        T, h, domain.L - 1, return_DtN=True
+        T, h, domain.L - 1, return_T=True
     )
 
     # Do the down pass
@@ -171,7 +171,7 @@ def check_merge_accuracy_2D_ItI_uniform(
     # Do the local solve and build stages
     Y, T, v, h = local_solve_stage_uniform_2D_ItI(pde_problem=pde_problem)
     S_lst, g_tilde_lst, T_last = merge_stage_uniform_2D_ItI(
-        T, h, domain.L - 1, return_ItI=True
+        T, h, domain.L - 1, return_T=True
     )
 
     # Compute incoming impedance data

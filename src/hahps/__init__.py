@@ -1,15 +1,3 @@
-# from ._grid_creation_2D import (
-#     compute_boundary_Gauss_points_adaptive_2D,
-#     compute_boundary_Gauss_points_uniform_2D,
-#     compute_interior_Chebyshev_points_adaptive_2D,
-#     compute_interior_Chebyshev_points_uniform_2D,
-# )
-# from ._grid_creation_3D import (
-#     compute_boundary_Gauss_points_adaptive_3D,
-#     compute_boundary_Gauss_points_uniform_3D,
-#     compute_interior_Chebyshev_points_adaptive_3D,
-#     compute_interior_Chebyshev_points_uniform_3D,
-# )
 from ._domain import Domain
 from ._discretization_tree import (
     DiscretizationNode2D,
@@ -17,6 +5,19 @@ from ._discretization_tree import (
     get_all_leaves,
 )
 from ._pdeproblem import PDEProblem
+from ._build_solver import build_solver
+from ._solve import solve
+from ._subtree_recomp import (
+    solve_subtree,
+    upward_pass_subtree,
+    downward_pass_subtree,
+)
+from ._device_config import (
+    DEVICE_ARR,
+    HOST_DEVICE,
+    local_solve_chunksize_2D,
+    local_solve_chunksize_3D,
+)
 
 # These will appear in the module's top-level namespace when imported
 __all__ = [
@@ -25,12 +26,13 @@ __all__ = [
     "DiscretizationNode3D",
     "get_all_leaves",
     "PDEProblem",
-    # "compute_boundary_Gauss_points_uniform_2D",
-    # "compute_boundary_Gauss_points_adaptive_2D",
-    # "compute_interior_Chebyshev_points_uniform_2D",
-    # "compute_interior_Chebyshev_points_adaptive_2D",
-    # "compute_boundary_Gauss_points_uniform_3D",
-    # "compute_boundary_Gauss_points_adaptive_3D",
-    # "compute_interior_Chebyshev_points_uniform_3D",
-    # "compute_interior_Chebyshev_points_adaptive_3D",
+    "build_solver",
+    "solve",
+    "solve_subtree",
+    "DEVICE_ARR",
+    "HOST_DEVICE",
+    "local_solve_chunksize_2D",
+    "local_solve_chunksize_3D",
+    "upward_pass_subtree",
+    "downward_pass_subtree",
 ]

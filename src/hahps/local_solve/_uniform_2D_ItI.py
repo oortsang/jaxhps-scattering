@@ -10,42 +10,22 @@ import logging
 
 def local_solve_stage_uniform_2D_ItI(
     pde_problem: PDEProblem,
-    host_device: jax.Device = HOST_DEVICE,
     device: jax.Device = DEVICE_ARR[0],
+    host_device: jax.Device = HOST_DEVICE,
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
-    Performs the local solve stage for all of the leaves in the 2D domain.
+    This function performs the local solve stage for 2D problems with a uniform quadtree, creating ItI matrices.
 
     Args:
-        D_xx (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
-        D_xy (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
-        D_yy (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
-        D_x (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
-        D_y (jnp.ndarray): Precomputed differential operator with shape (p**2, p**2).
-        I_P_0 (jnp.ndarray): Precomputed interpolation operator with shape (4(p-1), 4q).
-            Maps data on the Gauss boundary nodes to data on the Cheby boundary nodes.
-            Is formed by taking the kronecker product of I and P_0, which is the standard
-            Gauss -> Cheby 1D interp matrix missing the last row.
-        Q_D (jnp.ndarray): Precomputed interpolation operator with shape (4q, p**2).
-            Maps functions on the boundary Cheby nodes (counting corners twice) to functions on the
-            boundary Gauss nodes.
-        G (jnp.ndarray): Precomputed differentiation operator with shape (4q, p**2).
-            Maps a function on the Chebyshev nodes to the function's outgoing impedance
-            on the boundary Cheby nodes, counting corners twice.
-        F (jnp.ndarray): Precomputed differentiation operator with shape (4(p-1), p**2).
-            Maps a function on the Chebyshev nodes to the function's incoming impedance
-            on the boundary Cheby nodes, counting corners once.
-        p (int): Shape parameter. Number of Chebyshev nodes along one dimension in a leaf.
-        source_term (jnp.ndarray): Has shape (n_leaves, p**2, n_src). The right-hand side of the PDE.
-        D_xx_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        D_xy_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        D_yy_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        D_x_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        D_y_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        I_coeffs (jnp.ndarray | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
 
     Returns:
-        Tuple[jnp.ndarray, jnp.ndarray]: _description_
+        :Y: (jax.Array) Solution operators mapping from Dirichlet boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^2, 4q)
+        :T: (jax.Array) Impedance-to-Impedance matrices for each leaf. Has shape (n_leaves, 4q, 4q)
+        :v: (jax.Array) Leaf-level particular solutions. Has shape (n_leaves, p^2)
+        :h: (jax.Array) Outgoing boundary data. This is the outgoing impedance vector due to the particular solution :math:`u_n - i \eta u`. Has shape (n_leaves, 4q)
     """
     logging.debug("_local_solve_stage_2D_ItI: started")
 

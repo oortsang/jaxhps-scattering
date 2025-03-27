@@ -22,15 +22,21 @@ from ._utils_adaptive_2D_DtN import (
 
 
 def merge_stage_adaptive_2D_DtN(pde_problem: PDEProblem) -> None:
-    """Implements the upward pass, without the Tree interface.
+    """
+    Implements adaptive 2D merges of DtN matrices. Merges the nodes in the quadtree four at a time,
+    projecting the rows and columns of DtN matrices as necessary when neighboring nodes have different
+    boundary discretizations.
+
+    This function saves the output of each merge step inside the DiscretizationNode2D.data objects that
+    define the quadtree. After this function is called, the top-level DtN matrix can be accessed at
+    ``pde_problem.domain.root.data.T``.
 
     Args:
-        DtN_maps (jnp.ndarray): Has shape (n_leaves,4*q, 4*q)
-        v_prime_arr (jnp.ndarray): Has shape (n_leaves, 4*q)
-        root (DiscretizationNode2D): The root of the tree. Prescribes shape information.
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
     Returns:
-        None. Sets outputs in the tree object.
+        None.
+
     """
     logging.debug("merge_stage_adaptive_2D_DtN: started")
 

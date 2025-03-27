@@ -1,6 +1,7 @@
 import logging
 import jax
 import numpy as np
+import jax.numpy as jnp
 
 # Logging stuff
 jax_logger = logging.getLogger("jax")
@@ -21,3 +22,52 @@ jax.config.update("jax_default_device", jax.devices("cpu")[0])
 
 DEVICE_MESH = jax.sharding.Mesh(DEVICE_ARR, axis_names=("x",))
 HOST_DEVICE = jax.devices("cpu")[0]
+
+
+def local_solve_chunksize_2D(p: int, dtype: jax.typing.DTypeLike) -> int:
+    """
+    Estimates the chunksize that can be used for the local solve stage in 2D probelms.
+
+    Rounds to the nearest power of four that will fit on the device.
+
+    Args:
+        p (int): Chebyshev polynomial order.
+
+        dtype (jax.Dtype): Datatype of the input data.
+
+    Returns:
+
+        int: The chunksize that can be used for the local solve stage.
+    """
+
+    if p == 7:
+        return 4**2
+
+    if dtype == jnp.complex128:
+        return 4**6
+
+    return 4**7
+
+
+def local_solve_chunksize_3D(p: int, dtype: jax.typing.DTypeLike) -> int:
+    """
+    Estimates the chunksize that can be used for the local solve stage in 3D probelms.
+
+    Args:
+        p (int): Chebyshev polynomial order.
+
+        dtype (jax.Dtype): Datatype of the input data.
+
+    Returns:
+
+        int: The chunksize that can be used for the local solve stage.
+    """
+
+    if p <= 8:
+        return 2_000
+    elif p <= 10:
+        return 500
+    elif p <= 12:
+        return 100  # bummer how small this must be
+    else:
+        return 20

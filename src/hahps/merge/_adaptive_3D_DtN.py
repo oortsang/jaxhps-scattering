@@ -34,14 +34,30 @@ def merge_stage_adaptive_3D_DtN(
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
 ) -> None:
-    """_summary_
+    """
+    Implements adaptive 3D merges of DtN matrices. Merges the nodes in the quadtree eight at a time,
+    projecting the rows and columns of DtN matrices as necessary when neighboring nodes have different
+    boundary discretizations.
+
+    This function saves the output of each merge step inside the DiscretizationNode3D.data objects that
+    define the quadtree. After this function is called, the top-level DtN matrix can be accessed at
+    ``pde_problem.domain.root.data.T``.
+
+    This function takes as arguments parts of the local solve stage output. These arrays are indexed at the
+    locations of the lowest-level leaves; the lowest-level leaves are then merged using the vectorized code
+    used in the uniform version of this algorithm. This gives us a slight performance boost.
+    At higher levels, the merges are not vectorized.
 
     Args:
-        root (Node): _description_
-        refinement_op (jnp.array): Expect this to have shape (4 q^2, q^2)
-        coarsening_op (jnp.array): Expect this to have shpae (q^2, 4 q^2)
-        DtN_arr (jnp.array): Expect this to have shape (?, 8, 6 q^2, 6 q^2)
-        v_prime_arr (jnp.array): Expect this to have shape (?, 8, 6 q^2)
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+        :T_arr: Array of DtN matrices from the local solve stage. Has shape (n_leaves, 6q^2, 6q^2)
+        :h_arr: Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 6q^2)
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    Returns:
+        None.
+
     """
     logging.debug("_build_stage_3D: started")
 

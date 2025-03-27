@@ -12,40 +12,19 @@ def local_solve_stage_uniform_2D_DtN(
     host_device: jax.Device = HOST_DEVICE,
     device: jax.Device = DEVICE_ARR[0],
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-    """This function performs the local solve stage of the HPS algorithm.
+    """
+    This function performs the local solve stage for 2D problems with a uniform quadtree, creating DtN matrices.
 
     Args:
-        D_xx (jax.Array): Precomputed differential operator with shape (p**2, p**2).
-        D_xy (jax.Array): Precomputed differential operator with shape (p**2, p**2).
-        D_yy (jax.Array): Precomputed differential operator with shape (p**2, p**2).
-        D_x (jax.Array): Precomputed differential operator with shape (p**2, p**2).
-        D_y (jax.Array): Precomputed differential operator with shape (p**2, p**2).
-        P (jax.Array): Precomputed interpolation operator with shape (4(p-1), 4q).
-            Maps data on the boundary Gauss nodes to data on the boundary Chebyshev nodes.
-            Used when computing DtN maps.
-        p (int): Shape parameter. Number of Chebyshev nodes along one dimension in a leaf.
-        source_term (jax.Array): Has shape (n_leaves, p**2). The right-hand side of the PDE.
-        sidelens (jax.Array): Has shape (n_leaves,). Gives the side length of each leaf. Used for scaling differential operators.
-        D_xx_coeffs (jax.Array | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        D_xy_coeffs (jax.Array | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        D_yy_coeffs (jax.Array | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        D_x_coeffs (jax.Array | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        D_y_coeffs (jax.Array | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        I_coeffs (jax.Array | None, optional): Has shape (n_leaves, p**2). Defaults to None, which means zero coeffs.
-        device (jax.Device, optional): Device where computation should be executed.
-        host_device (jax.Device, optional): Device where results should be returned.
-        uniform_grid (bool, optional): If True, uses an optimized version of the local solve stage which assumes all of the
-            leaves have the same size. If False (default), does a bit of extra computation which depends on sidelens.
-        Q_D (jax.Array): Precomputed interpolation + differentiation operator with shape (4q, p**2).
-            Maps the solution on the Chebyshev nodes to the normal derivatives on the boundary Gauss nodes.
-            Used when computing DtN maps. Only used if uniform_grid == True.
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+
     Returns:
-         Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-            Y_arr, T_arr, v, h.
-            Y_arr is an array of shape (n_leaves, p**2, 4q) containing the Dirichlet-to-Soln maps for each leaf.
-            T_arr is an array of shape (n_quad_merges, 4, 4q, 4q) containing the DtN maps for each leaf.
-            v is an array of shape (n_leaves, p**2) containing the particular solutions for each leaf.
-            h is an array of shape (n_quad_merges, 4, 4q) containing the boundary fluxes for each leaf
+        :Y: (jax.Array) Solution operators mapping from Dirichlet boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^2, 4q)
+        :T: (jax.Array) Dirichlet-to-Neumann matrices for each leaf. Has shape (n_leaves, 4q, 4q)
+        :v: (jax.Array) Leaf-level particular solutions. Has shape (n_leaves, p^2)
+        :h: (jax.Array) Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 4q)
     """
     logging.debug("local_solve_stage_uniform_2D_DtN: started")
 
@@ -87,6 +66,7 @@ def local_solve_stage_uniform_2D_DtN(
     diff_operators = vmapped_assemble_diff_operator(
         coeffs_gathered, which_coeffs, diff_ops
     )
+
     Y_arr, T_arr, v, h = vmapped_get_DtN_uniform(
         source_term, diff_operators, pde_problem.Q, pde_problem.P
     )

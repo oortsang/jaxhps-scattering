@@ -3,6 +3,8 @@ from ._discretization_tree import DiscretizationNode2D
 import jax.numpy as jnp
 import jax
 
+import logging
+
 
 @jax.jit
 def get_four_children(
@@ -62,41 +64,48 @@ def add_four_children(
         root (Node, optional): The root of the tree. Specified if we want to count number of quadrature points along node boundaries. Defaults to None.
         q (int, optional): Number of quadrature points along the boundary of leaves of the tree. Specified if we want to count number of quadrature points along node boundaries. Defaults to None.
     """
+    logging.debug(
+        "add_four_children: Called with add_to=%s, root=%s, q=%s",
+        add_to,
+        root,
+        q,
+    )
     if len(add_to.children) == 0:
         children = get_four_children(add_to)
         add_to.children = children
 
-    if q is not None:
-        # Set the number of quadrature points along the boundary of each child.
-        for child in add_to.children:
-            child.n_0 = q
-            child.n_1 = q
-            child.n_2 = q
-            child.n_3 = q
+        if q is not None:
+            # Set the number of quadrature points along the boundary of each child.
+            for child in add_to.children:
+                child.n_0 = q
+                child.n_1 = q
+                child.n_2 = q
+                child.n_3 = q
 
-        # Update the number of quadrature points in add_to.
-        add_to.n_0 = 2 * q
-        add_to.n_1 = 2 * q
-        add_to.n_2 = 2 * q
-        add_to.n_3 = 2 * q
+            # Update the number of quadrature points in add_to.
+            add_to.n_0 = 2 * q
+            add_to.n_1 = 2 * q
+            add_to.n_2 = 2 * q
+            add_to.n_3 = 2 * q
 
-        # Update the number of quadrature points along the path from add_to to the root. Only do this
-        # if the root is not the same as add_to.
-        if not tree_equal(add_to, root):
-            path_info = find_path_from_root_2D(root, add_to)
-            for node, _ in path_info:
-                # If they share a boundary, then we need to update the number of quadrature points.
-                if node.ymin == add_to.ymin:
-                    node.n_0 += q
+            # Update the number of quadrature points along the path from add_to to the root. Only do this
+            # if the root is not the same as add_to.
+            if not tree_equal(add_to, root):
+                path_info = find_path_from_root_2D(root, add_to)
+                for node, _ in path_info:
+                    logging.debug("Trying to update node=%s", node)
+                    # If they share a boundary, then we need to update the number of quadrature points.
+                    if node.ymin == add_to.ymin:
+                        node.n_0 += q
 
-                if node.xmax == add_to.xmax:
-                    node.n_1 += q
+                    if node.xmax == add_to.xmax:
+                        node.n_1 += q
 
-                if node.ymax == add_to.ymax:
-                    node.n_2 += q
+                    if node.ymax == add_to.ymax:
+                        node.n_2 += q
 
-                if node.xmin == add_to.xmin:
-                    node.n_3 += q
+                    if node.xmin == add_to.xmin:
+                        node.n_3 += q
 
 
 def find_path_from_root_2D(

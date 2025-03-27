@@ -16,7 +16,20 @@ from ..merge._utils_adaptive_3D_DtN import find_projection_lists_3D
 def down_pass_adaptive_3D_DtN(
     pde_problem: PDEProblem,
     boundary_data: List[jax.Array],
-) -> None:
+) -> jax.Array:
+    """
+    This function performs the downward pass for 3D adaptive discretizations using DtN matrices.
+
+    The boundary data is assumed to be **Dirichlet data**
+
+    Args:
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices. Has the pre-built :math:`S` and :math:`\\tilde{g}` data saved within the tree structure.
+        :boundary_data: A list of arrays specifying the boundary data on each face of the domain.
+
+    Returns:
+        :solns: (jax.Array) Solutions on the interior Chebyshev discretization points. Has shape (n_leaves, p^3).
+
+    """
     root = pde_problem.domain.root
     depth = get_depth(root)
 

@@ -97,13 +97,13 @@ class DiscretizationNode2D:
         # side i of the patch. i = 0, 1, 2, 3 corresponds to the bottom, right,
         # top, and left, or (S, E, N, W), sides of t
 
-        #: Number of quadrature points on the boundary of face 0.he patch, respectively.
+        #: Number of quadrature points on the boundary of side 0.
         self.n_0: int = None
-        #: Number of quadrature points on the boundary of face 0.he patch, respectively.
+        #: Number of quadrature points on the boundary of side 1.
         self.n_1: int = None
-        #: Number of quadrature points on the boundary of face 0.he patch, respectively.
+        #: Number of quadrature points on the boundary of side 2.
         self.n_2: int = None
-        #: Number of quadrature points on the boundary of face 0.he patch, respectively.
+        #: Number of quadrature points on the boundary of side 3.
         self.n_3: int = None
 
         #: Child discretization nodes. Initialized to an empty tuple.

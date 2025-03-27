@@ -9,7 +9,7 @@ from .._device_config import HOST_DEVICE, DEVICE_ARR
 
 def down_pass_uniform_2D_ItI(
     boundary_imp_data: jax.Array,
-    S_maps_lst: List[jax.Array],
+    S_lst: List[jax.Array],
     g_tilde_lst: List[jax.Array],
     Y_arr: jax.Array,
     v_arr: jax.Array,
@@ -17,30 +17,45 @@ def down_pass_uniform_2D_ItI(
     host_device: jax.Device = HOST_DEVICE,
 ) -> None:
     """
-    This function performs the downward pass of the HPS algorithm.
-    Given the tree, which has S maps for the interior nodes and Y maps for
-    the leaf nodes, this function will propogate the Dirichlet boundary data
-    down to the leaf nodes via the S maps and then to the interior of each
-    leaf node via the Y maps.
+    Computes the downward pass of the HPS algorithm. This function takes the incoming impedance data
+    at the boundary of the domain:
 
-    This function doesn't return anything but it does modify the tree object
-    by setting the following attributes:
+    .. math::
+
+       g_n + i \\eta g
+
+    and propagates it down to the leaves.
+
+    If Y_arr is None, the function will exit early after doing all of the downward propagation operations.
+
+    Args:
+        :boundary_data: An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,)
+        :S_lst: A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
+        :g_tilde_lst: A list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+        :Y_arr: Matrices mapping the solution to the interior of the leaf nodes. Has shape (n_leaf, p^2, n_bdry).
+        :v_arr: Particular solutions at the interior of the leaves. Has shape (n_leaf, p^2).
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    Returns:
+        :solns: (jax.Array) Has shape (n_leaf, p^2). Interior solution at the leaf nodes.
+
     """
     logging.debug("_down_pass: started")
 
     boundary_imp_data = jax.device_put(boundary_imp_data, device)
     Y_arr = jax.device_put(Y_arr, device)
     v_arr = jax.device_put(v_arr, device)
-    S_maps_lst = [jax.device_put(S_arr, device) for S_arr in S_maps_lst]
+    S_lst = [jax.device_put(S_arr, device) for S_arr in S_lst]
     g_tilde_lst = [jax.device_put(g_tilde, device) for g_tilde in g_tilde_lst]
 
-    n_levels = len(S_maps_lst)
+    n_levels = len(S_lst)
 
     # Reshape to (1, n_bdry)
     bdry_data = jnp.expand_dims(boundary_imp_data, axis=0)
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
-        S_arr = S_maps_lst[level]
+        S_arr = S_lst[level]
         g_tilde = g_tilde_lst[level]
 
         bdry_data = vmapped_propogate_down_2D_ItI(S_arr, bdry_data, g_tilde)
@@ -50,6 +65,9 @@ def down_pass_uniform_2D_ItI(
     # Once we have the leaf node incoming impedance data, compute solution on the interior
     # of each leaf node using the Y maps.
     root_incoming_imp_data = bdry_data
+
+    if Y_arr is None:
+        return root_incoming_imp_data
 
     leaf_homog_solns = jnp.einsum("ijk,ik->ij", Y_arr, root_incoming_imp_data)
     leaf_solns = leaf_homog_solns + v_arr

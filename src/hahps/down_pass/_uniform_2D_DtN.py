@@ -7,7 +7,7 @@ from .._device_config import HOST_DEVICE, DEVICE_ARR
 
 def down_pass_uniform_2D_DtN(
     boundary_data: jax.Array,
-    S_maps_lst: List[jax.Array],
+    S_lst: List[jax.Array],
     g_tilde_lst: List[jax.Array],
     Y_arr: jax.Array,
     v_arr: jax.Array,
@@ -18,34 +18,37 @@ def down_pass_uniform_2D_DtN(
     Computes the downward pass of the HPS algorithm. This function takes the Dirichlet data
     at the boundary of the domain and propagates it down the tree to the leaf nodes.
 
-    Expects all data to be on the CPU. It will be moved to the GPU as needed.
+
+    If Y_arr is None, the function will exit early after doing all of the downward propagation operations.
 
     Args:
-        boundary_data (jax.Array): Has shape (n_bdry,)
-        S_maps_lst (List[jax.Array]): Matrices mapping data from the patch boundary to the merge interfaces. List has length (l - 1).
-        v_int_lst (List[jax.Array]): Vectors specifying the particular solution data at the merge interfaces. List has length (l - 1).
-        leaf_Y_maps (jax.Array): Matrices mapping the solution to the interior of the leaf nodes. Has shape (n_leaf, p**2, n_bdry).
-        v_array (jax.Array): Particular solutions at the interior of the leaves. Has shape (n_leaf, p**2).
-        device (jax.Device, optional): Where to run the computation. Defaults to HOST_DEVICE.
+        :boundary_data: An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,)
+        :S_lst: A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
+        :g_tilde_lst: A list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+        :Y_arr: Matrices mapping the solution to the interior of the leaf nodes. Has shape (n_leaf, p^2, n_bdry).
+        :v_arr: Particular solutions at the interior of the leaves. Has shape (n_leaf, p^2).
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
 
     Returns:
-        jax.Array: Has shape (n_leaf, p**2). Interior solution at the leaf nodes.
+        :solns: (jax.Array) Has shape (n_leaf, p^2). Interior solution at the leaf nodes.
+
     """
 
     boundary_data = jax.device_put(boundary_data, device)
     Y_arr = jax.device_put(Y_arr, device)
     v_arr = jax.device_put(v_arr, device)
-    S_maps_lst = [jax.device_put(S_arr, device) for S_arr in S_maps_lst]
+    S_lst = [jax.device_put(S_arr, device) for S_arr in S_lst]
     g_tilde_lst = [jax.device_put(g_tilde, device) for g_tilde in g_tilde_lst]
 
-    n_levels = len(S_maps_lst)
+    n_levels = len(S_lst)
 
     # Reshape to (1, n_bdry)
     bdry_data = jnp.expand_dims(boundary_data, axis=0)
 
     # propagate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
-        S_arr = S_maps_lst[level]
+        S_arr = S_lst[level]
         g_tilde = g_tilde_lst[level]
 
         bdry_data = vmapped_propagate_down_2D_DtN(S_arr, bdry_data, g_tilde)
@@ -54,6 +57,9 @@ def down_pass_uniform_2D_DtN(
         bdry_data = bdry_data.reshape((-1, n_bdry))
 
     root_dirichlet_data = bdry_data
+
+    if Y_arr is None:
+        return root_dirichlet_data
 
     # Batched matrix multiplication to compute homog solution on all leaves
     leaf_homog_solns = jnp.einsum("ijk,ik->ij", Y_arr, root_dirichlet_data)

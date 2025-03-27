@@ -26,12 +26,15 @@ If you find this work useful, please cite our paper::
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
+   Device_and_data
    DiscretizationNode
    Domain
    PDEProblem
+   solution_methods
    quadrature
-   computation_methods
+
+   
 

@@ -13,9 +13,28 @@ from functools import partial
 
 def local_solve_stage_adaptive_2D_DtN(
     pde_problem: PDEProblem,
-    host_device: jax.Device = HOST_DEVICE,
     device: jax.Device = DEVICE_ARR[0],
+    host_device: jax.Device = HOST_DEVICE,
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    """
+    This function performs the local solve stage for 2D adaptive discretization problems, creating DtN matrices.
+
+    The 2D adaptive version of the local solve stage is similar to the 2D uniform version. The major difference
+    appears when dealing with the pre-computed operator Q, which must be scaled by the side length of each leaf.
+    This means Q must be re-computed for each leaf solve.
+
+    Args:
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    Returns:
+        :Y: (jax.Array) Solution operators mapping from Dirichlet boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^2, 4q)
+        :T: (jax.Array) Dirichlet-to-Neumann matrices for each leaf. Has shape (n_leaves, 4q, 4q)
+        :v: (jax.Array) Leaf-level particular solutions. Has shape (n_leaves, p^2)
+        :h: (jax.Array) Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 4q)
+    """
+
     logging.debug("local_solve_stage_adaptive_2D_DtN: started")
 
     # Gather the coefficients into a single array.

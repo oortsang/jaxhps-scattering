@@ -1,4 +1,4 @@
-quadrature
+Quadrature utilities
 ==========
 The ``quadrature`` module provides utilities for computing quadrature rules and weights for numerical integration. It also includes routines for building barycentric Lagrange interpolation matrices.
 
@@ -7,7 +7,7 @@ The ``quadrature`` module provides utilities for computing quadrature rules and 
    :members:
 
 =================
-Other References
+References
 =================
 
 .. [BarycentricLagrange] Berrut, J.-P., & Trefethen, L. N. (2004). Barycentric Lagrange Interpolation.

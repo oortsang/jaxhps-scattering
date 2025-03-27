@@ -17,6 +17,25 @@ def local_solve_stage_adaptive_3D_DtN(
     host_device: jax.Device = HOST_DEVICE,
     device: jax.Device = DEVICE_ARR[0],
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    """
+    This function performs the local solve stage for 3D adaptive discretization problems, creating DtN matrices.
+
+    The 3D adaptive version of the local solve stage is similar to the 3D uniform version. The major difference
+    appears when dealing with the pre-computed operator Q, which must be scaled by the side length of each leaf.
+    This means Q must be re-computed for each leaf solve.
+
+    Args:
+        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+        :device: Where to perform the computation. Defaults to jax.devices()[0].
+        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    Returns:
+        :Y: (jax.Array) Solution operators mapping from Dirichlet boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^3, 6q^2)
+        :T: (jax.Array) Dirichlet-to-Neumann matrices for each leaf. Has shape (n_leaves, 6q^2, 6q^2)
+        :v: (jax.Array) Leaf-level particular solutions. Has shape (n_leaves, 6q^2)
+        :h: (jax.Array) Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 6q^2)
+    """
+
     coeffs_gathered, which_coeffs = _gather_coeffs_3D(
         D_xx_coeffs=pde_problem.D_xx_coefficients,
         D_xy_coeffs=pde_problem.D_xy_coefficients,
