@@ -2,7 +2,7 @@
 This file contains general utility functions for the HPS package.
 """
 
-from typing import List, Tuple
+from typing import Tuple
 import jax
 import jax.numpy as jnp
 
@@ -27,7 +27,9 @@ def points_to_2d_lst_of_points(x: jnp.ndarray) -> jnp.ndarray:
     return pts
 
 
-def lst_of_points_to_meshgrid(x: jnp.ndarray) -> Tuple[jnp.ndarray, jnp.ndarray]:
+def lst_of_points_to_meshgrid(
+    x: jnp.ndarray,
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
     """Given a list of n points which create a regular grid over a 2D plane,
     this function returns a meshgrid of the points.
 

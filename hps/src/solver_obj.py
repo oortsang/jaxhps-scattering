@@ -1,18 +1,13 @@
-from typing import Tuple, List, Dict, Callable
-import logging
+from typing import List, Callable
 import jax.numpy as jnp
 import numpy as np
-from scipy.interpolate import LinearNDInterpolator
 
 
-from hps.src.utils import meshgrid_to_lst_of_pts
 from hps.src.quadrature.trees import (
     Node,
     add_uniform_levels,
     get_all_leaves,
     get_all_uniform_leaves_2D,
-    get_all_leaves_jitted,
-    get_nodes_at_level,
 )
 
 from hps.src.quadrature.quad_2D.grid_creation import (
@@ -51,11 +46,9 @@ from hps.src.quadrature.quad_3D.interpolation import (
 
 
 class SolverObj:
-
     def __init__(
         self,
     ) -> None:
-
         self.root: Node = None
         self.p: int = None
         self.q: int = None
@@ -162,18 +155,16 @@ def create_solver_obj_2D(
     t.p = p
     t.q = q
 
-
     all_leaves = get_all_leaves(root)
     nleaves = len(all_leaves)
     if nleaves == 1 and uniform_levels is not None:
         t.uniform_grid = True
         t.l = uniform_levels
         if fill_tree:
-        #     add_uniform_levels(root=root, l=uniform_levels)
-        # else:
+            #     add_uniform_levels(root=root, l=uniform_levels)
+            # else:
             root.children = get_all_uniform_leaves_2D(root, uniform_levels)
         t.sidelens = jnp.ones(nleaves)
-        
 
     elif nleaves == 1 and uniform_levels is None:
         # Edge case for no refinement
@@ -182,9 +173,9 @@ def create_solver_obj_2D(
         t.sidelens = jnp.ones(nleaves)
     else:
         t.uniform_grid = False
-        t.sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
-
-
+        t.sidelens = jnp.array(
+            [l.xmax - l.xmin for l in get_all_leaves(t.root)]
+        )
 
     # Only initialize the Cheby points on the leaf nodes and the Gauss points on the boundary of the root node.
     # Call different code depending on how much we fill out the tree.
@@ -203,8 +194,10 @@ def create_solver_obj_2D(
         leaf_cheby_points = get_all_leaf_2d_cheby_points_uniform_refinement(
             p=p, l=uniform_levels, corners=corners
         )
-        root_gauss_points = get_all_boundary_gauss_legendre_points_uniform_refinement(
-            q=q, l=uniform_levels, corners=corners
+        root_gauss_points = (
+            get_all_boundary_gauss_legendre_points_uniform_refinement(
+                q=q, l=uniform_levels, corners=corners
+            )
         )
 
     t.leaf_cheby_points = leaf_cheby_points
@@ -307,7 +300,6 @@ def get_bdry_data_evals_lst_2D(
     solver_obj: SolverObj,
     f: Callable[[jnp.array], jnp.array],
 ) -> List[jnp.array]:
-
     side_0_pts = solver_obj.root_boundary_points[
         solver_obj.root_boundary_points[:, 1] == solver_obj.root.ymin
     ]

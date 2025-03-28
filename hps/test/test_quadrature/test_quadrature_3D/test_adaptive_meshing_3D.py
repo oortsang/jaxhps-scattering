@@ -1,5 +1,4 @@
 import pytest
-import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -13,10 +12,11 @@ from hps.src.quadrature.trees import (
     Node,
     add_eight_children,
     get_all_leaves,
-    tree_equal,
 )
 from hps.src.quadrature.quad_3D.interpolation import refinement_operator
-from hps.src.quadrature.quad_3D.grid_creation import get_all_leaf_3d_cheby_points
+from hps.src.quadrature.quad_3D.grid_creation import (
+    get_all_leaf_3d_cheby_points,
+)
 
 
 class Test_generate_adaptive_mesh_level_restriction:
@@ -27,7 +27,9 @@ class Test_generate_adaptive_mesh_level_restriction:
         tol = 1e-03
         refinement_op = refinement_operator(p)
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         add_eight_children(root)
 
         def f(x: jnp.array) -> jnp.array:
@@ -52,7 +54,9 @@ class Test_generate_adaptive_mesh_level_restriction:
         tol = 1e-03
         refinement_op = refinement_operator(p)
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         add_eight_children(root)
 
         def f(x: jnp.array) -> jnp.array:
@@ -74,13 +78,18 @@ class Test_generate_adaptive_mesh_level_restriction:
 class Test_get_squared_l2_norm_single_voxel:
     def test_0(self) -> None:
         """Make sure things run without error."""
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         p = 10
 
         f_evals = np.random.normal(size=(p**3))
 
         corners = jnp.array(
-            [[root.xmin, root.ymin, root.zmin], [root.xmax, root.ymax, root.zmax]]
+            [
+                [root.xmin, root.ymin, root.zmin],
+                [root.xmax, root.ymax, root.zmax],
+            ]
         )
 
         x = get_squared_l2_norm_single_voxel(f_evals, corners, p)
@@ -90,7 +99,9 @@ class Test_get_squared_l2_norm_single_voxel:
     def test_1(self) -> None:
         """Constant function. f(x,y,z) = 3"""
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         p = 4
         f_evals = 3 * np.ones((p**3))
         x = get_squared_l2_norm_single_voxel(
@@ -105,7 +116,9 @@ class Test_get_squared_l2_norm_single_voxel:
         Evaluating that from 0 to 1 gives 1.5
         """
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         p = 4
         pts = get_all_leaf_3d_cheby_points(p, root)
         f_evals = jnp.sqrt(pts[..., 0] + pts[..., 1] + pts[..., 2])
@@ -122,7 +135,9 @@ class Test_get_squared_l2_norm_single_voxel:
         Norm of f(x,y,z) = x^2 + y over [0,1]x[0,1]x[0,1] is sqrt(13/15)
         """
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         p = 6
 
         def f(x: jnp.array) -> jnp.array:

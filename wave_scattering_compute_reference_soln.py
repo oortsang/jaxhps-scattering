@@ -3,7 +3,6 @@ import os
 import logging
 
 import jax.numpy as jnp
-import jax
 from scipy.io import savemat
 
 from hps.src.logging_utils import FMT, TIMEFMT
@@ -20,7 +19,6 @@ from hps.src.scattering_potentials import (
     q_GBM_1,
 )
 from hps.src.plotting import plot_field_for_wave_scattering_experiment
-from hps.src.config import HOST_DEVICE, DEVICE_ARR
 
 
 # Silence matplotlib debug messages
@@ -57,7 +55,9 @@ def setup_args() -> argparse.Namespace:
         help="Number of points per dimension for the output regular grid.",
     )
     parser.add_argument("-k", type=float, default=100.0, help="Wavenumber.")
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging."
+    )
     parser.add_argument(
         "--SD_matrix_prefix",
         default="data/wave_scattering/SD_matrices",
@@ -104,7 +104,9 @@ def main(args: argparse.Namespace) -> None:
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "vertically_graded":
-        args.output_dir = f"data/wave_scattering/vertically_graded_k_{int(args.k)}"
+        args.output_dir = (
+            f"data/wave_scattering/vertically_graded_k_{int(args.k)}"
+        )
         args.p = 22
         q_fn_handle = q_vertically_graded
         plot_utot = False
@@ -113,7 +115,9 @@ def main(args: argparse.Namespace) -> None:
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "horizontally_graded":
-        args.output_dir = f"data/wave_scattering/horizontally_graded_k_{int(args.k)}"
+        args.output_dir = (
+            f"data/wave_scattering/horizontally_graded_k_{int(args.k)}"
+        )
         args.p = 22
         q_fn_handle = q_horizontally_graded
         plot_utot = False
@@ -155,7 +159,9 @@ def main(args: argparse.Namespace) -> None:
         args.SD_matrix_prefix, f"SD_k{k_str}_n{q}_nside{nside}_dom1.mat"
     )
 
-    domain_corners = jnp.array([[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]])
+    domain_corners = jnp.array(
+        [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]]
+    )
     source_dirs = jnp.array(
         [
             0.0,
@@ -184,7 +190,12 @@ def main(args: argparse.Namespace) -> None:
     # Step 3: Save the interpolated solution to a file.
     fp_out = os.path.join(output_dir, "reference_solution.mat")
     savemat(
-        fp_out, {"uscat": uscat, "target_pts": target_pts, "q": q_fn_handle(target_pts)}
+        fp_out,
+        {
+            "uscat": uscat,
+            "target_pts": target_pts,
+            "q": q_fn_handle(target_pts),
+        },
     )
 
     # Step 4: Plot
@@ -192,7 +203,10 @@ def main(args: argparse.Namespace) -> None:
     # plot q
     q_vals = q_fn_handle(target_pts)
     plot_field_for_wave_scattering_experiment(
-        q_vals, target_pts, title="q", save_fp=os.path.join(output_dir, "q.png")
+        q_vals,
+        target_pts,
+        title="q",
+        save_fp=os.path.join(output_dir, "q.png"),
     )
 
     # plot real part of uscat

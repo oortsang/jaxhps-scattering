@@ -19,7 +19,6 @@ class Test_lst_of_points_to_meshgrid:
         assert yy.shape == (n, n)
 
     def test_1(self) -> None:
-
         x = np.linspace(0, 1, 4)
         X, Y = np.meshgrid(x, np.flipud(x), indexing="ij")
         pts_lst = points_to_2d_lst_of_points(x)

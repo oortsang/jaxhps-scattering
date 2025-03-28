@@ -1,13 +1,10 @@
 import jax.numpy as jnp
-import jax
-import numpy as np
 import pytest
 
 from hps.src.quadrature.quad_2D.grid_creation import (
     chebyshev_points,
     bounds_to_cheby_points_lst,
     vmapped_corners,
-    vmapped_bounds_to_cheby_points_lst,
     get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,
     _get_next_S_boundary_node,
@@ -19,18 +16,22 @@ from hps.src.quadrature.trees import (
     find_node_at_corner,
     get_all_leaves,
     _corners_for_quad_subdivision,
-
 )
-from hps.src.test_utils import check_arrays_close
 
 
 class Test_get_all_boundary_gauss_legendre_points:
     def test_0(self) -> None:
         """Checks output shapes are correct on uniform refinement of 2 levels."""
-        p = 16
+        # p = 16
         q = 14
         root = Node(
-            xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=-1.0,
+            xmax=1.0,
+            ymin=-1.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
 
         add_four_children(root)
@@ -43,13 +44,19 @@ class Test_get_all_boundary_gauss_legendre_points:
 
     def test_1(self) -> None:
         """Checks that outputs pass basic sanity checks on uniform refinement of 3 levels."""
-        p = 16
+        # p = 16
         q = 14
         corners = jnp.array([[-1, -1], [1, -1], [1, 1], [-1, 1]])
         west, south = corners[0]
         east, north = corners[2]
         root = Node(
-            xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+            xmin=west,
+            xmax=east,
+            ymin=south,
+            ymax=north,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(root)
         for c in root.children:
@@ -86,7 +93,13 @@ class Test_get_all_leaf_2d_cheby_points:
         east = 1
         north = 1
         root = Node(
-            xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+            xmin=west,
+            xmax=east,
+            ymin=south,
+            ymax=north,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(root)
         for c in root.children:
@@ -110,7 +123,13 @@ class Test_get_all_leaf_2d_cheby_points:
         p = 8
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
         add_four_children(root)
         add_four_children(root.children[0])
@@ -127,9 +146,15 @@ class Test_get_all_leaf_2d_cheby_points:
 class Test_bounds_to_cheby_points_lst:
     def test_0(self) -> None:
         p = 16
-        q = 14
+        # q = 14
         node = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
         bounds = jnp.array([node.xmin, node.xmax, node.ymin, node.ymax])
 
@@ -202,5 +227,4 @@ class Test__get_next_S_boundary_node:
 
 
 if __name__ == "__main__":
-
     pytest.main()

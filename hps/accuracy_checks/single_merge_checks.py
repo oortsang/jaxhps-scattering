@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,19 +9,14 @@ from hps.accuracy_checks.dirichlet_neumann_data import (
     TEST_CASE_POISSON_NONPOLY,
     TEST_CASE_NONCONSTANT_COEFF_POLY,
     TEST_CASE_NONPOLY_ITI,
-    TEST_CASE_POLY_ITI,
     TEST_CASE_HELMHOLTZ_1,
     ETA,
 )
 from hps.accuracy_checks.utils import (
-    _distance_around_boundary,
     setup_tree_quad_merge,
-    plot_soln_from_cheby_nodes,
 )
 from hps.src.up_down_passes import build_stage, down_pass, local_solve_stage
 from hps.src.solver_obj import (
-    SolverObj,
-    create_solver_obj_2D,
     get_bdry_data_evals_lst_2D,
 )
 
@@ -47,8 +42,8 @@ def check_l_inf_error_convergence_quad_merge(
 
     It then computes the L_inf error at the Chebyshev points, and plots the convergence of the error.
     """
-    south = -jnp.pi / 2
-    north = jnp.pi / 2
+    # south = -jnp.pi / 2
+    # north = jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
 
@@ -84,7 +79,10 @@ def check_l_inf_error_convergence_quad_merge(
         # Local solve stage
 
         local_solve_stage(
-            t, source_term=source, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
 
         build_stage(t)
@@ -115,7 +113,6 @@ def check_l_inf_error_convergence_quad_merge(
             computed_soln_values = map_DtN @ jnp.concatenate(boundary_data_lst)
 
         else:
-
             down_pass(t, boundary_data_lst)
 
             all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 2))
@@ -178,10 +175,6 @@ def check_l_inf_error_convergence_quad_merge_ItI(
 
     It then computes the L_inf error at the Chebyshev points, and plots the convergence of the error.
     """
-    south = -jnp.pi / 2
-    north = jnp.pi / 2
-    east = jnp.pi / 2
-    west = -jnp.pi / 2
 
     error_vals = jnp.ones_like(p_values, dtype=jnp.float64)
 
@@ -211,7 +204,10 @@ def check_l_inf_error_convergence_quad_merge_ItI(
         # Local solve stage
 
         local_solve_stage(
-            t, source_term=source, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
 
         build_stage(t)
@@ -243,7 +239,9 @@ def check_l_inf_error_convergence_quad_merge_ItI(
         if check_ItI:
             expected_out_imp_data = boundary_normals - 1j * eta * boundary_f
             map_ItI = t.interior_node_R_maps[-1]
-            computed_out_imp_data = map_ItI @ jnp.concatenate(incoming_imp_data)
+            computed_out_imp_data = map_ItI @ jnp.concatenate(
+                incoming_imp_data
+            )
             logging.debug(
                 "check_l_inf_error_convergence_quad_merge_ItI: expected_out_imp_data shape = %s",
                 expected_out_imp_data.shape,
@@ -265,7 +263,6 @@ def check_l_inf_error_convergence_quad_merge_ItI(
             # plt.clf()
 
         else:
-
             down_pass(t, incoming_imp_data)
 
             all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 2))
@@ -362,19 +359,10 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
         eta (float): _description_
         check_ItI (bool, optional): _description_. Defaults to False.
     """
-    south = -jnp.pi / 2
-    north = jnp.pi / 2
-    east = jnp.pi / 2
-    west = -jnp.pi / 2
-
-    corners = jnp.array(
-        [
-            [west, south],
-            [east, south],
-            [east, north],
-            [west, north],
-        ]
-    )
+    # south = -jnp.pi / 2
+    # north = jnp.pi / 2
+    # east = jnp.pi / 2
+    # west = -jnp.pi / 2
 
     error_vals = jnp.ones_like(p_values, dtype=jnp.float64)
 
@@ -401,15 +389,17 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
 
         root_bdry_points = t.root_boundary_points
         n_per_side = root_bdry_points.shape[0] // 4
-        boundary_f = dirichlet_data_fn(root_bdry_points) + part_data_fn(
-            root_bdry_points
-        )
+        # boundary_f = dirichlet_data_fn(root_bdry_points) + part_data_fn(
+        #     root_bdry_points
+        # )
 
         boundary_homog_normals = jnp.concatenate(
             [
                 -1 * homog_dudy_fn(root_bdry_points[:n_per_side]),
                 homog_dudx_fn(root_bdry_points[n_per_side : 2 * n_per_side]),
-                homog_dudy_fn(root_bdry_points[2 * n_per_side : 3 * n_per_side]),
+                homog_dudy_fn(
+                    root_bdry_points[2 * n_per_side : 3 * n_per_side]
+                ),
                 -1 * homog_dudx_fn(root_bdry_points[3 * n_per_side :]),
             ]
         )
@@ -417,12 +407,15 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
             [
                 -1 * part_dudy_fn(root_bdry_points[:n_per_side]),
                 part_dudx_fn(root_bdry_points[n_per_side : 2 * n_per_side]),
-                part_dudy_fn(root_bdry_points[2 * n_per_side : 3 * n_per_side]),
+                part_dudy_fn(
+                    root_bdry_points[2 * n_per_side : 3 * n_per_side]
+                ),
                 -1 * part_dudx_fn(root_bdry_points[3 * n_per_side :]),
             ]
         )
-        incoming_imp_data = boundary_homog_normals + 1j * eta * dirichlet_data_fn(
-            root_bdry_points
+        incoming_imp_data = (
+            boundary_homog_normals
+            + 1j * eta * dirichlet_data_fn(root_bdry_points)
         )
 
         # break incoming_imp_data into a list of four arrays
@@ -439,7 +432,8 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
             )
             # Check that the ItI map can map from incoming to outgoing homogeneous impedance data.
             expected_out_imp_data = (
-                boundary_homog_normals - 1j * eta * dirichlet_data_fn(root_bdry_points)
+                boundary_homog_normals
+                - 1j * eta * dirichlet_data_fn(root_bdry_points)
             )
             incoming_imp_data = jnp.concatenate(incoming_imp_data)
             map_ItI = t.interior_node_R_maps[-1]
@@ -472,8 +466,12 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
             part_boundary_n = jnp.concatenate(
                 [
                     -1 * part_dudy_fn(root_bdry_points[:n_per_side]),
-                    part_dudx_fn(root_bdry_points[n_per_side : 2 * n_per_side]),
-                    part_dudy_fn(root_bdry_points[2 * n_per_side : 3 * n_per_side]),
+                    part_dudx_fn(
+                        root_bdry_points[n_per_side : 2 * n_per_side]
+                    ),
+                    part_dudy_fn(
+                        root_bdry_points[2 * n_per_side : 3 * n_per_side]
+                    ),
                     -1 * part_dudx_fn(root_bdry_points[3 * n_per_side :]),
                 ]
             )
@@ -484,7 +482,9 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
             # plt.show()
             # plt.clf()
 
-            expected_out_part_imp_data = part_boundary_n - 1j * eta * part_boundary_f
+            expected_out_part_imp_data = (
+                part_boundary_n - 1j * eta * part_boundary_f
+            )
             computed_out_part_imp_data = t.h_last.flatten()
             logging.debug(
                 "check_l_inf_error_convergence_quad_merge_ItI: expected_out_part_imp_data shape = %s",
@@ -507,7 +507,6 @@ def check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
             # plt.clf()
 
         else:
-
             down_pass(t, incoming_imp_data)
 
             all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 2))
@@ -654,7 +653,9 @@ def single_merge_check_4(plot_fp: str) -> None:
     p_values = jnp.array([4, 8, 12, 16])
     check_l_inf_error_convergence_quad_merge(
         p_values=p_values,
-        dirichlet_data_fn=TEST_CASE_NONCONSTANT_COEFF_POLY["dirichlet_data_fn"],
+        dirichlet_data_fn=TEST_CASE_NONCONSTANT_COEFF_POLY[
+            "dirichlet_data_fn"
+        ],
         d_xx_coeff_fn=TEST_CASE_NONCONSTANT_COEFF_POLY["d_xx_coeff_fn"],
         d_yy_coeff_fn=TEST_CASE_NONCONSTANT_COEFF_POLY["d_yy_coeff_fn"],
         source_fn=TEST_CASE_NONCONSTANT_COEFF_POLY["source_fn"],
@@ -782,7 +783,8 @@ def single_merge_check_10(plot_fp: str) -> None:
     logging.info("Running single_merge_check_10")
     p_values = jnp.array([4, 8, 12, 16, 20, 24])
 
-    z = lambda x: jnp.zeros_like(x[..., 0])
+    def z(x):
+        return jnp.zeros_like(x[..., 0])
 
     check_l_inf_error_convergence_quad_merge_ItI_Helmholtz_like(
         p_values=p_values,

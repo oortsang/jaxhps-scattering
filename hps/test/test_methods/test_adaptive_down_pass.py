@@ -5,7 +5,6 @@ import jax.numpy as jnp
 from hps.src.solver_obj import (
     create_solver_obj_2D,
     create_solver_obj_3D,
-    SolverObj,
     get_bdry_data_evals_lst_2D,
     get_bdry_data_evals_lst_3D,
 )
@@ -14,20 +13,21 @@ from hps.src.methods.adaptive_down_pass import (
     _down_pass_2D,
     _propogate_down_quad,
     _propogate_down_oct,
-    _decompress_merge_interface_2D,
 )
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
     _local_solve_stage_3D,
 )
-from hps.src.methods.adaptive_build_stage import _build_stage_2D, _build_stage_3D
+from hps.src.methods.adaptive_build_stage import (
+    _build_stage_2D,
+    _build_stage_3D,
+)
 from hps.src.quadrature.trees import (
     Node,
     get_all_leaves,
     add_four_children,
     add_eight_children,
     add_uniform_levels,
-    get_all_leaves_jitted,
 )
 
 
@@ -40,7 +40,13 @@ class Test__down_pass_2D:
         num_leaves = 4**l
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_uniform_levels(root=root, l=l, q=q)
 
@@ -48,7 +54,9 @@ class Test__down_pass_2D:
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
 
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
 
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
@@ -76,12 +84,16 @@ class Test__down_pass_2D:
             refinement_op=t.refinement_op,
             coarsening_op=t.coarsening_op,
         )
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_2D(t, f)
 
         leaf_solns = _down_pass_2D(
-            root=t.root, boundary_data=boundary_data_lst, refinement_op=t.refinement_op
+            root=t.root,
+            boundary_data=boundary_data_lst,
+            refinement_op=t.refinement_op,
         )
         assert leaf_solns.shape == (num_leaves, p**2)
 
@@ -92,7 +104,13 @@ class Test__down_pass_2D:
         num_leaves = 7
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         add_four_children(add_to=root.children[2], root=root, q=q)
@@ -100,7 +118,9 @@ class Test__down_pass_2D:
         t = create_solver_obj_2D(p, q, root)
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -129,11 +149,15 @@ class Test__down_pass_2D:
             refinement_op=t.refinement_op,
             coarsening_op=t.coarsening_op,
         )
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_2D(t, f)
 
-        solns = _down_pass_2D(t.root, boundary_data_lst, refinement_op=t.refinement_op)
+        solns = _down_pass_2D(
+            t.root, boundary_data_lst, refinement_op=t.refinement_op
+        )
         assert solns.shape == (num_leaves, p**2)
         assert not jnp.any(jnp.isnan(solns))
         assert not jnp.any(jnp.isinf(solns))
@@ -147,7 +171,13 @@ class Test__down_pass_2D:
         print("test_3: q = ", q)
 
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_four_children(add_to=root, root=root, q=q)
         for child in root.children:
@@ -161,7 +191,9 @@ class Test__down_pass_2D:
         t = create_solver_obj_2D(p, q, root)
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
         Y_arr, DtN_arr, v_arr, v_prime_arr = _local_solve_stage_2D(
             D_xx=t.D_xx,
             D_xy=t.D_xy,
@@ -191,11 +223,14 @@ class Test__down_pass_2D:
         )
         print("test_3: Completed build stage.")
 
-        f = lambda x: jnp.ones_like(x[..., 0])
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_2D(t, f)
 
-        solns = _down_pass_2D(t.root, boundary_data_lst, refinement_op=t.refinement_op)
+        solns = _down_pass_2D(
+            t.root, boundary_data_lst, refinement_op=t.refinement_op
+        )
         assert solns.shape == (num_leaves, p**2)
         assert not jnp.any(jnp.isnan(solns))
         assert not jnp.any(jnp.isinf(solns))
@@ -232,7 +267,7 @@ class Test__propogate_down_quad:
         )
         expected_out_len = 4
         assert len(out) == expected_out_len
-        expected_out_shape = (4 * q,)
+        # expected_out_shape = (4 * q,)
         for x in out:
             for z in x:
                 assert z.shape == (q,)
@@ -291,14 +326,18 @@ class Test__down_pass_3D:
         l = 2
         num_leaves = 8**l
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=0.0, zmax=1.0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=0.0, zmax=1.0
+        )
 
         add_uniform_levels(root=root, l=l, q=q)
         t = create_solver_obj_3D(p, q, root)
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**3))
         source_term = np.random.normal(size=(num_leaves, p**3))
 
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
 
         DtN_arr, v_arr, v_prime_arr, Y_arr = _local_solve_stage_3D(
             D_xx=t.D_xx,
@@ -334,14 +373,19 @@ class Test__down_pass_3D:
             v_prime_arr=v_prime_arr,
             q=q,
         )
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_3D(t, f)
         print(
-            "test_0: boundary_data_lst shapes = ", [x.shape for x in boundary_data_lst]
+            "test_0: boundary_data_lst shapes = ",
+            [x.shape for x in boundary_data_lst],
         )
         leaf_solns = _down_pass_3D(
-            root=t.root, boundary_data=boundary_data_lst, refinement_op=t.refinement_op
+            root=t.root,
+            boundary_data=boundary_data_lst,
+            refinement_op=t.refinement_op,
         )
         assert leaf_solns.shape == (num_leaves, p**3)
 
@@ -349,9 +393,10 @@ class Test__down_pass_3D:
         """3D non-uniform case"""
         p = 4
         q = 2
-        l = 2
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=0.0, zmax=1.0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=0.0, zmax=1.0
+        )
 
         add_eight_children(add_to=root, root=root, q=q)
 
@@ -367,7 +412,9 @@ class Test__down_pass_3D:
         print("test_1: source_term.shape = ", source_term.shape)
         print("test_1: d_xx_coeffs.shape = ", d_xx_coeffs.shape)
 
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
 
         DtN_arr, v_arr, v_prime_arr, Y_arr = _local_solve_stage_3D(
             D_xx=t.D_xx,
@@ -403,14 +450,19 @@ class Test__down_pass_3D:
             v_prime_arr=v_prime_arr,
             q=q,
         )
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_3D(t, f)
         print(
-            "test_0: boundary_data_lst shapes = ", [x.shape for x in boundary_data_lst]
+            "test_0: boundary_data_lst shapes = ",
+            [x.shape for x in boundary_data_lst],
         )
         leaf_solns = _down_pass_3D(
-            root=t.root, boundary_data=boundary_data_lst, refinement_op=t.refinement_op
+            root=t.root,
+            boundary_data=boundary_data_lst,
+            refinement_op=t.refinement_op,
         )
         assert leaf_solns.shape == (num_leaves, p**3)
 
@@ -421,7 +473,9 @@ class Test__propogate_down_oct:
         S_arr = np.random.normal(size=(12 * n_per_face, 24 * n_per_face))
         v_int_data = np.random.normal(size=(12 * n_per_face))
 
-        bdry_data = [np.random.normal(size=(4 * n_per_face,)) for _ in range(6)]
+        bdry_data = [
+            np.random.normal(size=(4 * n_per_face,)) for _ in range(6)
+        ]
 
         out = _propogate_down_oct(
             S_arr,

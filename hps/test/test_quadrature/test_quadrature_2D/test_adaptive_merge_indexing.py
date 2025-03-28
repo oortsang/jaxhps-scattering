@@ -1,17 +1,10 @@
-import jax
 import jax.numpy as jnp
 import numpy as np
-import pytest
 
 from hps.src.quadrature.quad_2D.adaptive_merge_indexing import (
     get_quadmerge_blocks_a,
     get_quadmerge_blocks_b,
-    _get_submatrices,
 )
-from hps.src.quadrature.quad_2D.grid_creation import (
-    get_all_leaf_2d_cheby_points_uniform_refinement,
-)
-from hps.src.quadrature.quadrature_utils import chebyshev_points, affine_transform
 
 
 class Test_get_quadmerge_blocks_a:

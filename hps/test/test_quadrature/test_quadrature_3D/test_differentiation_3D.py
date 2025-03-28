@@ -1,11 +1,14 @@
 import numpy as np
 import jax.numpy as jnp
-import pytest
 
 
 from hps.src.quadrature.quadrature_utils import chebyshev_points
-from hps.src.quadrature.quad_3D.grid_creation import corners_to_cheby_points_lst
-from hps.src.quadrature.quad_3D.differentiation import precompute_diff_operators
+from hps.src.quadrature.quad_3D.grid_creation import (
+    corners_to_cheby_points_lst,
+)
+from hps.src.quadrature.quad_3D.differentiation import (
+    precompute_diff_operators,
+)
 
 
 class Test_precompute_diff_operators:
@@ -33,7 +36,10 @@ class Test_precompute_diff_operators:
         p = 5
         half_side_len = np.pi / 2
         corners = np.array(
-            [[-np.pi / 2, -np.pi / 2, -np.pi / 2], [np.pi / 2, np.pi / 2, np.pi / 2]]
+            [
+                [-np.pi / 2, -np.pi / 2, -np.pi / 2],
+                [np.pi / 2, np.pi / 2, np.pi / 2],
+            ]
         )
         pp = chebyshev_points(p)[0]
         cheby_pts = corners_to_cheby_points_lst(corners, pp)
@@ -96,8 +102,8 @@ class Test_precompute_diff_operators:
             return x[:, 0] ** 2 + x[:, 1] ** 2 + x[:, 2] ** 2
 
         f_evals = f(cheby_pts)
-        _, _, _, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz = precompute_diff_operators(
-            p, half_side_len
+        _, _, _, d_xx, d_yy, d_zz, d_xy, d_xz, d_yz = (
+            precompute_diff_operators(p, half_side_len)
         )
 
         d_xx_f = d_xx @ f_evals
@@ -127,7 +133,9 @@ class Test_precompute_diff_operators:
             return x[:, 0] * x[:, 1] * x[:, 2]
 
         f_evals = f(cheby_pts)
-        _, _, _, _, _, _, d_xy, d_xz, d_yz = precompute_diff_operators(p, half_side_len)
+        _, _, _, _, _, _, d_xy, d_xz, d_yz = precompute_diff_operators(
+            p, half_side_len
+        )
 
         d_xy_f = d_xy @ f_evals
         d_xz_f = d_xz @ f_evals

@@ -5,11 +5,14 @@ import matplotlib.pyplot as plt
 from matplotlib import cm, colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import jax.numpy as jnp
-from matplotlib import cm, colors
 from scipy.interpolate import LinearNDInterpolator
 
 from hps.src.utils import meshgrid_to_lst_of_pts
-from hps.src.quadrature.trees import Node, get_all_leaves, get_all_leaves_jitted
+from hps.src.quadrature.trees import (
+    Node,
+    get_all_leaves,
+    get_all_leaves_jitted,
+)
 
 # plt.rcParams.update({"text.usetex": True, "font.family": "Computer Modern Roman"})
 
@@ -46,7 +49,6 @@ def plot_func_with_grid(
 
     Expects corners to be shape (x, 2, 2). The first row is xmin, ymin and the second row is xmax, ymax.
     """
-    LABELSIZE = 20
     LINEWIDTH = 0.5
 
     # evaluate perm on the eval_pts
@@ -80,7 +82,9 @@ def plot_func_with_grid(
         max_val = f_vals.max()
         abs_max = max(abs(min_val), abs(max_val))
         norm = colors.TwoSlopeNorm(vmin=-abs_max, vcenter=0, vmax=abs_max)
-        im = ax.imshow(f_vals, extent=extent, origin="lower", cmap="bwr", norm=norm)
+        im = ax.imshow(
+            f_vals, extent=extent, origin="lower", cmap="bwr", norm=norm
+        )
         line_color = "black"
     else:
         im = ax.imshow(f_vals, extent=extent, origin="lower", cmap="plasma")
@@ -104,20 +108,6 @@ def plot_func_with_grid(
     # Save the figure
     plt.savefig(plot_fp, bbox_inches="tight")
     plt.close(fig)
-
-
-def get_discrete_cmap(N: int, cmap: str) -> cm.ScalarMappable:
-    """
-    Create an N-bin discrete colormap from the specified input map
-    """
-    cmap = plt.get_cmap(cmap)
-
-    # If it's plasma, go 0 to 0.8
-    if cmap.name == "plasma":
-        return cmap(np.linspace(0, 0.8, N))
-    else:
-
-        return cmap(np.linspace(0, 1, N))
 
 
 # https://stackoverflow.com/questions/34859628/has-someone-made-the-parula-colormap-in-matplotlib
@@ -204,7 +194,6 @@ def get_discrete_cmap(N: int, cmap: str) -> cm.ScalarMappable:
     if cmap.name == "plasma" or cmap.name == "parula":
         return cmap(np.linspace(0, 0.8, N))
     else:
-
         return cmap(np.linspace(0, 1, N))
 
 
@@ -346,7 +335,6 @@ def plot_2D_adaptive_refinement(
         ax.vlines(w, s, n, color="black")
         ax.vlines(e, s, n, color="black")
 
-    n_leaves = len(get_all_leaves_jitted(root))
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.set_title(title)
@@ -359,7 +347,9 @@ def plot_2D_adaptive_refinement(
     plt.clf()
 
 
-def plot_adaptive_grid_histogram(root: Node, plot_fp: str, tol: float, p: int) -> None:
+def plot_adaptive_grid_histogram(
+    root: Node, plot_fp: str, tol: float, p: int
+) -> None:
     """
     Given a tree with adaptive refinement, plot a histogram of the reciprocal of the leaves' side lengths.
     """
@@ -411,10 +401,12 @@ def plot_field_for_wave_scattering_experiment(
         target_pts[0, 0, 1],
     ]
     logging.debug(
-        "plot_field_for_wave_scattering_experiment: max_val: %s", jnp.max(field)
+        "plot_field_for_wave_scattering_experiment: max_val: %s",
+        jnp.max(field),
     )
     logging.debug(
-        "plot_field_for_wave_scattering_experiment: min_val: %s", jnp.min(field)
+        "plot_field_for_wave_scattering_experiment: min_val: %s",
+        jnp.min(field),
     )
 
     if use_bwr_cmap:

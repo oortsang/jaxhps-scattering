@@ -57,7 +57,9 @@ def get_n_levels_3D(n_leaves: int) -> int:
     return int(jnp.log(n_leaves) / jnp.log(8))
 
 
-def get_fused_chunksize_2D(p: int, dtype: DTypeLike, n_leaves: int) -> Tuple[int, int]:
+def get_fused_chunksize_2D(
+    p: int, dtype: DTypeLike, n_leaves: int
+) -> Tuple[int, int]:
     """Empirically, we can fit 4**7 leaves into GPU memory without a problem
     when p = 16. When p > 16, we will try 4**6 leaves, and keep adding if
     statements as needed.

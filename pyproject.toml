@@ -1,0 +1,19 @@
+[tool.ruff]
+# Set the maximum line length to 79.
+line-length = 79
+exclude = ["docs"]
+
+[tool.ruff.lint]
+# Add the `line-too-long` rule to the enforced rule set. By default, Ruff omits rules that
+# overlap with the use of a formatter, like Black, but we can override this behavior by
+# explicitly adding the rule.
+ignore = ["E741"]
+
+[tool.coverage.run]
+disable_warnings = ["no-data-collected"]
+source = ["src"]
+omit = ["src/hahps/_utils.py"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,20 +1,15 @@
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import jax
 import numpy as np
 import matplotlib.pyplot as plt
 
-from hps.src.quadrature.quad_3D.differentiation import precompute_diff_operators
+from hps.src.quadrature.quad_3D.differentiation import (
+    precompute_diff_operators,
+)
 from hps.src.quadrature.quad_3D.interpolation import (
     precompute_P_matrix,
-    precompute_Q_D_matrix,
 )
-from hps.src.quadrature.quad_3D.grid_creation import (
-    corners_to_cheby_points_lst,
-    corners_to_gauss_points_lst,
-)
-from hps.src.quadrature.quadrature_utils import chebyshev_points
 from hps.src.quadrature.trees import Node
 from hps.src.methods.local_solve_stage import _local_solve_stage_3D
 from hps.src.solver_obj import create_solver_obj_3D
@@ -35,10 +30,6 @@ from hps.accuracy_checks.test_cases_3D import (
     TEST_CASE_POISSON_POLY,
     TEST_CASE_POISSON_NONPOLY,
     TEST_CASE_HOMOG_PART_POLY,
-)
-from hps.accuracy_checks.utils import (
-    plot_soln_from_cheby_nodes,
-    _distance_around_boundary_nonode,
 )
 
 
@@ -102,8 +93,8 @@ def check_l_inf_error_convergence_3D(
         d_zz_coeffs = jnp.repeat(d_zz_coeffs, 8, axis=0)
         source = jnp.repeat(source, 8, axis=0)
 
-        D_x, D_y, D_z, D_xx, D_yy, D_zz, D_xy, D_xz, D_yz = precompute_diff_operators(
-            p, 1.0
+        D_x, D_y, D_z, D_xx, D_yy, D_zz, D_xy, D_xz, D_yz = (
+            precompute_diff_operators(p, 1.0)
         )
         P = precompute_P_matrix(p, q)
 
@@ -183,7 +174,9 @@ def check_l_inf_error_convergence_3D(
 
         l_inf_error = jnp.max(jnp.abs(computed_soln - expected_soln))
         logging.debug(
-            "check_l_inf_error_convergence: p=%i, l_inf_error = %s", p, l_inf_error
+            "check_l_inf_error_convergence: p=%i, l_inf_error = %s",
+            p,
+            l_inf_error,
         )
         error_vals = error_vals.at[i].set(l_inf_error)
     logging.info("check_l_inf_error_convergence: error_vals = %s", error_vals)
@@ -273,8 +266,8 @@ def check_l_inf_error_convergence_particular_homog_solns_3D(
         d_zz_coeffs = jnp.repeat(d_zz_coeffs, 8, axis=0)
         source = jnp.repeat(source, 8, axis=0)
 
-        D_x, D_y, D_z, D_xx, D_yy, D_zz, D_xy, D_xz, D_yz = precompute_diff_operators(
-            p, 1.0
+        D_x, D_y, D_z, D_xx, D_yy, D_zz, D_xy, D_xz, D_yz = (
+            precompute_diff_operators(p, 1.0)
         )
         P = precompute_P_matrix(p, q)
 
@@ -331,7 +324,9 @@ def check_l_inf_error_convergence_particular_homog_solns_3D(
         )
 
         l_inf_error = jnp.max(jnp.abs(expected_particular_flux - v_prime))
-        error_vals_particular_flux = error_vals_particular_flux.at[i].set(l_inf_error)
+        error_vals_particular_flux = error_vals_particular_flux.at[i].set(
+            l_inf_error
+        )
         logging.debug(
             "check_l_inf_error_convergence_particular_homog_solns: p=%i, error homogeneous soln=%f, error particular soln=%f, error part soln flux=%f",
             p,
@@ -373,11 +368,17 @@ def check_l_inf_error_convergence_particular_homog_solns_3D(
     ax.set_title("Error convergence for Poisson BVP; Single Patch")
     ax.set_xlabel("p = # Chebyshev nodes")
     ax.set_ylabel("L_inf error at Chebyshev nodes")
-    ax.plot(p_values, error_vals_homog, "o-", label="Homogeneous soln", color="red")
+    ax.plot(
+        p_values, error_vals_homog, "o-", label="Homogeneous soln", color="red"
+    )
     if compute_convergence_rate:
         ax.plot(xvals, yvals_h, "--", label=f"Slope = {m_h:.2f}", color="red")
     ax.plot(
-        p_values, error_vals_particular, "o-", label="Particular soln", color="blue"
+        p_values,
+        error_vals_particular,
+        "o-",
+        label="Particular soln",
+        color="blue",
     )
     if compute_convergence_rate:
         ax.plot(xvals, yvals_p, "--", label=f"Slope = {m_p:.2f}", color="blue")
@@ -389,7 +390,9 @@ def check_l_inf_error_convergence_particular_homog_solns_3D(
         color="green",
     )
     if compute_convergence_rate:
-        ax.plot(xvals, yvals_pf, "--", label=f"Slope = {m_pf:.2f}", color="green")
+        ax.plot(
+            xvals, yvals_pf, "--", label=f"Slope = {m_pf:.2f}", color="green"
+        )
     ax.set_yscale("log")
     ax.grid()
 

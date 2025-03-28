@@ -1,13 +1,12 @@
-"""This file has a collection of checks that are meant to make sure the 
+"""This file has a collection of checks that are meant to make sure the
 non-uniform merging and down pass are working correctly.
 The checks are designed to run against problems with polynomial data and solutions,
 so the convergence will be obvious once the choice of polynomial basis is correct.
 """
 
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import numpy as np
 import matplotlib.pyplot as plt
 
 from hps.accuracy_checks.test_cases_3D import (
@@ -20,10 +19,6 @@ from hps.accuracy_checks.test_cases_3D import (
     K_XX_COEFF,
     K_ZZ_COEFF,
     K_DIRICHLET,
-    adaptive_meshing_data_fn,
-    d_x_adaptive_meshing_data_fn,
-    d_y_adaptive_meshing_data_fn,
-    d_z_adaptive_meshing_data_fn,
     d_xx_adaptive_meshing_data_fn,
     d_yy_adaptive_meshing_data_fn,
     d_zz_adaptive_meshing_data_fn,
@@ -39,7 +34,6 @@ from hps.src.quadrature.quad_3D.interpolation import refinement_operator
 from hps.src.quadrature.quad_3D.adaptive_meshing import (
     generate_adaptive_mesh_level_restriction,
 )
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
 
 def adaptive_meshing_data_fn_source(x: jnp.array) -> jnp.array:
@@ -52,7 +46,9 @@ def adaptive_meshing_data_fn_source(x: jnp.array) -> jnp.array:
 
 
 def setup_tree_wavefront_example(p: int, tol: float) -> SolverObj:
-    root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+    root = Node(
+        xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+    )
     interp = refinement_operator(p)
     generate_adaptive_mesh_level_restriction(
         root=root,
@@ -73,7 +69,13 @@ def setup_tree_nonuniform_3D(p: int, max_depth: int, child_idx: int):
     east = jnp.pi / 2
     west = -jnp.pi / 2
     root = Node(
-        xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=south, zmax=north
+        xmin=west,
+        xmax=east,
+        ymin=south,
+        ymax=north,
+        depth=0,
+        zmin=south,
+        zmax=north,
     )
     # corners = [(west, south), (east, south), (east, north), (west, north)]
     q = p - 2
@@ -105,7 +107,6 @@ def check_l_inf_error_convergence_nonuniform_merge_3D(
     dudy_fn: Callable[[jnp.ndarray], jnp.ndarray] = None,
     dudz_fn: Callable[[jnp.ndarray], jnp.ndarray] = None,
 ) -> None:
-
     child_idxes = [0, 1, 2, 3, 4, 5, 6, 7]
 
     n_p_vals = p_values.shape[0]
@@ -114,10 +115,11 @@ def check_l_inf_error_convergence_nonuniform_merge_3D(
 
     # Loop over the child_idxes to check the convergence of the error
     for child_idx in child_idxes:
-
         for i, p in enumerate(p_values):
             p = int(p)
-            t = setup_tree_nonuniform_3D(p=p, max_depth=max_depth, child_idx=child_idx)
+            t = setup_tree_nonuniform_3D(
+                p=p, max_depth=max_depth, child_idx=child_idx
+            )
 
             # Assemble differential operator coeffs for the Laplacian
             d_xx_coeffs = d_xx_coeff_fn(t.leaf_cheby_points)
@@ -137,7 +139,9 @@ def check_l_inf_error_convergence_nonuniform_merge_3D(
             build_stage(t)
 
             root_bdry_points = t.root_boundary_points
-            boundary_data_lst = get_bdry_data_evals_lst_3D(t, dirichlet_data_fn)
+            boundary_data_lst = get_bdry_data_evals_lst_3D(
+                t, dirichlet_data_fn
+            )
 
             if check_dtn:
                 # Evaluate the accuracy of the DtN map
@@ -145,13 +149,14 @@ def check_l_inf_error_convergence_nonuniform_merge_3D(
                     [
                         -1 * dudx_fn(root_bdry_points[: t.root.n_0]),  # face 0
                         dudx_fn(
-                            root_bdry_points[t.root.n_0 : t.root.n_0 + t.root.n_1]
+                            root_bdry_points[
+                                t.root.n_0 : t.root.n_0 + t.root.n_1
+                            ]
                         ),  # face 1
                         -1
                         * dudy_fn(
                             root_bdry_points[
-                                t.root.n_0
-                                + t.root.n_1 : t.root.n_0
+                                t.root.n_0 + t.root.n_1 : t.root.n_0
                                 + t.root.n_1
                                 + t.root.n_2
                             ]
@@ -184,7 +189,9 @@ def check_l_inf_error_convergence_nonuniform_merge_3D(
                 )
                 map_DtN = t.root.DtN
 
-                computed_soln_values = map_DtN @ jnp.concatenate(boundary_data_lst)
+                computed_soln_values = map_DtN @ jnp.concatenate(
+                    boundary_data_lst
+                )
 
                 #########################################
                 # Use this code to check faces individually. Otherwise, comment out.
@@ -222,7 +229,6 @@ def check_l_inf_error_convergence_nonuniform_merge_3D(
                 # plt.show()
 
             else:
-
                 down_pass(t, boundary_data_lst)
 
                 all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 3))
@@ -236,7 +242,9 @@ def check_l_inf_error_convergence_nonuniform_merge_3D(
 
                 expected_soln = dirichlet_data_fn(all_cheby_points)
 
-            l_inf_error = jnp.max(jnp.abs(computed_soln_values - expected_soln))
+            l_inf_error = jnp.max(
+                jnp.abs(computed_soln_values - expected_soln)
+            )
             error_vals = error_vals.at[child_idx, i].set(l_inf_error)
 
         logging.info(
@@ -263,7 +271,12 @@ def check_l_inf_error_convergence_nonuniform_merge_3D(
     ax.set_xlabel("p = # Chebyshev nodes")
     ax.set_ylabel("L_inf error at Chebyshev nodes")
     for child_idx in child_idxes:
-        ax.plot(p_values, error_vals[child_idx], "o-", label=f"Child idx = {child_idx}")
+        ax.plot(
+            p_values,
+            error_vals[child_idx],
+            "o-",
+            label=f"Child idx = {child_idx}",
+        )
     # ax.plot(p_values, error_vals, "o-")
     ax.set_yscale("log")
     ax.grid()
@@ -330,17 +343,14 @@ def check_l_inf_error_convergence_wavefront_example_3D(
                     -1
                     * dudy_fn(
                         root_bdry_points[
-                            t.root.n_0
-                            + t.root.n_1 : t.root.n_0
+                            t.root.n_0 + t.root.n_1 : t.root.n_0
                             + t.root.n_1
                             + t.root.n_2
                         ]
                     ),  # face 2
                     dudy_fn(
                         root_bdry_points[
-                            t.root.n_0
-                            + t.root.n_1
-                            + t.root.n_2 : t.root.n_0
+                            t.root.n_0 + t.root.n_1 + t.root.n_2 : t.root.n_0
                             + t.root.n_1
                             + t.root.n_2
                             + t.root.n_3
@@ -375,7 +385,6 @@ def check_l_inf_error_convergence_wavefront_example_3D(
             # plt.show()
 
         else:
-
             down_pass(t, boundary_data_lst)
 
             all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 3))

@@ -16,19 +16,13 @@ from hps.src.quadrature.quad_3D.indexing import (
 
 from hps.src.quadrature.quad_3D.grid_creation import (
     corners_to_cheby_points_lst,
-    get_all_boundary_gauss_legendre_points,
     get_all_leaf_3d_cheby_points,
-    corners_to_gauss_points_lst,
-    _corners_for_oct_subdivision,
     affine_transform,
 )
-from hps.src.quadrature.quad_3D.interpolation import precompute_refining_coarsening_ops
 from hps.src.quadrature.quadrature_utils import chebyshev_points
 from hps.src.quadrature.trees import (
     Node,
-    get_all_leaves,
     add_uniform_levels,
-    add_eight_children,
 )
 
 
@@ -180,7 +174,9 @@ class Test_into_column_first_order:
 
         q_idxes = np.arange(q).astype(int)
 
-        out = into_column_first_order(q_idxes, idxes_a, idxes_b, idxes_c, idxes_d)
+        out = into_column_first_order(
+            q_idxes, idxes_a, idxes_b, idxes_c, idxes_d
+        )
         print("test_0: out = ", out)
         assert out.shape == (4 * q**2,)
         assert np.unique(out).shape == (4 * q**2,)
@@ -205,12 +201,13 @@ class Test_indexing_for_refinement_operator:
         )
 
         col_x, col_y, col_z = jnp.meshgrid(
-            cheby_pts_refined, cheby_pts_refined, cheby_pts_refined, indexing="ij"
+            cheby_pts_refined,
+            cheby_pts_refined,
+            cheby_pts_refined,
+            indexing="ij",
         )
         col_pts = jnp.stack([col_x, col_y, col_z], axis=-1).reshape(-1, 3)
         print("test_1: col_pts", col_pts)
-
-        corners = jnp.array([[-1, -1, -1], [1, 1, 1]], dtype=jnp.float64)
 
         root = Node(xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0)
         add_uniform_levels(root, 1)

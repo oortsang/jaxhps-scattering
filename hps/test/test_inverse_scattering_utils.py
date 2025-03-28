@@ -4,13 +4,11 @@ import jax.numpy as jnp
 
 from hps.src.inverse_scattering_utils import (
     q_point_sources,
-    source_locations_to_scattered_field,
 )
 
 
 class Test_q_point_sources:
     def test_0(self) -> None:
-
         a = 3
         b = 4
         n = 5

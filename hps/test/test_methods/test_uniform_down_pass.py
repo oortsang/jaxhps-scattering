@@ -3,26 +3,23 @@ import pytest
 import numpy as np
 import jax.numpy as jnp
 
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
+from hps.src.solver_obj import create_solver_obj_2D
 from hps.src.methods.uniform_down_pass import (
     _uniform_down_pass_2D_DtN,
     _propogate_down_quad,
     _propogate_down_oct,
     _propogate_down_quad_ItI,
     _uniform_down_pass_2D_ItI,
-    _uniform_down_pass_3D_DtN,
 )
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
     _local_solve_stage_2D_ItI,
-    _local_solve_stage_3D,
 )
 from hps.src.methods.uniform_build_stage import (
     _uniform_build_stage_2D_DtN,
-    _uniform_build_stage_3D_DtN,
     _uniform_build_stage_2D_ItI,
 )
-from hps.src.quadrature.trees import Node, get_all_leaves, add_uniform_levels
+from hps.src.quadrature.trees import Node, get_all_leaves
 
 
 class Test__uniform_down_pass_2D_DtN:
@@ -56,7 +53,7 @@ class Test__uniform_down_pass_2D_DtN:
 
         print("test_0: DtN_arr.shape = ", DtN_arr.shape)
         print("test_0: v_prime_arr.shape = ", v_prime_arr.shape)
-        S_arr_lst,  v_int_lst = _uniform_build_stage_2D_DtN(
+        S_arr_lst, v_int_lst = _uniform_build_stage_2D_DtN(
             DtN_maps=DtN_arr, v_prime_arr=v_prime_arr, l=l
         )
 
@@ -89,7 +86,9 @@ class Test__uniform_down_pass_2D_ItI:
         num_leaves = 4**l
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, eta=4.0, use_ItI=True)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, eta=4.0, use_ItI=True
+        )
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = np.random.normal(size=(num_leaves, p**2))
         R_arr, Y_arr, g_arr, v_arr = _local_solve_stage_2D_ItI(
@@ -110,7 +109,7 @@ class Test__uniform_down_pass_2D_ItI:
         # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
         # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
 
-        S_arr_lst,  f_arr_lst = _uniform_build_stage_2D_ItI(
+        S_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
             R_maps=R_arr, h_arr=g_arr, l=l
         )
 
@@ -154,13 +153,21 @@ class Test__propogate_down_quad:
         # Check the interfaces match up
 
         # Edge 5
-        assert jnp.allclose(g_a[n_child : 2 * n_child], jnp.flipud(g_b[3 * n_child :]))
+        assert jnp.allclose(
+            g_a[n_child : 2 * n_child], jnp.flipud(g_b[3 * n_child :])
+        )
         # Edge 6
-        assert jnp.allclose(g_b[2 * n_child : 3 * n_child], jnp.flipud(g_c[:n_child]))
+        assert jnp.allclose(
+            g_b[2 * n_child : 3 * n_child], jnp.flipud(g_c[:n_child])
+        )
         # Edge 7
-        assert jnp.allclose(g_c[3 * n_child :], jnp.flipud(g_d[n_child : 2 * n_child]))
+        assert jnp.allclose(
+            g_c[3 * n_child :], jnp.flipud(g_d[n_child : 2 * n_child])
+        )
         # Edge 8
-        assert jnp.allclose(g_d[:n_child], jnp.flipud(g_a[2 * n_child : 3 * n_child]))
+        assert jnp.allclose(
+            g_d[:n_child], jnp.flipud(g_a[2 * n_child : 3 * n_child])
+        )
 
 
 class Test__propogate_down_oct:

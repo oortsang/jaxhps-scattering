@@ -1,15 +1,20 @@
-import sys
 import argparse
 import os
 import logging
 
 import numpy as np
 import jax.numpy as jnp
-import jax
 import matplotlib.pyplot as plt
-import matplotlib
-from scipy.sparse.linalg import LinearOperator, lsqr, svds
-from scipy.io import savemat, loadmat
+from scipy.io import loadmat
+
+
+from hps.src.logging_utils import FMT, TIMEFMT
+from hps.src.plotting import (
+    get_discrete_cmap,
+    FIGSIZE_2,
+    FONTSIZE_2,
+    TICKSIZE_2,
+)
 
 # Disable all matplorlib logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -17,18 +22,6 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 # Uncomment for debugging NaNs. Slows code down.
 # jax.config.update("jax_debug_nans", True)
-
-from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.plotting import get_discrete_cmap, FIGSIZE_2, FONTSIZE_2, TICKSIZE_2
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D
-from hps.src.up_down_passes import (
-    local_solve_stage,
-    build_stage,
-    down_pass,
-    fused_pde_solve_2D,
-    fused_pde_solve_2D_ItI,
-)
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
 
 def setup_args() -> argparse.Namespace:
@@ -49,7 +42,6 @@ CORNERS = jnp.array([[XMIN, YMIN], [XMAX, YMIN], [XMAX, YMAX], [XMIN, YMAX]])
 def plot_problem_1(
     err_vals: jnp.array, l_vals: jnp.array, p_vals: jnp.array, plot_fp: str
 ) -> None:
-
     p_vals = p_vals.flatten()
     l_vals = l_vals.flatten()
     logging.info("plot_problem_1: p_vals: %s", p_vals)
@@ -57,7 +49,6 @@ def plot_problem_1(
 
     fig, ax = plt.subplots(figsize=(FIGSIZE_2, FIGSIZE_2))
 
-    LABELSIZE = 20
     # Compute 1 / h values
     n_patches_per_side = 2**l_vals
     h_vals = (XMAX - XMIN) / n_patches_per_side
@@ -84,12 +75,18 @@ def plot_problem_1(
     for i, p in enumerate(p_vals):
         n_i = n_to_plot[i]
         ax.plot(
-            h_inv_vals[:n_i], err_vals[:n_i, i], ".-", color=cmap[i], label=f"$p={p}$"
+            h_inv_vals[:n_i],
+            err_vals[:n_i, i],
+            ".-",
+            color=cmap[i],
+            label=f"$p={p}$",
         )
 
         if p == np.max(p_vals):
             # Only want to lable this once.
-            plt.plot(xvals[i], yvals[i], "--", color="black", label="$O(h^{p - 2})$")
+            plt.plot(
+                xvals[i], yvals[i], "--", color="black", label="$O(h^{p - 2})$"
+            )
         else:
             plt.plot(xvals[i], yvals[i], "--", color="black")
 
@@ -116,7 +113,6 @@ def plot_problem_2(
 
     fig, ax = plt.subplots(figsize=(FIGSIZE_2, FIGSIZE_2))
 
-    LABELSIZE = 20
     # Compute 1 / h values
     n_patches_per_side = 2**l_vals
     h_vals = (XMAX - XMIN) / n_patches_per_side
@@ -143,12 +139,18 @@ def plot_problem_2(
     for i, p in enumerate(p_vals):
         n_i = n_to_plot[i]
         ax.plot(
-            h_inv_vals[:n_i], err_vals[:n_i, i], ".-", color=cmap[i], label=f"$p={p}$"
+            h_inv_vals[:n_i],
+            err_vals[:n_i, i],
+            ".-",
+            color=cmap[i],
+            label=f"$p={p}$",
         )
 
         if p == np.max(p_vals):
             # Only want to lable this once.
-            plt.plot(xvals[i], yvals[i], "--", color="black", label="$O(h^{p - 2})$")
+            plt.plot(
+                xvals[i], yvals[i], "--", color="black", label="$O(h^{p - 2})$"
+            )
         else:
             plt.plot(xvals[i], yvals[i], "--", color="black")
 

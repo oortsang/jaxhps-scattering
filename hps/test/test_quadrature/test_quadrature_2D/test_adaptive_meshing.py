@@ -1,14 +1,13 @@
-import pytest
 from copy import deepcopy
 import jax.numpy as jnp
 import numpy as np
-import jax
 
 from hps.src.quadrature.quad_2D.interpolation import refinement_operator
-from hps.src.quadrature.quad_2D.grid_creation import get_all_leaf_2d_cheby_points
+from hps.src.quadrature.quad_2D.grid_creation import (
+    get_all_leaf_2d_cheby_points,
+)
 from hps.src.quadrature.quad_2D.adaptive_meshing import (
     generate_adaptive_mesh_l2,
-    generate_adaptive_mesh_linf,
     find_or_add_child,
     get_squared_l2_norm_single_panel,
     check_current_discretization_relative_global_l2_norm,
@@ -18,10 +17,7 @@ from hps.src.quadrature.trees import (
     Node,
     get_all_leaves,
     add_four_children,
-    get_node_area,
-    _node_flatten,
     tree_equal,
-    plot_tree,
 )
 
 
@@ -29,7 +25,13 @@ class Test_get_squared_l2_norm_single_panel:
     def test_0(self) -> None:
         """Make sure things run without error."""
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
 
         p = 4
@@ -47,7 +49,13 @@ class Test_get_squared_l2_norm_single_panel:
     def test_1(self) -> None:
         """Make sure things are correct for a constant function."""
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
         p = 4
 
@@ -62,7 +70,13 @@ class Test_get_squared_l2_norm_single_panel:
     def test_2(self) -> None:
         """Make sure things are correct for a low-degree polynomial."""
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
 
         p = 16
@@ -98,7 +112,6 @@ class Test_get_squared_l2_norm_single_panel:
         )
 
         p = 16
-        cheby_pts = get_all_leaf_2d_cheby_points(p, root)
         f_evals = 3 * np.ones((p**2))
         expected_x = 9 * np.pi**2
         x = get_squared_l2_norm_single_panel(
@@ -145,7 +158,6 @@ class Test_generate_adaptive_mesh_l2:
 
 
 class Test_find_or_add_child:
-
     def test_0(self) -> None:
         """Test case from a bug observed while plotting"""
         xmin = -1
@@ -155,13 +167,21 @@ class Test_find_or_add_child:
 
         q = 2
 
-        node = Node(xmin=-1, xmax=0.0, ymin=-1, ymax=0.0, zmin=None, zmax=None, depth=0)
+        node = Node(
+            xmin=-1, xmax=0.0, ymin=-1, ymax=0.0, zmin=None, zmax=None, depth=0
+        )
         add_four_children(add_to=node, root=node, q=2)
         add_four_children(add_to=node.children[0], root=node, q=2)
         node_cp = deepcopy(node)
 
         find_or_add_child(
-            node=node, root=node, q=q, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax
+            node=node,
+            root=node,
+            q=q,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax,
         )
         print("test_0: node: ", node)
         leaves = get_all_leaves(node)
@@ -178,7 +198,9 @@ class Test_check_current_discretization_relative_global_l2_norm:
         f_evals_refined = np.random.normal(size=(4 * p**2))
         tol = 1e-03
         global_l2_norm = 100.0
-        node = Node(xmin=0, xmax=1, ymin=0, ymax=1, zmin=None, zmax=None, depth=0)
+        node = Node(
+            xmin=0, xmax=1, ymin=0, ymax=1, zmin=None, zmax=None, depth=0
+        )
         z = check_current_discretization_relative_global_l2_norm(
             f_evals,
             f_evals_refined,

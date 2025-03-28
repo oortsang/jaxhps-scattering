@@ -12,12 +12,15 @@ from hps.src.quadrature.quad_3D.grid_creation import (
     get_all_leaf_3d_cheby_points,
 )
 from hps.src.quadrature.quad_3D.indexing import rearrange_indices_ext_int
-from hps.src.quadrature.trees import Node, add_eight_children, add_uniform_levels
+from hps.src.quadrature.trees import (
+    Node,
+    add_eight_children,
+    add_uniform_levels,
+)
 
 
 class Test_corners_to_cheby_points_lst:
     def test_0(self) -> None:
-
         p = 13
         pts = chebyshev_points(p)[0]
 
@@ -108,9 +111,9 @@ class Test__corners_for_oct_subdivision:
     def test_2(self) -> None:
         xmin, ymin, zmin = 0, 0, 0
         xmax, ymax, zmax = 1, 1, 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
+        # xmid = (xmin + xmax) / 2
+        # ymid = (ymin + ymax) / 2
+        # zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         out = _corners_for_oct_subdivision(corners)
 
@@ -129,7 +132,9 @@ class Test_get_all_leaf_3d_cheby_points:
         """Test things work with uniform grid."""
         p = 8
         l = 3
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
 
         add_eight_children(root)
         for c in root.children:
@@ -150,7 +155,9 @@ class Test_get_all_leaf_3d_cheby_points:
     def test_1(self) -> None:
         """Tests non-uniform refinement"""
         p = 8
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         add_eight_children(root)
         add_eight_children(root.children[0])
 

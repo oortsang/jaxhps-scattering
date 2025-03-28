@@ -10,16 +10,12 @@ from hps.src.quadrature.quad_3D.interpolation import (
 )
 from hps.src.quadrature.quad_3D.indexing import (
     get_face_1_idxes,
-    get_face_2_idxes,
-    get_face_3_idxes,
-    get_face_4_idxes,
-    get_face_5_idxes,
-    get_face_6_idxes,
 )
-from hps.src.quadrature.quad_3D.differentiation import precompute_diff_operators
+from hps.src.quadrature.quad_3D.differentiation import (
+    precompute_diff_operators,
+)
 from hps.src.quadrature.quadrature_utils import (
     chebyshev_points,
-    barycentric_lagrange_2d_interpolation_matrix,
 )
 from hps.src.quadrature.quad_3D.grid_creation import (
     corners_to_cheby_points_lst,
@@ -28,8 +24,6 @@ from hps.src.quadrature.quad_3D.grid_creation import (
     get_all_boundary_gauss_legendre_points,
 )
 from hps.src.quadrature.trees import Node, add_eight_children
-from hps.src.utils import meshgrid_to_lst_of_pts
-import matplotlib.pyplot as plt
 
 
 class Test_interp_operator_to_uniform:
@@ -37,7 +31,9 @@ class Test_interp_operator_to_uniform:
         """Make sure things work OK on non-uniform grid."""
         p = 8
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
         add_eight_children(root)
         add_eight_children(root.children[0])
 
@@ -56,7 +52,9 @@ class Test_interp_operator_to_uniform:
         """One node and one output point"""
         p = 4
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0, depth=0
+        )
 
         def f(x: jnp.array) -> jnp.array:
             """f(x,y) = x"""
@@ -83,7 +81,9 @@ class Test_interp_operator_to_uniform:
         """Multiple nodes and multiple output points"""
         p = 4
 
-        root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=0.0, zmax=1.0)
+        root = Node(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=0.0, zmax=1.0
+        )
         add_eight_children(root)
         add_eight_children(root.children[0])
 
@@ -132,7 +132,6 @@ class Test_refinement_operator:
         p = 5
         x = refinement_operator(p)
         assert not jnp.any(jnp.isnan(x))
-        corners = jnp.array([[-1, -1, -1], [1, 1, 1]], dtype=jnp.float64)
         root_0 = Node(
             xmin=-1.0,
             xmax=1.0,
@@ -219,7 +218,9 @@ class Test_precompute_P_matrix:
         )
         n_cheby_bdry = p**3 - (p - 2) ** 3
         cheby_pts = chebyshev_points(p)[0]
-        cheby_pts_lst = corners_to_cheby_points_lst(corners, cheby_pts)[:n_cheby_bdry]
+        cheby_pts_lst = corners_to_cheby_points_lst(corners, cheby_pts)[
+            :n_cheby_bdry
+        ]
         gauss_pts_lst = corners_to_gauss_points_lst(q, corners)
 
         f_gauss_evals = f(gauss_pts_lst)
@@ -296,7 +297,7 @@ class Test_precompute_Q_D_matrix:
         corners = (jnp.pi / 2) * jnp.array([[-1, -1, -1], [1, 1, 1]])
         cheby_pts = chebyshev_points(p)[0]
         cheby_pts_lst = corners_to_cheby_points_lst(corners, cheby_pts)
-        gauss_pts_lst = corners_to_gauss_points_lst(q, corners)
+        # gauss_pts_lst = corners_to_gauss_points_lst(q, corners)
 
         f_cheby_evals = f(cheby_pts_lst)
         df_dn_gauss_interp = mat @ f_cheby_evals
@@ -339,7 +340,9 @@ class Test_precompute_Q_D_matrix:
         # Test the answer face-by-face
 
         # Face 1
-        face_1_expected = -1 * (2 * gauss_pts_lst[: q**2, 0] - gauss_pts_lst[: q**2, 2])
+        face_1_expected = -1 * (
+            2 * gauss_pts_lst[: q**2, 0] - gauss_pts_lst[: q**2, 2]
+        )
         face_1_interp = df_dn_gauss_interp[: q**2]
         print("test_2: face_1_interp: ", face_1_interp)
         print("test_2: face_1_expected: ", face_1_expected)
@@ -601,7 +604,9 @@ class Test_precompute_refining_coarsening_op:
         print("test_2: root_0_evals: ", root_0_evals)
         print("test_2: diffs: ", root_0_interp - root_0_evals)
 
-        assert jnp.allclose(root_0_interp, root_0_evals), "Coarsening op failed"
+        assert jnp.allclose(root_0_interp, root_0_evals), (
+            "Coarsening op failed"
+        )
 
     def test_4(self) -> None:
         """Make sure things are accurate with low-degree polynomial interpolation in the face 2"""
@@ -670,7 +675,9 @@ class Test_precompute_refining_coarsening_op:
         print("test_2: root_0_evals: ", root_0_evals)
         print("test_2: diffs: ", root_0_interp - root_0_evals)
 
-        assert jnp.allclose(root_0_interp, root_0_evals), "Coarsening op failed"
+        assert jnp.allclose(root_0_interp, root_0_evals), (
+            "Coarsening op failed"
+        )
 
     def test_5(self) -> None:
         """Make sure things are accurate with low-degree polynomial interpolation in face 1"""
@@ -735,7 +742,9 @@ class Test_precompute_refining_coarsening_op:
         print("test_2: root_0_evals: ", root_0_evals)
         print("test_2: diffs: ", root_0_interp - root_0_evals)
 
-        assert jnp.allclose(root_0_interp, root_0_evals), "Coarsening op failed"
+        assert jnp.allclose(root_0_interp, root_0_evals), (
+            "Coarsening op failed"
+        )
 
     def test_6(self) -> None:
         """Make sure things are accurate with low-degree polynomial interpolation in face 0"""
@@ -771,8 +780,12 @@ class Test_precompute_refining_coarsening_op:
         n_per_face_1 = 4 * q**2
 
         # Get the boundary points for the first face, which is the face in the (y,z) plane farthest in the +z direction.
-        root_0_pts = get_all_boundary_gauss_legendre_points(q, root_0)[:n_per_face_0]
-        root_1_pts = get_all_boundary_gauss_legendre_points(q, root_1)[:n_per_face_1]
+        root_0_pts = get_all_boundary_gauss_legendre_points(q, root_0)[
+            :n_per_face_0
+        ]
+        root_1_pts = get_all_boundary_gauss_legendre_points(q, root_1)[
+            :n_per_face_1
+        ]
 
         # Check to make sure all of the points have x_vals equal to 0.0
         assert jnp.allclose(root_0_pts[:, 0], min_val)
@@ -796,7 +809,9 @@ class Test_precompute_refining_coarsening_op:
         print("test_2: root_0_evals: ", root_0_evals)
         print("test_2: diffs: ", root_0_interp - root_0_evals)
 
-        assert jnp.allclose(root_0_interp, root_0_evals), "Coarsening op failed"
+        assert jnp.allclose(root_0_interp, root_0_evals), (
+            "Coarsening op failed"
+        )
 
 
 if __name__ == "__main__":

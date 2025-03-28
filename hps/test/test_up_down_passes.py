@@ -6,7 +6,6 @@ import jax
 from hps.src.solver_obj import (
     create_solver_obj_2D,
     create_solver_obj_3D,
-    SolverObj,
     get_bdry_data_evals_lst_2D,
     get_bdry_data_evals_lst_3D,
 )
@@ -37,7 +36,9 @@ class Test_local_solve_stage:
         q = 14
         l = 2
 
-        root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None)
+        root = Node(
+            xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None
+        )
         t = create_solver_obj_2D(p, q, root, uniform_levels=l)
         print("test_0: l = ", l)
 
@@ -51,7 +52,10 @@ class Test_local_solve_stage:
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
 
         local_solve_stage(
-            t, source_term=source_term, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
 
         n_leaves = 4**l
@@ -65,9 +69,10 @@ class Test_local_solve_stage:
         """Tests the local_solve_stage function returns without error when using DtN maps. 2D case w/ non-uniform refinement."""
         p = 16
         q = 14
-        n_leaves = 7
 
-        root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None)
+        root = Node(
+            xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None
+        )
         add_four_children(root, root=root, q=q)
         add_four_children(root.children[0], root=root, q=q)
         t = create_solver_obj_2D(p, q, root)
@@ -82,7 +87,10 @@ class Test_local_solve_stage:
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
 
         local_solve_stage(
-            t, source_term=source_term, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
 
         # assert len(t.interior_node_DtN_maps) == 1
@@ -118,7 +126,6 @@ class Test_local_solve_stage:
             D_zz_coeffs=d_zz_coeffs,
         )
         n_leaves = 8**l
-        n_merge_octs = 8 ** (l - 1)
         assert len(t.interior_node_DtN_maps) == 1
         assert t.interior_node_DtN_maps[0].shape == (
             n_leaves,
@@ -138,7 +145,6 @@ class Test_local_solve_stage:
         n_src = 2
         eta = 4.0
 
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
         root = Node(
             xmin=0,
             xmax=1,
@@ -146,7 +152,9 @@ class Test_local_solve_stage:
             ymax=1,
         )
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=eta)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=eta
+        )
         print("test_3: l = ", l)
 
         print("test_3: q = ", q)
@@ -157,20 +165,31 @@ class Test_local_solve_stage:
         d_yy_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
 
         source_term = jnp.concatenate(
-            [jnp.zeros_like(t.leaf_cheby_points[..., 0, None]) for _ in range(n_src)],
+            [
+                jnp.zeros_like(t.leaf_cheby_points[..., 0, None])
+                for _ in range(n_src)
+            ],
             axis=-1,
         )
         print("test_2: source_term.shape = ", source_term.shape)
 
         local_solve_stage(
-            t, source_term=source_term, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
 
         n_leaves = 4**l
         n_merge_quads = 4 ** (l - 1)
 
         assert len(t.interior_node_R_maps) == 1
-        assert t.interior_node_R_maps[0].shape == (n_merge_quads, 4, 4 * q, 4 * q)
+        assert t.interior_node_R_maps[0].shape == (
+            n_merge_quads,
+            4,
+            4 * q,
+            4 * q,
+        )
         assert t.leaf_Y_maps.shape == (n_leaves, p**2, 4 * q)
         assert t.leaf_node_v_vecs.shape == (n_leaves, p**2)
         assert t.leaf_node_h_vecs.shape == (n_merge_quads, 4, 4 * q)
@@ -183,9 +202,9 @@ class Test_build_stage:
         q = 14
         l = 2
 
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
-
-        root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None)
+        root = Node(
+            xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None
+        )
 
         t = create_solver_obj_2D(p, q, root, uniform_levels=l)
         print("test_0: l = ", l)
@@ -200,7 +219,10 @@ class Test_build_stage:
         source_term = jnp.zeros_like(t.leaf_cheby_points[..., 0])
 
         local_solve_stage(
-            t, source_term=source_term, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
         build_stage(t)
 
@@ -251,7 +273,6 @@ class Test_build_stage:
         caplog.set_level(logging.DEBUG)
         p = 4
         q = 2
-        l = 3
 
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=0, zmax=1.0)
         add_eight_children(root, root, q)
@@ -286,11 +307,12 @@ class Test_build_stage:
         q = 14
         l = 2
         eta = 4.0
-        n_src = 2
 
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1)
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, eta=eta, use_ItI=True)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, eta=eta, use_ItI=True
+        )
         print("test_2: l = ", l)
 
         print("test_2: q = ", q)
@@ -303,10 +325,12 @@ class Test_build_stage:
         source_term = jnp.zeros_like(t.leaf_cheby_points)
 
         local_solve_stage(
-            t, source_term=source_term, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
         build_stage(t)
-
 
         assert len(t.interior_node_S_maps) == l
         # l = 2 so we expect the root node to have 8q boundary points
@@ -325,9 +349,9 @@ class Test_down_pass:
         q = 3
         l = 2
 
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
-
-        root = Node(xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None)
+        root = Node(
+            xmin=0, xmax=1, ymin=0, ymax=1, depth=0, zmin=None, zmax=None
+        )
 
         t = create_solver_obj_2D(p, q, root, uniform_levels=l)
         print("test_0: l = ", l)
@@ -346,12 +370,17 @@ class Test_down_pass:
         source_term = jax.device_put(source_term, DEVICE_ARR[0])
 
         local_solve_stage(
-            t, source_term=source_term, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
         build_stage(t)
 
         print("test_0: Boundary points shape: ", t.root_boundary_points.shape)
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            return jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_2D(t, f)
 
@@ -381,7 +410,9 @@ class Test_down_pass:
             D_zz_coeffs=d_zz_coeffs,
         )
         build_stage(t)
-        f = lambda x: jnp.ones_like(x[..., 0])
+
+        def f(x):
+            jnp.ones_like(x[..., 0])
 
         boundary_data_lst = get_bdry_data_evals_lst_3D(t, f)
         down_pass(t, boundary_data_lst)
@@ -394,7 +425,6 @@ class Test_down_pass:
         l = 2
         eta = 4.0
 
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
         root = Node(
             xmin=0,
             xmax=1,
@@ -402,7 +432,9 @@ class Test_down_pass:
             ymax=1,
         )
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, eta=eta, use_ItI=True)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, eta=eta, use_ItI=True
+        )
         print("test_2: l = ", l)
 
         print("test_2: q = ", q)
@@ -415,7 +447,10 @@ class Test_down_pass:
         source_term = jnp.zeros_like(t.leaf_cheby_points)
 
         local_solve_stage(
-            t, source_term=source_term, D_xx_coeffs=d_xx_coeffs, D_yy_coeffs=d_yy_coeffs
+            t,
+            source_term=source_term,
+            D_xx_coeffs=d_xx_coeffs,
+            D_yy_coeffs=d_yy_coeffs,
         )
         build_stage(t)
 
@@ -441,7 +476,9 @@ class Test_fused_pde_solve_2D:
         d_xx_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
         d_yy_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
         source = jnp.array(np.random.normal(size=(4**l, p**2)))
-        bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
+        bdry_data = jnp.array(
+            np.random.normal(size=t.root_boundary_points.shape[0])
+        )
         fused_pde_solve_2D(
             t=t,
             boundary_data=bdry_data,
@@ -466,7 +503,9 @@ class Test_baseline_pde_solve_2D:
         d_xx_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
         d_yy_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
         source = jnp.array(np.random.normal(size=(4**l, p**2)))
-        bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
+        bdry_data = jnp.array(
+            np.random.normal(size=t.root_boundary_points.shape[0])
+        )
         baseline_pde_solve_2D(
             t=t,
             boundary_data=bdry_data,
@@ -486,12 +525,16 @@ class Test_fused_pde_solve_2D_ItI:
         eta = 3.0
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1)
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, eta=eta, use_ItI=True)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, eta=eta, use_ItI=True
+        )
 
         d_xx_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
         d_yy_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
         source = jnp.array(np.random.normal(size=(4**l, p**2)))
-        bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
+        bdry_data = jnp.array(
+            np.random.normal(size=t.root_boundary_points.shape[0])
+        )
         fused_pde_solve_2D_ItI(
             t=t,
             boundary_data=bdry_data,
@@ -509,12 +552,16 @@ class Test_fused_pde_solve_2D_ItI:
         eta = 4.0
         root = Node(xmin=0, xmax=1, ymin=0, ymax=1)
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, eta=eta, use_ItI=True)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, eta=eta, use_ItI=True
+        )
 
         d_xx_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
         d_yy_coeffs = jnp.ones_like(t.leaf_cheby_points[..., 0])
         source = jnp.array(np.random.normal(size=(4**l, p**2)))
-        bdry_data = jnp.array(np.random.normal(size=t.root_boundary_points.shape[0]))
+        bdry_data = jnp.array(
+            np.random.normal(size=t.root_boundary_points.shape[0])
+        )
         fused_pde_solve_2D_ItI(
             t=t,
             boundary_data=bdry_data,

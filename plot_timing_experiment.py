@@ -1,19 +1,20 @@
 import logging
 import os
 import argparse
-from typing import List, Tuple
-from datetime import datetime
+from typing import List
 
-import jax.numpy as jnp
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.cm as cm
 from scipy.io import loadmat
 import pandas as pd
 
 from hps.src.logging_utils import FMT, TIMEFMT
-from hps.src.plotting import get_discrete_cmap, FONTSIZE_2, FIGSIZE_2, TICKSIZE_2
+from hps.src.plotting import (
+    get_discrete_cmap,
+    FONTSIZE_2,
+    FIGSIZE_2,
+    TICKSIZE_2,
+)
 
 
 # Disable matplotlib logging
@@ -30,7 +31,9 @@ def setup_args() -> argparse.Namespace:
         type=str,
         help="Directory to save the reference solution.",
     )
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging."
+    )
     return parser.parse_args()
 
 

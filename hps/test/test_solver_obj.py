@@ -3,22 +3,16 @@ import pytest
 from hps.src.solver_obj import (
     create_solver_obj_2D,
     create_solver_obj_3D,
-    SolverObj,
 )
 from hps.src.quadrature.trees import (
     Node,
     add_four_children,
-    add_eight_children,
     add_uniform_levels,
-    tree_equal,
-    get_all_leaves,
-    get_all_leaves_jitted,
 )
 import jax.numpy as jnp
 
 
 class Test_create_solver_obj_2D:
-
     def test_0(self) -> None:
         p = 14
         q = 12
@@ -99,7 +93,6 @@ class Test_create_solver_obj_2D:
 
         p = 14
         q = 12
-        l = 4
 
         root = Node(
             xmin=0.0,
@@ -134,11 +127,12 @@ class Test_create_solver_obj_2D:
             zmax=None,
             depth=0,
         )
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
-        n_leaf_nodes = 4**l
+        # n_leaf_nodes = 4**l
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=4.0)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=4.0
+        )
 
         assert t.I_P_0.shape == (4 * (p - 1), 4 * q)
         assert t.Q_I.shape == (4 * q, 4 * p)
@@ -152,7 +146,6 @@ class Test_create_solver_obj_3D:
         q = 12
         l = 2
 
-        corners = jnp.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]])
         root = Node(
             xmin=-1.0,
             xmax=1.0,

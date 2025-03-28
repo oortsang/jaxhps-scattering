@@ -1,19 +1,14 @@
 import os
-from typing import Callable, Tuple, List
-import sys
+from typing import Callable
 import argparse
 import logging
 import numpy as np
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-import matplotlib
 from timeit import default_timer
 from scipy.io import savemat
 
-# Suppress matplotlib debug messages
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
-logging.getLogger("jax").setLevel(logging.WARNING)
 
 from hps.src.quadrature.quad_3D.adaptive_meshing import (
     generate_adaptive_mesh_level_restriction,
@@ -40,8 +35,7 @@ from hps.src.quadrature.quad_3D.interpolation import (
     refinement_operator,
     interp_from_nonuniform_hps_to_uniform_grid,
 )
-from hps.src.plotting import plot_2D_adaptive_refinement, plot_adaptive_grid_histogram
-from hps.src.utils import meshgrid_to_lst_of_pts, points_to_2d_lst_of_points
+from hps.src.plotting import plot_adaptive_grid_histogram
 from hps.accuracy_checks.test_cases_3D import (
     adaptive_meshing_data_fn,
     d_xx_adaptive_meshing_data_fn,
@@ -49,15 +43,20 @@ from hps.accuracy_checks.test_cases_3D import (
     d_zz_adaptive_meshing_data_fn,
     default_lap_coeffs,
 )
-from hps.accuracy_checks.h_refinement_functions import get_l_inf_error_2D
 from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src.config import HOST_DEVICE, DEVICE_ARR
+
+# Suppress matplotlib debug messages
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("jax").setLevel(logging.WARNING)
 
 
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--plot_dir", type=str, default="data/adaptive_meshing_3D")
+    parser.add_argument(
+        "--plot_dir", type=str, default="data/adaptive_meshing_3D"
+    )
     parser.add_argument(
         "--tol", type=float, nargs="+", default=[1e-02, 1e-04, 1e-06, 1e-08]
     )
@@ -66,7 +65,10 @@ def setup_args() -> argparse.Namespace:
     parser.add_argument("--max_l", type=int, default=4)
     parser.add_argument("--l2", action="store_true")
     parser.add_argument(
-        "-n", type=int, default=500, help="Number of pixels to use when plotting"
+        "-n",
+        type=int,
+        default=500,
+        help="Number of pixels to use when plotting",
     )
 
     return parser.parse_args()
@@ -90,7 +92,9 @@ def get_relative_l2_error(
     diffs = expected_soln - computed_soln
 
     all_leaves = get_all_leaves(t.root)
-    all_corners = jnp.array([node_corners_to_3d_corners(l) for l in all_leaves])
+    all_corners = jnp.array(
+        [node_corners_to_3d_corners(l) for l in all_leaves]
+    )
     logging.debug("get_relative_l2_error: all_corners: %s", all_corners.shape)
 
     v = jax.vmap(get_squared_l2_norm_single_voxel, in_axes=(0, 0, None))
@@ -114,7 +118,6 @@ def plot_diffs(
     eval_pts_z: jnp.array,
     plot_fp: str,
 ) -> None:
-
     TITLESIZE = 20
 
     # Make a figure with 3 panels.
@@ -141,7 +144,9 @@ def plot_diffs(
     ax[1, 0].set_xlabel("y", fontsize=TITLESIZE)
     ax[1, 0].set_ylabel("z", fontsize=TITLESIZE)
 
-    im_2 = ax[2, 0].imshow(np.abs(u_reg_x - u_expected_x), cmap="hot", extent=extent)
+    im_2 = ax[2, 0].imshow(
+        np.abs(u_reg_x - u_expected_x), cmap="hot", extent=extent
+    )
     plt.colorbar(im_2, ax=ax[2, 0])
     ax[2, 0].set_title("Absolute Error", fontsize=TITLESIZE)
     ax[2, 0].set_xlabel("y", fontsize=TITLESIZE)
@@ -165,7 +170,9 @@ def plot_diffs(
     ax[1, 1].set_xlabel("x", fontsize=TITLESIZE)
     ax[1, 1].set_ylabel("z", fontsize=TITLESIZE)
 
-    im_2 = ax[2, 1].imshow(np.abs(u_reg_y - u_expected_y), cmap="hot", extent=extent)
+    im_2 = ax[2, 1].imshow(
+        np.abs(u_reg_y - u_expected_y), cmap="hot", extent=extent
+    )
     plt.colorbar(im_2, ax=ax[2, 1])
     ax[2, 1].set_title("Absolute Error", fontsize=TITLESIZE)
     ax[2, 1].set_xlabel("x", fontsize=TITLESIZE)
@@ -189,7 +196,9 @@ def plot_diffs(
     ax[1, 2].set_xlabel("x", fontsize=TITLESIZE)
     ax[1, 2].set_ylabel("y", fontsize=TITLESIZE)
 
-    im_2 = ax[2, 2].imshow(np.abs(u_reg_z - u_expected_z), cmap="hot", extent=extent)
+    im_2 = ax[2, 2].imshow(
+        np.abs(u_reg_z - u_expected_z), cmap="hot", extent=extent
+    )
     plt.colorbar(im_2, ax=ax[2, 2])
     ax[2, 2].set_title("Absolute Error", fontsize=TITLESIZE)
     ax[2, 2].set_xlabel("x", fontsize=TITLESIZE)
@@ -203,7 +212,6 @@ def plot_diffs(
 
 
 def plot_problem(plot_fp: str) -> None:
-
     # Set up part of the grid.
     n = 300
     x = jnp.linspace(XMIN, XMAX, n)
@@ -218,7 +226,9 @@ def plot_problem(plot_fp: str) -> None:
     #############################################################
     # First column: Plot along x = 0.0
     Y, Z = jnp.meshgrid(y, jnp.flipud(z))
-    pts = jnp.stack([jnp.zeros_like(Y.flatten()), Y.flatten(), Z.flatten()], axis=-1)
+    pts = jnp.stack(
+        [jnp.zeros_like(Y.flatten()), Y.flatten(), Z.flatten()], axis=-1
+    )
 
     u_evals = adaptive_meshing_data_fn(pts).reshape(n, n)
     lap_u_evals = (
@@ -246,7 +256,9 @@ def plot_problem(plot_fp: str) -> None:
     #############################################################
     # Second column: Plot along y = 0.0
     X, Z = jnp.meshgrid(x, jnp.flipud(z))
-    pts = jnp.stack([X.flatten(), jnp.zeros_like(X.flatten()), Z.flatten()], axis=-1)
+    pts = jnp.stack(
+        [X.flatten(), jnp.zeros_like(X.flatten()), Z.flatten()], axis=-1
+    )
 
     u_evals = adaptive_meshing_data_fn(pts).reshape(n, n)
     lap_u_evals = (
@@ -273,7 +285,9 @@ def plot_problem(plot_fp: str) -> None:
     #############################################################
     # Second column: Plot along z = 0.0
     X, Y = jnp.meshgrid(x, jnp.flipud(y))
-    pts = jnp.stack([X.flatten(), Y.flatten(), jnp.zeros_like(X.flatten())], axis=-1)
+    pts = jnp.stack(
+        [X.flatten(), Y.flatten(), jnp.zeros_like(X.flatten())], axis=-1
+    )
 
     u_evals = adaptive_meshing_data_fn(pts).reshape(n, n)
     lap_u_evals = (
@@ -335,7 +349,9 @@ def hp_convergence_study() -> None:
             depth=0,
         )
 
-        t = create_solver_obj_3D(p=args.p, q=args.p - 2, root=root, uniform_levels=l)
+        t = create_solver_obj_3D(
+            p=args.p, q=args.p - 2, root=root, uniform_levels=l
+        )
 
         #############################################################
         # Do a PDE Solve
@@ -415,7 +431,7 @@ def hp_convergence_study() -> None:
         )
         u_reg_y = u_reg_y.reshape(args.n, args.n)
         eval_pts_y = eval_pts_y.reshape(args.n, args.n, 3)
-        y_leaf_corners = find_leaves_containing_pts(eval_pts_y, t.root)
+        # y_leaf_corners = find_leaves_containing_pts(eval_pts_y, t.root)
 
         u_reg_z, eval_pts_z = interp_from_nonuniform_hps_to_uniform_grid(
             root=t.root,
@@ -427,14 +443,20 @@ def hp_convergence_study() -> None:
         )
         u_reg_z = u_reg_z.reshape(args.n, args.n)
         eval_pts_z = eval_pts_z.reshape(args.n, args.n, 3)
-        z_leaf_corners = find_leaves_containing_pts(eval_pts_z, t.root)
+        # z_leaf_corners = find_leaves_containing_pts(eval_pts_z, t.root)
 
         #############################################################
         # Plot the solution
 
         plot_fp = os.path.join(args.plot_dir, f"hp_soln_l_{l}_p_{args.p}.png")
         plot_diffs(
-            u_reg_x, eval_pts_x, u_reg_y, eval_pts_y, u_reg_z, eval_pts_z, plot_fp
+            u_reg_x,
+            eval_pts_x,
+            u_reg_y,
+            eval_pts_y,
+            u_reg_z,
+            eval_pts_z,
+            plot_fp,
         )
 
     # #############################################################
@@ -508,7 +530,7 @@ def adaptive_small_ex_for_jit() -> None:
         D_yy_coeffs=D_yy_evals,
         D_zz_coeffs=D_zz_evals,
     )
-    D_size = build_stage(t, return_D_size=True)
+    # D_size = build_stage(t, return_D_size=True)
 
     bdry_data = get_bdry_data_evals_lst_3D(t, f=adaptive_meshing_data_fn)
     down_pass(t, bdry_data)
@@ -525,9 +547,11 @@ def uniform_small_ex_for_jit() -> None:
         zmax=ZMAX,
         depth=0,
     )
-    interp = refinement_operator(args.p)
+    # interp = refinement_operator(args.p)
 
-    t = create_solver_obj_3D(p=args.p, q=args.p - 2, root=root, uniform_levels=1)
+    t = create_solver_obj_3D(
+        p=args.p, q=args.p - 2, root=root, uniform_levels=1
+    )
 
     #############################################################
     # Do a PDE Solve
@@ -542,7 +566,7 @@ def uniform_small_ex_for_jit() -> None:
         D_yy_coeffs=D_yy_evals,
         D_zz_coeffs=D_zz_evals,
     )
-    D_size = build_stage(t, return_D_size=True)
+    # D_size = build_stage(t, return_D_size=True)
 
     bdry_data = get_bdry_data_evals_lst_3D(t, f=adaptive_meshing_data_fn)
     down_pass(t, bdry_data)
@@ -604,7 +628,9 @@ def adaptive_convergence_study() -> None:
         )
 
         # Plot a histogram of the side lengths of the leaves
-        plot_fp = os.path.join(args.plot_dir, f"adaptive_mesh_hist_tol_{tol}.png")
+        plot_fp = os.path.join(
+            args.plot_dir, f"adaptive_mesh_hist_tol_{tol}.png"
+        )
         plot_adaptive_grid_histogram(root, plot_fp, tol, args.p)
 
         t = create_solver_obj_3D(p=args.p, q=args.p - 2, root=root)
@@ -707,7 +733,13 @@ def adaptive_convergence_study() -> None:
 
         plot_fp = os.path.join(args.plot_dir, f"soln_tol_{tol}.png")
         plot_diffs(
-            u_reg_x, eval_pts_x, u_reg_y, eval_pts_y, u_reg_z, eval_pts_z, plot_fp
+            u_reg_x,
+            eval_pts_x,
+            u_reg_y,
+            eval_pts_y,
+            u_reg_z,
+            eval_pts_z,
+            plot_fp,
         )
 
         #############################################################
@@ -739,7 +771,9 @@ def adaptive_convergence_study() -> None:
 
     #############################################################
     # Save data
-    save_fp = os.path.join(args.plot_dir, f"adaptive_data_{nrm_str}_p_{args.p}.mat")
+    save_fp = os.path.join(
+        args.plot_dir, f"adaptive_data_{nrm_str}_p_{args.p}.mat"
+    )
 
     out_dd = {
         "tol": args.tol,

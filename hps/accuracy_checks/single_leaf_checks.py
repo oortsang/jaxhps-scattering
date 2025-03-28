@@ -1,15 +1,13 @@
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import jax
 import numpy as np
 import matplotlib.pyplot as plt
 
 from hps.src.methods.local_solve_stage import _local_solve_stage_2D
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D
+from hps.src.solver_obj import create_solver_obj_2D
 from hps.src.quadrature.trees import Node
 from hps.src.methods.local_solve_stage import (
-    _local_solve_stage_2D,
     _local_solve_stage_2D_ItI,
 )
 from hps.accuracy_checks.dirichlet_neumann_data import (
@@ -23,11 +21,6 @@ from hps.accuracy_checks.dirichlet_neumann_data import (
     TEST_CASE_HELMHOLTZ_1,
     ETA,
 )
-from hps.accuracy_checks.utils import (
-    plot_soln_from_cheby_nodes,
-    _distance_around_boundary_nonode,
-)
-from hps.src.config import DEVICE_ARR, HOST_DEVICE
 
 
 def check_l_inf_error_convergence(
@@ -53,8 +46,8 @@ def check_l_inf_error_convergence(
     south = -jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
-    half_side_len = (east - west) / 2
+    # corners = [(west, south), (east, south), (east, north), (west, north)]
+    # half_side_len = (east - west) / 2
 
     n_X = 100
     x = jnp.linspace(west, east, n_X)
@@ -197,8 +190,7 @@ def check_l_inf_error_convergence_particular_homog_solns(
     south = -jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
-    half_side_len = (east - west) / 2
+    # half_side_len = (east - west) / 2
 
     n_X = 100
     x = jnp.linspace(west, east, n_X)
@@ -325,7 +317,9 @@ def check_l_inf_error_convergence_particular_homog_solns(
         # plt.clf()
 
         l_inf_error = jnp.max(jnp.abs(expected_particular_flux - v_prime))
-        error_vals_particular_flux = error_vals_particular_flux.at[i].set(l_inf_error)
+        error_vals_particular_flux = error_vals_particular_flux.at[i].set(
+            l_inf_error
+        )
 
     logging.info(
         "check_l_inf_error_convergence_particular_homog_solns: error_vals_homog = %s",
@@ -360,11 +354,17 @@ def check_l_inf_error_convergence_particular_homog_solns(
     ax.set_title("Error convergence for Poisson BVP; Single Patch")
     ax.set_xlabel("p = # Chebyshev nodes")
     ax.set_ylabel("L_inf error at Chebyshev nodes")
-    ax.plot(p_values, error_vals_homog, "o-", label="Homogeneous soln", color="red")
+    ax.plot(
+        p_values, error_vals_homog, "o-", label="Homogeneous soln", color="red"
+    )
     if compute_convergence_rate:
         ax.plot(xvals, yvals_h, "--", label=f"Slope = {m_h:.2f}", color="red")
     ax.plot(
-        p_values, error_vals_particular, "o-", label="Particular soln", color="blue"
+        p_values,
+        error_vals_particular,
+        "o-",
+        label="Particular soln",
+        color="blue",
     )
     if compute_convergence_rate:
         ax.plot(xvals, yvals_p, "--", label=f"Slope = {m_p:.2f}", color="blue")
@@ -376,7 +376,9 @@ def check_l_inf_error_convergence_particular_homog_solns(
         color="green",
     )
     if compute_convergence_rate:
-        ax.plot(xvals, yvals_pf, "--", label=f"Slope = {m_pf:.2f}", color="green")
+        ax.plot(
+            xvals, yvals_pf, "--", label=f"Slope = {m_pf:.2f}", color="green"
+        )
     ax.set_yscale("log")
     ax.grid()
 
@@ -410,8 +412,7 @@ def check_l_inf_error_convergence_ItI_maps(
     south = -jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
-    half_side_len = (east - west) / 2
+    # half_side_len = (east - west) / 2
 
     n_X = 100
     x = jnp.linspace(west, east, n_X)
@@ -504,9 +505,9 @@ def check_l_inf_error_convergence_ItI_maps(
         #     expected_soln=expected_soln.real.flatten(),
         #     computed_soln=computed_soln.real.flatten(),
         # )
-        l_inf_error = jnp.max(jnp.abs(computed_soln - expected_soln)) / jnp.max(
-            jnp.abs(expected_soln)
-        )
+        l_inf_error = jnp.max(
+            jnp.abs(computed_soln - expected_soln)
+        ) / jnp.max(jnp.abs(expected_soln))
         error_vals = error_vals.at[i].set(l_inf_error)
     logging.info("check_l_inf_error_convergence: error_vals = %s", error_vals)
     if compute_convergence_rate:
@@ -566,7 +567,6 @@ def check_l_inf_error_convergence_particular_homog_solns_ItI(
     south = -jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
 
     error_vals_iti = jnp.zeros_like(p_values, dtype=jnp.float64)
     error_vals_homog = jnp.zeros_like(p_values, dtype=jnp.float64)
@@ -604,9 +604,9 @@ def check_l_inf_error_convergence_particular_homog_solns_ItI(
         d_yy_coeffs = jnp.stack(
             [d_yy_coeffs, d_yy_coeffs, d_yy_coeffs, d_yy_coeffs], axis=0
         ).squeeze(1)
-        I_coeffs = jnp.stack([I_coeffs, I_coeffs, I_coeffs, I_coeffs], axis=0).squeeze(
-            1
-        )
+        I_coeffs = jnp.stack(
+            [I_coeffs, I_coeffs, I_coeffs, I_coeffs], axis=0
+        ).squeeze(1)
         source = jnp.stack([source, source, source, source], axis=0).squeeze(1)
 
         R_arr, Y_arr, g_arr, v_arr = _local_solve_stage_2D_ItI(
@@ -666,17 +666,19 @@ def check_l_inf_error_convergence_particular_homog_solns_ItI(
                 -1 * dudx_fn(t.root_boundary_points[3 * q :]),
             ]
         )
-        boundary_part_f = particular_soln_fn(t.root_boundary_points)
-        boundary_part_n = jnp.concatenate(
-            [
-                -1 * particular_dy_fn(t.root_boundary_points[:q]),
-                particular_dx_fn(t.root_boundary_points[q : 2 * q]),
-                particular_dy_fn(t.root_boundary_points[2 * q : 3 * q]),
-                -1 * particular_dx_fn(t.root_boundary_points[3 * q :]),
-            ]
-        )
+        # boundary_part_f = particular_soln_fn(t.root_boundary_points)
+        # boundary_part_n = jnp.concatenate(
+        #     [
+        #         -1 * particular_dy_fn(t.root_boundary_points[:q]),
+        #         particular_dx_fn(t.root_boundary_points[q : 2 * q]),
+        #         particular_dy_fn(t.root_boundary_points[2 * q : 3 * q]),
+        #         -1 * particular_dx_fn(t.root_boundary_points[3 * q :]),
+        #     ]
+        # )
         incoming_imp_data = (boundary_homog_n) + 1j * eta * (boundary_homog_f)
-        expected_outgoing_imp_data = (boundary_homog_n) - 1j * eta * (boundary_homog_f)
+        expected_outgoing_imp_data = (boundary_homog_n) - 1j * eta * (
+            boundary_homog_f
+        )
 
         # print(
         #     "check_l_inf_error_convergence_particular_homog_solns_ItI: incoming_imp_data = ",
@@ -733,7 +735,9 @@ def check_l_inf_error_convergence_particular_homog_solns_ItI(
         ) - 1j * eta * particular_soln_fn(t.root_boundary_points)
 
         l_inf_error = jnp.max(jnp.abs(expected_outgoing_part_imp - g))
-        error_vals_particular_flux = error_vals_particular_flux.at[i].set(l_inf_error)
+        error_vals_particular_flux = error_vals_particular_flux.at[i].set(
+            l_inf_error
+        )
 
         # Plot the outgoing impedance data
         # plt.plot(g.real, "o-", label="Computed.real")
@@ -781,11 +785,17 @@ def check_l_inf_error_convergence_particular_homog_solns_ItI(
     ax.set_title("Error convergence for Poisson BVP; Single Patch")
     ax.set_xlabel("p = # Chebyshev nodes")
     ax.set_ylabel("L_inf error at Chebyshev nodes")
-    ax.plot(p_values, error_vals_homog, "o-", label="Homogeneous soln", color="red")
+    ax.plot(
+        p_values, error_vals_homog, "o-", label="Homogeneous soln", color="red"
+    )
     if compute_convergence_rate:
         ax.plot(xvals, yvals_h, "--", label=f"Slope = {m_h:.2f}", color="red")
     ax.plot(
-        p_values, error_vals_particular, "o-", label="Particular soln", color="blue"
+        p_values,
+        error_vals_particular,
+        "o-",
+        label="Particular soln",
+        color="blue",
     )
     if compute_convergence_rate:
         ax.plot(xvals, yvals_p, "--", label=f"Slope = {m_p:.2f}", color="blue")
@@ -797,7 +807,9 @@ def check_l_inf_error_convergence_particular_homog_solns_ItI(
         color="green",
     )
     if compute_convergence_rate:
-        ax.plot(xvals, yvals_pf, "--", label=f"Slope = {m_pf:.2f}", color="green")
+        ax.plot(
+            xvals, yvals_pf, "--", label=f"Slope = {m_pf:.2f}", color="green"
+        )
     ax.set_yscale("log")
     ax.grid()
 
@@ -851,7 +863,9 @@ def single_leaf_check_2(plot_fp: str) -> None:
     p_values = jnp.array([4, 8, 12, 16])
     check_l_inf_error_convergence(
         p_values=p_values,
-        dirichlet_data_fn=TEST_CASE_NONCONSTANT_COEFF_POLY["dirichlet_data_fn"],
+        dirichlet_data_fn=TEST_CASE_NONCONSTANT_COEFF_POLY[
+            "dirichlet_data_fn"
+        ],
         d_xx_coeff_fn=TEST_CASE_NONCONSTANT_COEFF_POLY["d_xx_coeff_fn"],
         d_yy_coeff_fn=TEST_CASE_NONCONSTANT_COEFF_POLY["d_yy_coeff_fn"],
         source_fn=TEST_CASE_NONCONSTANT_COEFF_POLY["source_fn"],

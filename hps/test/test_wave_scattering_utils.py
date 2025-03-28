@@ -3,9 +3,6 @@ import numpy as np
 import jax.numpy as jnp
 import jax
 from hps.src.wave_scattering_utils import (
-    get_DtN_from_ItI,
-    load_SD_matrices,
-    setup_scattering_lin_system,
     get_uin_and_normals,
     get_uin,
 )
@@ -19,7 +16,6 @@ jax.config.update("jax_enable_x64", True)
 
 class Test_get_uin:
     def test_0(self) -> None:
-
         n = 16
         n_src = 7
         k = 2.0
@@ -40,7 +36,6 @@ class Test_get_uin:
 
 class Test_get_uin_and_normals:
     def test_0(self) -> None:
-
         n = 16
         n_src = 7
         k = 2.0
@@ -52,7 +47,9 @@ class Test_get_uin_and_normals:
             np.random.randn(n_src).astype(np.float64), dtype=jnp.float64
         )
 
-        uin, normals = get_uin_and_normals(k, gauss_bdry_pts, source_directions)
+        uin, normals = get_uin_and_normals(
+            k, gauss_bdry_pts, source_directions
+        )
 
         assert uin.shape == (n, n_src)
         assert uin.dtype == jnp.complex128
@@ -72,10 +69,10 @@ class Test_get_uin_and_normals:
         k = 6.0
         uin, normals = get_uin_and_normals(k, bdry_pts, src_theta)
         s_0 = jnp.array([1.0, 0.0])
-        s_1 = jnp.array([0.0, 1.0])
+        # s_1 = jnp.array([0.0, 1.0])
 
         normals_0 = normals[:, 0]
-        normals_1 = normals[:, 1]
+        # normals_1 = normals[:, 1]
 
         # Compute expected normals 0
         expected_normals_0 = jnp.concatenate(

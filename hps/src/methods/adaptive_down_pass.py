@@ -1,4 +1,3 @@
-from functools import partial
 import logging
 from typing import Tuple, List
 
@@ -48,7 +47,6 @@ def _down_pass_2D(
 
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(depth + 1):
-
         nodes_this_level = get_nodes_at_level(root, level)
         n_nodes = len(nodes_this_level)
 
@@ -103,7 +101,6 @@ def _down_pass_2D(
         bdry_data_lst = new_bdry_data_lst
 
     for i, leaf in enumerate(get_all_leaves(root)):
-
         leaf_homog_solns = leaf.Y @ leaf.bdry_data
         leaf_solns = leaf_homog_solns + leaf.v
         leaf.soln = leaf_solns
@@ -119,7 +116,6 @@ def _decompress_merge_interface_2D(
     refinement_op: jnp.array,
     idx_g_int: int,
 ) -> Tuple[jnp.array, jnp.array, int]:
-
     q = refinement_op.shape[1]
     n_panels_0 = compression_lst_0.shape[0]
     n_panels_1 = compression_lst_1.shape[0]
@@ -346,11 +342,7 @@ def _propogate_down_quad(
         jnp.ndarray: Has shape (4, 4 * n_child)
     """
 
-    q = refinement_op.shape[1]
-
     g_int = S_arr @ jnp.concatenate(bdry_data_lst) + v_int_data
-
-    n_child = g_int.shape[0] // 4
 
     idx_g_int = 0
 
@@ -360,19 +352,35 @@ def _propogate_down_quad(
     # from OUTSIDE to INSIDE
 
     g_int_a_5, g_int_b_5, idx_g_int = _decompress_merge_interface_2D(
-        g_int, compression_lsts[0], compression_lsts[1], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[0],
+        compression_lsts[1],
+        refinement_op,
+        idx_g_int,
     )
 
     g_int_b_6, g_int_c_6, idx_g_int = _decompress_merge_interface_2D(
-        g_int, compression_lsts[2], compression_lsts[3], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[2],
+        compression_lsts[3],
+        refinement_op,
+        idx_g_int,
     )
 
     g_int_c_7, g_int_d_7, idx_g_int = _decompress_merge_interface_2D(
-        g_int, compression_lsts[4], compression_lsts[5], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[4],
+        compression_lsts[5],
+        refinement_op,
+        idx_g_int,
     )
 
     g_int_d_8, g_int_a_8, idx_g_int = _decompress_merge_interface_2D(
-        g_int, compression_lsts[6], compression_lsts[7], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[6],
+        compression_lsts[7],
+        refinement_op,
+        idx_g_int,
     )
 
     # g_a is a list of the boundary data for the four sides of child a.
@@ -460,40 +468,88 @@ def _propogate_down_oct(
     # the merge interfaces that were compressed during the merge.
 
     g_int_a_9, g_int_b_9, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[0], compression_lsts[1], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[0],
+        compression_lsts[1],
+        refinement_op,
+        idx_g_int,
     )
     g_int_b_10, g_int_c_10, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[2], compression_lsts[3], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[2],
+        compression_lsts[3],
+        refinement_op,
+        idx_g_int,
     )
     g_int_c_11, g_int_d_11, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[4], compression_lsts[5], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[4],
+        compression_lsts[5],
+        refinement_op,
+        idx_g_int,
     )
     g_int_d_12, g_int_a_12, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[6], compression_lsts[7], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[6],
+        compression_lsts[7],
+        refinement_op,
+        idx_g_int,
     )
     g_int_e_13, g_int_f_13, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[8], compression_lsts[9], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[8],
+        compression_lsts[9],
+        refinement_op,
+        idx_g_int,
     )
     g_int_f_14, g_int_g_14, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[10], compression_lsts[11], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[10],
+        compression_lsts[11],
+        refinement_op,
+        idx_g_int,
     )
     g_int_g_15, g_int_h_15, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[12], compression_lsts[13], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[12],
+        compression_lsts[13],
+        refinement_op,
+        idx_g_int,
     )
     g_int_h_16, g_int_e_16, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[14], compression_lsts[15], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[14],
+        compression_lsts[15],
+        refinement_op,
+        idx_g_int,
     )
     g_int_a_17, g_int_e_17, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[16], compression_lsts[17], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[16],
+        compression_lsts[17],
+        refinement_op,
+        idx_g_int,
     )
     g_int_b_18, g_int_f_18, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[18], compression_lsts[19], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[18],
+        compression_lsts[19],
+        refinement_op,
+        idx_g_int,
     )
     g_int_c_19, g_int_g_19, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[20], compression_lsts[21], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[20],
+        compression_lsts[21],
+        refinement_op,
+        idx_g_int,
     )
     g_int_d_20, g_int_h_20, idx_g_int = _decompress_merge_interface_3D(
-        g_int, compression_lsts[22], compression_lsts[23], refinement_op, idx_g_int
+        g_int,
+        compression_lsts[22],
+        compression_lsts[23],
+        refinement_op,
+        idx_g_int,
     )
 
     # g_a is a list of the boundary data for the 6 faces of child a.

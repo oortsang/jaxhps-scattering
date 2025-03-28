@@ -2,9 +2,8 @@
 
 from functools import partial
 import logging
-from typing import List, Tuple
+from typing import Tuple
 
-import numpy as np
 import jax.numpy as jnp
 import jax
 
@@ -18,7 +17,6 @@ from hps.src.quadrature.quad_3D.interpolation import (
 
 
 from hps.src.config import (
-    DEVICE_MESH,
     DEVICE_ARR,
     HOST_DEVICE,
     get_fused_chunksize_2D,
@@ -69,14 +67,16 @@ def _local_solve_stage_2D_chunked(
     v_arr = []
     v_prime_arr = []
     Y_arr = []
-    solns_arr = []
 
     while chunk_start_idx < n_leaves:
-
         # Loop over all available devices
         for device_idx, device in enumerate(DEVICE_ARR):
-            logging.debug("_local_solve_stage_2D_chunked: device_idx = %s", device_idx)
-            chunk_end_idx = min(chunk_start_idx + max_chunksizes[device_idx], n_leaves)
+            logging.debug(
+                "_local_solve_stage_2D_chunked: device_idx = %s", device_idx
+            )
+            chunk_end_idx = min(
+                chunk_start_idx + max_chunksizes[device_idx], n_leaves
+            )
             logging.debug(
                 "_local_solve_stage_2D_chunked: chunk_start_idx = %s, chunk_end_idx = %s",
                 chunk_start_idx,
@@ -127,7 +127,7 @@ def _local_solve_stage_2D_chunked(
                 P=P,
                 Q_D=Q_D,
                 p=p,
-                sidelens=sidelens,
+                sidelens=sidelens_chunk,
                 source_term=source_term_chunk,
                 D_xx_coeffs=D_xx_coeffs_chunk,
                 D_xy_coeffs=D_xy_coeffs_chunk,
@@ -289,11 +289,12 @@ def _local_solve_stage_2D(
     else:
         # Have to generate Q_D matrices for each leaf
         sidelens = jax.device_put(sidelens, device)
-        n_cheby_bdry_pts = 4 * (p - 1)
         q = P.shape[1] // 4
 
-        all_diff_operators, Q_Ds = vmapped_prep_nonuniform_refinement_diff_operators_2D(
-            sidelens, coeffs_gathered, which_coeffs, diff_ops, p, q
+        all_diff_operators, Q_Ds = (
+            vmapped_prep_nonuniform_refinement_diff_operators_2D(
+                sidelens, coeffs_gathered, which_coeffs, diff_ops, p, q
+            )
         )
         Y_arr, DtN_arr, v, v_prime = vmapped_get_DtN(
             source_term, all_diff_operators, Q_Ds, P
@@ -414,7 +415,8 @@ def _local_solutions_2D_DtN_uniform(
         coeffs_gathered, which_coeffs, diff_ops
     )
     logging.debug(
-        "_local_solutions_2D_DtN_uniform: source_term shape: %s", source_term.shape
+        "_local_solutions_2D_DtN_uniform: source_term shape: %s",
+        source_term.shape,
     )
     logging.debug(
         "_local_solutions_2D_DtN_uniform: diff_operators shape: %s",
@@ -585,7 +587,12 @@ def _local_solve_stage_2D_ItI(
     )[..., 0]
     part_soln_arr_host = jax.device_put(part_soln_arr, host_device)[..., 0]
 
-    return R_arr_host, Y_arr_host, outgoing_part_impedance_arr_host, part_soln_arr_host
+    return (
+        R_arr_host,
+        Y_arr_host,
+        outgoing_part_impedance_arr_host,
+        part_soln_arr_host,
+    )
 
 
 def _local_solve_stage_3D_chunked(
@@ -636,7 +643,6 @@ def _local_solve_stage_3D_chunked(
     v_prime_arr = []
 
     while chunk_start_idx < n_leaves:
-
         chunk_end_idx = min(chunk_start_idx + max_chunksize, n_leaves)
         logging.debug(
             "_local_solve_stage_3D_chunked: chunk_start_idx = %s, chunk_end_idx = %s",
@@ -693,35 +699,39 @@ def _local_solve_stage_3D_chunked(
             else None
         )
         I_coeffs_chunk = (
-            I_coeffs[chunk_start_idx:chunk_end_idx] if I_coeffs is not None else None
+            I_coeffs[chunk_start_idx:chunk_end_idx]
+            if I_coeffs is not None
+            else None
         )
 
         # Call the local solve stage
-        Y_arr_chunk, DtN_arr_chunk, v_chunk, v_prime_chunk = _local_solve_stage_3D(
-            D_xx=D_xx,
-            D_xy=D_xy,
-            D_yy=D_yy,
-            D_xz=D_xz,
-            D_yz=D_yz,
-            D_zz=D_zz,
-            D_x=D_x,
-            D_y=D_y,
-            D_z=D_z,
-            P=P,
-            p=p,
-            q=q,
-            sidelens=sidelens_chunk,
-            source_term=source_term_chunk,
-            D_xx_coeffs=D_xx_coeffs_chunk,
-            D_xy_coeffs=D_xy_coeffs_chunk,
-            D_yy_coeffs=D_yy_coeffs_chunk,
-            D_xz_coeffs=D_xz_coeffs_chunk,
-            D_yz_coeffs=D_yz_coeffs_chunk,
-            D_zz_coeffs=D_zz_coeffs_chunk,
-            D_x_coeffs=D_x_coeffs_chunk,
-            D_y_coeffs=D_y_coeffs_chunk,
-            D_z_coeffs=D_z_coeffs_chunk,
-            I_coeffs=I_coeffs_chunk,
+        Y_arr_chunk, DtN_arr_chunk, v_chunk, v_prime_chunk = (
+            _local_solve_stage_3D(
+                D_xx=D_xx,
+                D_xy=D_xy,
+                D_yy=D_yy,
+                D_xz=D_xz,
+                D_yz=D_yz,
+                D_zz=D_zz,
+                D_x=D_x,
+                D_y=D_y,
+                D_z=D_z,
+                P=P,
+                p=p,
+                q=q,
+                sidelens=sidelens_chunk,
+                source_term=source_term_chunk,
+                D_xx_coeffs=D_xx_coeffs_chunk,
+                D_xy_coeffs=D_xy_coeffs_chunk,
+                D_yy_coeffs=D_yy_coeffs_chunk,
+                D_xz_coeffs=D_xz_coeffs_chunk,
+                D_yz_coeffs=D_yz_coeffs_chunk,
+                D_zz_coeffs=D_zz_coeffs_chunk,
+                D_x_coeffs=D_x_coeffs_chunk,
+                D_y_coeffs=D_y_coeffs_chunk,
+                D_z_coeffs=D_z_coeffs_chunk,
+                I_coeffs=I_coeffs_chunk,
+            )
         )
 
         Y_arr.append(Y_arr_chunk)
@@ -847,23 +857,26 @@ def _local_solve_stage_3D(
     which_coeffs = jax.device_put(which_coeffs, device)
     source_term = jax.device_put(source_term, device)
     P = jax.device_put(P, device)
-    n_cheby_bdry_pts = p**3 - (p - 2) ** 3
 
     # Prepare the differential operators for non-uniform refined grid
-    diff_operators, Q_Ds = vmapped_prep_nonuniform_refinement_diff_operators_3D(
-        sidelens,
-        coeffs_gathered,
-        which_coeffs,
-        diff_ops,
-        p,
-        q,
+    diff_operators, Q_Ds = (
+        vmapped_prep_nonuniform_refinement_diff_operators_3D(
+            sidelens,
+            coeffs_gathered,
+            which_coeffs,
+            diff_ops,
+            p,
+            q,
+        )
     )
     logging.debug(
         "_local_solve_stage_3D: diff_operators shape: %s", diff_operators.shape
     )
     logging.debug("_local_solve_stage_3D: Q_Ds shape: %s", Q_Ds.shape)
 
-    Y_arr, DtN_arr, v, v_prime = vmapped_get_DtN(source_term, diff_operators, Q_Ds, P)
+    Y_arr, DtN_arr, v, v_prime = vmapped_get_DtN(
+        source_term, diff_operators, Q_Ds, P
+    )
 
     Y_arr = jax.device_put(Y_arr, HOST_DEVICE)
     DtN_arr = jax.device_put(DtN_arr, HOST_DEVICE)
@@ -898,7 +911,9 @@ def _gather_coeffs(
         I_coeffs,
     ]
     which_coeffs = jnp.array([coeff is not None for coeff in coeffs_lst])
-    coeffs_gathered = jnp.array([coeff for coeff in coeffs_lst if coeff is not None])
+    coeffs_gathered = jnp.array(
+        [coeff for coeff in coeffs_lst if coeff is not None]
+    )
     return coeffs_gathered, which_coeffs
 
 
@@ -935,7 +950,9 @@ def _gather_coeffs_3D(
         I_coeffs,
     ]
     which_coeffs = jnp.array([coeff is not None for coeff in coeffs_lst])
-    coeffs_gathered = jnp.array([coeff for coeff in coeffs_lst if coeff is not None])
+    coeffs_gathered = jnp.array(
+        [coeff for coeff in coeffs_lst if coeff is not None]
+    )
     return coeffs_gathered, which_coeffs
 
 
@@ -952,14 +969,18 @@ def _add(
 
 
 @jax.jit
-def _not(out: jnp.ndarray, coeff: jnp.ndarray, diff_op: jnp.ndarray) -> jnp.ndarray:
+def _not(
+    out: jnp.ndarray, coeff: jnp.ndarray, diff_op: jnp.ndarray
+) -> jnp.ndarray:
     return out
 
 
 @jax.jit
 def add_or_not(
     i: int,
-    carry_tuple: Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray, int],
+    carry_tuple: Tuple[
+        jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray, int
+    ],
 ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
     """body function for loop in assemble_diff_operator."""
     out = carry_tuple[0]
@@ -1056,7 +1077,9 @@ def _prep_nonuniform_refinement_diff_operators_2D(
     diff_ops_2D = diff_ops_2D.at[:3].set(diff_ops_2D[:3] / (half_side_len**2))
     # First-order differential operators
     diff_ops_2D = diff_ops_2D.at[3:5].set(diff_ops_2D[3:5] / half_side_len)
-    diff_operator = assemble_diff_operator(coeffs_arr, which_coeffs, diff_ops_2D)
+    diff_operator = assemble_diff_operator(
+        coeffs_arr, which_coeffs, diff_ops_2D
+    )
     Q_D = precompute_Q_D_matrix_2D(p, q, diff_ops_2D[3], diff_ops_2D[4])
     return diff_operator, Q_D
 
@@ -1100,8 +1123,12 @@ def _prep_nonuniform_refinement_diff_operators_3D(
     diff_ops_3D = diff_ops_3D.at[:6].set(diff_ops_3D[:6] / (half_side_len**2))
     # First-order differential operators
     diff_ops_3D = diff_ops_3D.at[6:9].set(diff_ops_3D[6:9] / half_side_len)
-    diff_operator = assemble_diff_operator(coeffs_arr, which_coeffs, diff_ops_3D)
-    Q_D = precompute_Q_D_matrix_3D(p, q, diff_ops_3D[6], diff_ops_3D[7], diff_ops_3D[8])
+    diff_operator = assemble_diff_operator(
+        coeffs_arr, which_coeffs, diff_ops_3D
+    )
+    Q_D = precompute_Q_D_matrix_3D(
+        p, q, diff_ops_3D[6], diff_ops_3D[7], diff_ops_3D[8]
+    )
     return diff_operator, Q_D
 
 
@@ -1220,7 +1247,9 @@ def get_soln_DtN(
     return jnp.linalg.solve(A, rhs)
 
 
-vmapped_get_soln_DtN_uniform = jax.vmap(get_soln_DtN, in_axes=(0, 0, 0, None, None))
+vmapped_get_soln_DtN_uniform = jax.vmap(
+    get_soln_DtN, in_axes=(0, 0, 0, None, None)
+)
 
 
 # @partial(jax.jit, static_argnums=(6,))

@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,25 +14,16 @@ from hps.accuracy_checks.test_cases_3D import (
     K_DU_DY,
     K_DU_DZ,
     K_PART_SOLN,
-    K_PART_SOLN_DUDX,
-    K_PART_SOLN_DUDY,
-    K_PART_SOLN_DUDZ,
     TEST_CASE_POISSON_POLY,
     TEST_CASE_POISSON_NONPOLY,
     TEST_CASE_HOMOG_PART_POLY,
 )
-from hps.accuracy_checks.utils import (
-    _distance_around_boundary,
-    setup_tree_quad_merge,
-    plot_soln_from_cheby_nodes,
-)
 from hps.src.up_down_passes import build_stage, down_pass, local_solve_stage
 from hps.src.solver_obj import (
-    SolverObj,
     create_solver_obj_3D,
     get_bdry_data_evals_lst_3D,
 )
-from hps.src.quadrature.trees import Node, get_all_leaves, get_nodes_at_level
+from hps.src.quadrature.trees import Node
 
 
 def check_l_inf_error_convergence_oct_merge(
@@ -58,9 +49,6 @@ def check_l_inf_error_convergence_oct_merge(
 
     It then computes the L_inf error at the Chebyshev points, and plots the convergence of the error.
     """
-    corners = jnp.array(
-        [[-jnp.pi / 2, -jnp.pi / 2, -jnp.pi / 2], [jnp.pi / 2, jnp.pi / 2, jnp.pi / 2]]
-    )
 
     error_vals = jnp.ones_like(p_values, dtype=jnp.float64)
 
@@ -114,17 +102,14 @@ def check_l_inf_error_convergence_oct_merge(
                     -1
                     * dudy_fn(
                         root_bdry_points[
-                            t.root.n_0
-                            + t.root.n_1 : t.root.n_0
+                            t.root.n_0 + t.root.n_1 : t.root.n_0
                             + t.root.n_1
                             + t.root.n_2
                         ]
                     ),  # face 2
                     dudy_fn(
                         root_bdry_points[
-                            t.root.n_0
-                            + t.root.n_1
-                            + t.root.n_2 : t.root.n_0
+                            t.root.n_0 + t.root.n_1 + t.root.n_2 : t.root.n_0
                             + t.root.n_1
                             + t.root.n_2
                             + t.root.n_3
@@ -178,7 +163,6 @@ def check_l_inf_error_convergence_oct_merge(
             # plt.show()
 
         else:
-
             down_pass(t, boundary_data_lst=bdry_data_lst)
 
             all_cheby_points = jnp.reshape(t.leaf_cheby_points, (-1, 3))
@@ -207,7 +191,9 @@ def check_l_inf_error_convergence_oct_merge(
             l_inf_error,
         )
 
-    logging.info("check_l_inf_error_convergence_oct_merge: error_vals = %s", error_vals)
+    logging.info(
+        "check_l_inf_error_convergence_oct_merge: error_vals = %s", error_vals
+    )
     # Plot the convergence on a semi-log plot
     if compute_convergence_rate:
         log_error_vals = jnp.log(error_vals)
@@ -324,9 +310,12 @@ def single_merge_check_3D_3(plot_fp: str) -> None:
 def single_merge_check_3D_4(plot_fp: str) -> None:
     """Laplace problem with polynomial source and Dirichlet data."""
     logging.info("Running single_merge_check_3D_4")
-    soln_fn = lambda x: TEST_CASE_HOMOG_PART_POLY[K_DIRICHLET](
-        x
-    ) + TEST_CASE_HOMOG_PART_POLY[K_PART_SOLN](x)
+
+    def soln_fn(x):
+        return TEST_CASE_HOMOG_PART_POLY[K_DIRICHLET](
+            x
+        ) + TEST_CASE_HOMOG_PART_POLY[K_PART_SOLN](x)
+
     p_values = jnp.array([4, 6, 8])
     check_l_inf_error_convergence_oct_merge(
         p_values=p_values,

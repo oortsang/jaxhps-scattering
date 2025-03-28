@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 import jax.numpy as jnp
 import jax
 
@@ -7,8 +6,6 @@ from hps.src.poisson_boltzmann_eqn_helpers import (
     rho,
     permittivity,
     perm_2D,
-    d_permittivity_d_x,
-    d_permittivity_d_y,
     d_permittivity_d_x_2D,
     d_permittivity_d_y_2D,
     d_rho_d_x,

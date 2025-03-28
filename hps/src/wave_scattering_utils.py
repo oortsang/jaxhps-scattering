@@ -7,12 +7,8 @@ from timeit import default_timer
 
 import jax.numpy as jnp
 import jax
-from scipy.io import loadmat
 import h5py
-import matplotlib.pyplot as plt
 
-# Disable logging
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 from hps.src.solver_obj import create_solver_obj_2D
 from hps.src.methods.fused_methods import (
@@ -27,6 +23,10 @@ from hps.src.quadrature.quad_2D.interpolation import (
     interp_from_nonuniform_hps_to_regular_grid,
 )
 from hps.src.quadrature.trees import Node
+
+
+# Disable logging
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 
 @jax.jit
@@ -77,7 +77,9 @@ def load_SD_matrices(fp: str) -> Tuple[jnp.array, jnp.array]:
         # Helper function to convert structured array to complex array
         def to_complex(structured_array):
             # Convert structured array to complex numpy array
-            complex_array = structured_array["real"] + 1j * structured_array["imag"]
+            complex_array = (
+                structured_array["real"] + 1j * structured_array["imag"]
+            )
             # Convert to jax array
             return jnp.array(complex_array)
 
@@ -151,7 +153,9 @@ def get_uin_and_normals(
 
     uin = get_uin(k, bdry_pts, source_directions)
     # print("get_uin_and_normals: uin shape: ", uin.shape)
-    source_vecs = jnp.array([jnp.cos(source_directions), jnp.sin(source_directions)]).T
+    source_vecs = jnp.array(
+        [jnp.cos(source_directions), jnp.sin(source_directions)]
+    ).T
     # print("get_uin_and_normals: source_vecs shape: ", source_vecs.shape)
 
     normals = jnp.concatenate(
@@ -185,8 +189,12 @@ def get_uin_and_normals(
 
 
 @jax.jit
-def get_uin(k: float, pts: jnp.array, source_directions: jnp.array) -> jnp.array:
-    source_vecs = jnp.array([jnp.cos(source_directions), jnp.sin(source_directions)]).T
+def get_uin(
+    k: float, pts: jnp.array, source_directions: jnp.array
+) -> jnp.array:
+    source_vecs = jnp.array(
+        [jnp.cos(source_directions), jnp.sin(source_directions)]
+    ).T
     # jax.debug.print("get_uin: source_vecs: {x}", x=source_vecs)
     uin = jnp.exp(1j * k * jnp.dot(pts, source_vecs.T))
     return uin
@@ -207,7 +215,12 @@ def get_scattering_uscat_impedance(
     # print("get_scattering_utot_impedance: D shape: ", D.shape)
     # print("get_scattering_utot_impedance: R shape: ", R.shape)
     A, b = setup_scattering_lin_system(
-        S=S, D=D, T_int=T, gauss_bdry_pts=bdry_pts, k=k, source_directions=source_dirs
+        S=S,
+        D=D,
+        T_int=T,
+        gauss_bdry_pts=bdry_pts,
+        k=k,
+        source_directions=source_dirs,
     )
     b = b.flatten()
     uin, uin_dn = get_uin_and_normals(k, bdry_pts, source_dirs)
@@ -260,10 +273,18 @@ def solve_scattering_problem(
     logging.debug("solve_scattering_problem: Creating tree...")
     xmin, ymin = domain_corners[0]
     xmax, ymax = domain_corners[2]
-    root = Node(xmin=float(xmin), xmax=float(xmax), ymin=float(ymin), ymax=float(ymax))
+    root = Node(
+        xmin=float(xmin), xmax=float(xmax), ymin=float(ymin), ymax=float(ymax)
+    )
 
     t = create_solver_obj_2D(
-        p=p, q=p - 2, root=root, uniform_levels=l, use_ItI=True, eta=k, fill_tree=True
+        p=p,
+        q=p - 2,
+        root=root,
+        uniform_levels=l,
+        use_ItI=True,
+        eta=k,
+        fill_tree=True,
     )
 
     t_0 = default_timer()
@@ -277,11 +298,13 @@ def solve_scattering_problem(
     uin_evals = get_uin(k, t.leaf_cheby_points, source_dirs)[:, :, 0]
 
     source_term = -1 * (k**2) * q_fn(t.leaf_cheby_points) * uin_evals
-    logging.debug("solve_scattering_problem: source_term shape: %s", source_term.shape)
+    logging.debug(
+        "solve_scattering_problem: source_term shape: %s", source_term.shape
+    )
 
     logging.debug("solve_scattering_problem: S device: %s", S.devices())
 
-    # Determine whether we need to use fused functions or can fit everything on the 
+    # Determine whether we need to use fused functions or can fit everything on the
     n_leaves = t.leaf_cheby_points.shape[0]
     _, n_levels = get_fused_chunksize_2D(p, jnp.complex128, n_leaves)
     bool_use_recomp = n_levels < l
@@ -304,7 +327,7 @@ def solve_scattering_problem(
             D_yy_coeffs=d_yy_coeffs,
             I_coeffs=i_term,
             host_device=DEVICE_ARR[0],
-            return_top_T=True
+            return_top_T=True,
         )
     else:
         T_arr, Y_arr, h_arr, v_arr = _local_solve_stage_2D_ItI(
@@ -325,13 +348,18 @@ def solve_scattering_problem(
             host_device=DEVICE_ARR[0],
         )
         S_arr_lst, f_arr_lst, R = _uniform_build_stage_2D_ItI(
-            R_maps=T_arr, h_arr=h_arr, l=l, host_device=DEVICE_ARR[0], return_ItI=True
+            R_maps=T_arr,
+            h_arr=h_arr,
+            l=l,
+            host_device=DEVICE_ARR[0],
+            return_ItI=True,
         )
-
 
     T = get_DtN_from_ItI(R, t.eta)
 
-    logging.debug("solve_scattering_problem: Solving boundary integral equation...")
+    logging.debug(
+        "solve_scattering_problem: Solving boundary integral equation..."
+    )
 
     if DEVICE_ARR[0] not in S.devices():
         S = jax.device_put(S, DEVICE_ARR[0])
@@ -379,12 +407,14 @@ def solve_scattering_problem(
             I_coeffs=i_term,
         )
     else:
-        interior_solns = _uniform_down_pass_2D_ItI(boundary_imp_data=incoming_imp_data, 
-                                                   S_maps_lst=S_arr_lst, 
-                                                   f_lst=f_arr_lst, 
-                                                   leaf_Y_maps=Y_arr, 
-                                                   v_array=v_arr,
-                                                   host_device=DEVICE_ARR[0])
+        interior_solns = _uniform_down_pass_2D_ItI(
+            boundary_imp_data=incoming_imp_data,
+            S_maps_lst=S_arr_lst,
+            f_lst=f_arr_lst,
+            leaf_Y_maps=Y_arr,
+            v_array=v_arr,
+            host_device=DEVICE_ARR[0],
+        )
     uscat_soln = interior_solns
 
     # Measure consistency with the PDE

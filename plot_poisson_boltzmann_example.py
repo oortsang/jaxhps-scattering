@@ -1,24 +1,29 @@
-from typing import Callable, List, Tuple, Dict
 import os
-import pickle
 import logging
 import argparse
 import numpy as np
-import jax
 import jax.numpy as jnp
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
 
+from hps.src.logging_utils import FMT, TIMEFMT
+from hps.src.plotting import (
+    plot_func_with_grid,
+    FIGSIZE_3,
+    FONTSIZE_3,
+    TICKSIZE_3,
+)
+from hps.src.poisson_boltzmann_eqn_helpers import (
+    rho,
+    permittivity,
+    vdw_permittivity,
+)
+
 # supress matplotlib debug messages
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logging.getLogger("matplotlib.font_manager").disabled = True
 logging.getLogger("jax").setLevel(logging.WARNING)
-
-from hps.src.logging_utils import FMT, TIMEFMT, DATESTR
-from hps.src.plotting import plot_func_with_grid, FIGSIZE_3, FONTSIZE_3, TICKSIZE_3
-from hps.src.quadrature.trees import Node, get_all_leaves
-from hps.src.poisson_boltzmann_eqn_helpers import rho, permittivity, vdw_permittivity
 
 K_TOL = "tol"
 K_ERRORS = "errors"
@@ -33,7 +38,9 @@ K_MESH_TIMES = "mesh_times"
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--plot_dir", type=str, default="data/poisson_boltzmann_3D")
+    parser.add_argument(
+        "--plot_dir", type=str, default="data/poisson_boltzmann_3D"
+    )
     parser.add_argument(
         "--mesh_tol",
         type=float,
@@ -41,7 +48,10 @@ def setup_args() -> argparse.Namespace:
         help="The tolerance at which we will draw the adaptive mesh",
     )
     parser.add_argument(
-        "--mesh_p", type=int, default=12, help="The polynomial degree of the tree"
+        "--mesh_p",
+        type=int,
+        default=12,
+        help="The polynomial degree of the tree",
     )
     return parser.parse_args()
 
@@ -84,9 +94,9 @@ def runtime_bar_chart(
     # set ylim 1, 10^3
     ax.set_ylim(1, 3 * 10**2)
     ax.set_yscale("log")
-    ax.set_xlabel("Tolerance", fontsize=LABELSIZE)
-    ax.set_ylabel("Time (s)", fontsize=LABELSIZE)
-    ax.set_title("Runtime Breakdown", fontsize=LABELSIZE)
+    ax.set_xlabel("Tolerance", fontsize=FONTSIZE_3)
+    ax.set_ylabel("Time (s)", fontsize=FONTSIZE_3)
+    ax.set_title("Runtime Breakdown", fontsize=FONTSIZE_3)
     ax.legend()
     ax.grid()
     fig.tight_layout()

@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: If you use this software, please cite both the article from preferred-citation and the software itself.
+authors:
+  - family-names: Melia
+    given-names: Owen
+  - family-names: Fortunato
+    given-names: Daniel
+  - family-names: Jeremy
+    given-names: Hoskins
+  - family-names: Rebecca
+    given-names: Willett
+title: Hardware Acceleration for HPS Algorithms in Two and Three Dimensions
+version: 1.0.0
+url: https://github.com/meliao/ha-hps
+date-released: '2025-03-28'
+preferred-citation:
+  authors:
+    - family-names: Melia
+      given-names: Owen
+    - family-names: Fortunato
+      given-names: Daniel
+    - family-names: Jeremy
+      given-names: Hoskins
+    - family-names: Rebecca
+      given-names: Willett
+  title: Hardware Acceleration for HPS Algorithms in Two and Three Dimensions
+  url: https://arxiv.org/abs/2503.17535
+  type: generic
+  year: '2025'
+  conference: {}
+  publisher: {}

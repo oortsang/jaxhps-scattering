@@ -1,4 +1,3 @@
-import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -29,7 +28,6 @@ from hps.src.quadrature.quad_3D.adaptive_merge_indexing import (
 
 class Test_a_submatrices_equivalence:
     def test_0(self) -> None:
-
         q = 2
         n_per_panel = q**2
 
@@ -58,13 +56,17 @@ class Test_a_submatrices_equivalence:
 
         for i in range(len(a_submatrices_uniform)):
             print("test_0: i=", i)
-            assert a_submatrices_uniform[i].shape == a_submatrices_adaptive[i].shape
-            assert jnp.allclose(a_submatrices_uniform[i], a_submatrices_adaptive[i])
+            assert (
+                a_submatrices_uniform[i].shape
+                == a_submatrices_adaptive[i].shape
+            )
+            assert jnp.allclose(
+                a_submatrices_uniform[i], a_submatrices_adaptive[i]
+            )
 
 
 class Test_b_submatrices_equivalence:
     def test_0(self) -> None:
-
         q = 2
         n_per_panel = q**2
 
@@ -93,13 +95,17 @@ class Test_b_submatrices_equivalence:
 
         for i in range(len(b_submatrices_uniform)):
             print("test_0: i=", i)
-            assert b_submatrices_uniform[i].shape == b_submatrices_adaptive[i].shape
-            assert jnp.allclose(b_submatrices_uniform[i], b_submatrices_adaptive[i])
+            assert (
+                b_submatrices_uniform[i].shape
+                == b_submatrices_adaptive[i].shape
+            )
+            assert jnp.allclose(
+                b_submatrices_uniform[i], b_submatrices_adaptive[i]
+            )
 
 
 class Test_c_submatrices_equivalence:
     def test_0(self) -> None:
-
         q = 2
         n_per_panel = q**2
 
@@ -128,13 +134,17 @@ class Test_c_submatrices_equivalence:
 
         for i in range(len(c_submatrices_uniform)):
             print("test_0: i=", i)
-            assert c_submatrices_uniform[i].shape == c_submatrices_adaptive[i].shape
-            assert jnp.allclose(c_submatrices_uniform[i], c_submatrices_adaptive[i])
+            assert (
+                c_submatrices_uniform[i].shape
+                == c_submatrices_adaptive[i].shape
+            )
+            assert jnp.allclose(
+                c_submatrices_uniform[i], c_submatrices_adaptive[i]
+            )
 
 
 class Test_d_submatrices_equivalence:
     def test_0(self) -> None:
-
         q = 2
         n_per_panel = q**2
 
@@ -163,13 +173,17 @@ class Test_d_submatrices_equivalence:
 
         for i in range(len(d_submatrices_uniform)):
             print("test_0: i=", i)
-            assert d_submatrices_uniform[i].shape == d_submatrices_adaptive[i].shape
-            assert jnp.allclose(d_submatrices_uniform[i], d_submatrices_adaptive[i])
+            assert (
+                d_submatrices_uniform[i].shape
+                == d_submatrices_adaptive[i].shape
+            )
+            assert jnp.allclose(
+                d_submatrices_uniform[i], d_submatrices_adaptive[i]
+            )
 
 
 class Test_e_submatrices_equivalence:
     def test_0(self) -> None:
-
         q = 2
         n_per_panel = q**2
 
@@ -198,13 +212,17 @@ class Test_e_submatrices_equivalence:
 
         for i in range(len(e_submatrices_uniform)):
             print("test_0: i=", i)
-            assert e_submatrices_uniform[i].shape == e_submatrices_adaptive[i].shape
-            assert jnp.allclose(e_submatrices_uniform[i], e_submatrices_adaptive[i])
+            assert (
+                e_submatrices_uniform[i].shape
+                == e_submatrices_adaptive[i].shape
+            )
+            assert jnp.allclose(
+                e_submatrices_uniform[i], e_submatrices_adaptive[i]
+            )
 
 
 class Test_f_submatrices_equivalence:
     def test_0(self) -> None:
-
         q = 2
         n_per_panel = q**2
 
@@ -233,13 +251,17 @@ class Test_f_submatrices_equivalence:
 
         for i in range(len(f_submatrices_uniform)):
             print("test_0: i=", i)
-            assert f_submatrices_uniform[i].shape == f_submatrices_adaptive[i].shape
-            assert jnp.allclose(f_submatrices_uniform[i], f_submatrices_adaptive[i])
+            assert (
+                f_submatrices_uniform[i].shape
+                == f_submatrices_adaptive[i].shape
+            )
+            assert jnp.allclose(
+                f_submatrices_uniform[i], f_submatrices_adaptive[i]
+            )
 
 
 class Test_g_submatrices_equivalence:
     def test_0(self) -> None:
-
         q = 2
         n_per_panel = q**2
 
@@ -268,13 +290,17 @@ class Test_g_submatrices_equivalence:
 
         for i in range(len(g_submatrices_uniform)):
             print("test_0: i=", i)
-            assert g_submatrices_uniform[i].shape == g_submatrices_adaptive[i].shape
-            assert jnp.allclose(g_submatrices_uniform[i], g_submatrices_adaptive[i])
+            assert (
+                g_submatrices_uniform[i].shape
+                == g_submatrices_adaptive[i].shape
+            )
+            assert jnp.allclose(
+                g_submatrices_uniform[i], g_submatrices_adaptive[i]
+            )
 
 
 class Test_h_submatrices_equivalence:
     def test_0(self) -> None:
-
         q = 2
         n_per_panel = q**2
 
@@ -303,8 +329,13 @@ class Test_h_submatrices_equivalence:
 
         for i in range(len(h_submatrices_uniform)):
             print("test_0: i=", i)
-            assert h_submatrices_uniform[i].shape == h_submatrices_adaptive[i].shape
-            assert jnp.allclose(h_submatrices_uniform[i], h_submatrices_adaptive[i])
+            assert (
+                h_submatrices_uniform[i].shape
+                == h_submatrices_adaptive[i].shape
+            )
+            assert jnp.allclose(
+                h_submatrices_uniform[i], h_submatrices_adaptive[i]
+            )
 
 
 class Test_rearrange_indices_equivalence:

@@ -1,20 +1,19 @@
-"""This file has functions that create quadrature grids for a 3D cube. This includes a 3D Chebyshev quadrature of the volume and 
+"""This file has functions that create quadrature grids for a 3D cube. This includes a 3D Chebyshev quadrature of the volume and
 2D Gauss-Legendre quadrature of the faces.
 """
 
-import logging
 from typing import Tuple
 from functools import partial
 import numpy as np
 import jax
 import jax.numpy as jnp
-from hps.src.quadrature.quadrature_utils import chebyshev_points, affine_transform
+from hps.src.quadrature.quadrature_utils import (
+    chebyshev_points,
+    affine_transform,
+)
 from hps.src.quadrature.quad_3D.indexing import rearrange_indices_ext_int
 from hps.src.quadrature.trees import (
     Node,
-    add_eight_children,
-    get_node_area,
-    get_all_leaves,
     get_all_leaves_jitted,
     get_all_leaves_special_ordering,
 )
@@ -83,33 +82,41 @@ def get_all_leaf_3d_cheby_points_uniform_refinement(
         corners_iter = vmapped_corners(corners_iter).reshape(-1, 2, 3)
 
     cheby_pts_1d = chebyshev_points(p)[0]
-    all_cheby_points = vmapped_corners_to_cheby_points_lst(corners_iter, cheby_pts_1d)
+    all_cheby_points = vmapped_corners_to_cheby_points_lst(
+        corners_iter, cheby_pts_1d
+    )
     return all_cheby_points
 
 
 def get_all_leaf_3d_cheby_points(p: int, root: Node) -> jnp.array:
-
     leaves_iter = get_all_leaves_jitted(root)
     bounds = jnp.array(
         [
-            [[leaf.xmin, leaf.ymin, leaf.zmin], [leaf.xmax, leaf.ymax, leaf.zmax]]
+            [
+                [leaf.xmin, leaf.ymin, leaf.zmin],
+                [leaf.xmax, leaf.ymax, leaf.zmax],
+            ]
             for leaf in leaves_iter
         ]
     )
     cheby_points_1d = chebyshev_points(p)[0]
-    all_cheby_points = vmapped_corners_to_cheby_points_lst(bounds, cheby_points_1d)
+    all_cheby_points = vmapped_corners_to_cheby_points_lst(
+        bounds, cheby_points_1d
+    )
     return all_cheby_points
 
 
 def get_all_boundary_gauss_legendre_points(q: int, root: Node) -> jnp.ndarray:
-
     gauss_pts_1d = np.polynomial.legendre.leggauss(q)[0]
 
     side_leaves = get_ordered_lst_of_boundary_nodes(root)
 
     # Do first face.
     bounds_1 = jnp.array(
-        [[[leaf.ymin, leaf.zmin], [leaf.ymax, leaf.zmax]] for leaf in side_leaves[0]]
+        [
+            [[leaf.ymin, leaf.zmin], [leaf.ymax, leaf.zmax]]
+            for leaf in side_leaves[0]
+        ]
     )
     bdry_pts_1 = vmapped_corners_to_gauss_face(bounds_1, gauss_pts_1d)
     # Add xmin in the first column.
@@ -124,7 +131,10 @@ def get_all_boundary_gauss_legendre_points(q: int, root: Node) -> jnp.ndarray:
 
     # Do second face.
     bounds_2 = jnp.array(
-        [[[leaf.ymin, leaf.zmin], [leaf.ymax, leaf.zmax]] for leaf in side_leaves[1]]
+        [
+            [[leaf.ymin, leaf.zmin], [leaf.ymax, leaf.zmax]]
+            for leaf in side_leaves[1]
+        ]
     )
     bdry_pts_2 = vmapped_corners_to_gauss_face(bounds_2, gauss_pts_1d)
     bdry_pts_2 = jnp.stack(
@@ -138,7 +148,10 @@ def get_all_boundary_gauss_legendre_points(q: int, root: Node) -> jnp.ndarray:
 
     # Do third face.
     bounds_3 = jnp.array(
-        [[[leaf.xmin, leaf.zmin], [leaf.xmax, leaf.zmax]] for leaf in side_leaves[2]]
+        [
+            [[leaf.xmin, leaf.zmin], [leaf.xmax, leaf.zmax]]
+            for leaf in side_leaves[2]
+        ]
     )
     bdry_pts_3 = vmapped_corners_to_gauss_face(bounds_3, gauss_pts_1d)
     bdry_pts_3 = jnp.stack(
@@ -152,7 +165,10 @@ def get_all_boundary_gauss_legendre_points(q: int, root: Node) -> jnp.ndarray:
 
     # Do fourth face.
     bounds_4 = jnp.array(
-        [[[leaf.xmin, leaf.zmin], [leaf.xmax, leaf.zmax]] for leaf in side_leaves[3]]
+        [
+            [[leaf.xmin, leaf.zmin], [leaf.xmax, leaf.zmax]]
+            for leaf in side_leaves[3]
+        ]
     )
     bdry_pts_4 = vmapped_corners_to_gauss_face(bounds_4, gauss_pts_1d)
     bdry_pts_4 = jnp.stack(
@@ -166,7 +182,10 @@ def get_all_boundary_gauss_legendre_points(q: int, root: Node) -> jnp.ndarray:
 
     # Do fifth face.
     bounds_5 = jnp.array(
-        [[[leaf.xmin, leaf.ymin], [leaf.xmax, leaf.ymax]] for leaf in side_leaves[4]]
+        [
+            [[leaf.xmin, leaf.ymin], [leaf.xmax, leaf.ymax]]
+            for leaf in side_leaves[4]
+        ]
     )
     bdry_pts_5 = vmapped_corners_to_gauss_face(bounds_5, gauss_pts_1d)
     bdry_pts_5 = jnp.stack(
@@ -179,7 +198,10 @@ def get_all_boundary_gauss_legendre_points(q: int, root: Node) -> jnp.ndarray:
     )
     # Do sixth face.
     bounds_6 = jnp.array(
-        [[[leaf.xmin, leaf.ymin], [leaf.xmax, leaf.ymax]] for leaf in side_leaves[5]]
+        [
+            [[leaf.xmin, leaf.ymin], [leaf.xmax, leaf.ymax]]
+            for leaf in side_leaves[5]
+        ]
     )
     bdry_pts_6 = vmapped_corners_to_gauss_face(bounds_6, gauss_pts_1d)
     bdry_pts_6 = jnp.stack(
@@ -273,7 +295,9 @@ def get_all_boundary_gauss_legendre_points_uniform_refinement(
         (all_gauss_points_xy, jnp.full(all_gauss_points_xy.shape[0], zmax))
     )
 
-    out = jnp.concatenate([face_1, face_2, face_3, face_4, face_5, face_6], axis=0)
+    out = jnp.concatenate(
+        [face_1, face_2, face_3, face_4, face_5, face_6], axis=0
+    )
     return out
 
 
@@ -401,7 +425,11 @@ def corners_to_cheby_points_lst(
     X, Y, Z = jnp.meshgrid(x_pts, y_pts, z_pts, indexing="ij")
 
     together = jnp.concatenate(
-        [jnp.expand_dims(X, -1), jnp.expand_dims(Y, -1), jnp.expand_dims(Z, -1)],
+        [
+            jnp.expand_dims(X, -1),
+            jnp.expand_dims(Y, -1),
+            jnp.expand_dims(Z, -1),
+        ],
         axis=-1,
     )
     out = jnp.reshape(together, (p**3, 3))
@@ -418,7 +446,9 @@ vmapped_corners_to_cheby_points_lst = jax.vmap(
 
 
 @jax.jit
-def corners_to_gauss_face(corners: jnp.ndarray, gauss_pts_1d: jnp.array) -> jnp.ndarray:
+def corners_to_gauss_face(
+    corners: jnp.ndarray, gauss_pts_1d: jnp.array
+) -> jnp.ndarray:
     """
     Given a square defined by two opposing corners, this function will create a Gauss-Legendre grid on the square.
 
@@ -453,7 +483,9 @@ def corners_to_gauss_face(corners: jnp.ndarray, gauss_pts_1d: jnp.array) -> jnp.
     return out
 
 
-vmapped_corners_to_gauss_face = jax.vmap(corners_to_gauss_face, in_axes=(0, None))
+vmapped_corners_to_gauss_face = jax.vmap(
+    corners_to_gauss_face, in_axes=(0, None)
+)
 
 
 @partial(jax.jit, static_argnums=(0,))
@@ -509,6 +541,8 @@ def corners_to_gauss_points_lst(q: int, corners: jnp.ndarray) -> jnp.ndarray:
         axis=-1,
     )
 
-    out = jnp.concatenate([face_1, face_2, face_3, face_4, face_5, face_6], axis=0)
+    out = jnp.concatenate(
+        [face_1, face_2, face_3, face_4, face_5, face_6], axis=0
+    )
 
     return out

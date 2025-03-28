@@ -1,6 +1,5 @@
 import logging
-from functools import partial
-from typing import Tuple, Any, List
+from typing import Tuple, List
 import jax.numpy as jnp
 import jax
 import matplotlib.pyplot as plt
@@ -150,7 +149,9 @@ jax.tree_util.register_pytree_node(Node, _node_flatten, _node_unflatten)
 def get_node_area(node: Node) -> float:
     if node.zmax is not None:
         return (
-            (node.xmax - node.xmin) * (node.ymax - node.ymin) * (node.zmax - node.zmin)
+            (node.xmax - node.xmin)
+            * (node.ymax - node.ymin)
+            * (node.zmax - node.zmin)
         )
     else:
         return (node.xmax - node.xmin) * (node.ymax - node.ymin)
@@ -172,7 +173,6 @@ def add_four_children(add_to: Node, root: Node = None, q: int = None) -> None:
         add_to.children = children
 
     if q is not None:
-
         # Set the number of quadrature points along the boundary of each child.
         for child in add_to.children:
             child.n_0 = q
@@ -191,7 +191,6 @@ def add_four_children(add_to: Node, root: Node = None, q: int = None) -> None:
         if not tree_equal(add_to, root):
             path_info = find_path_from_root_2D(root, add_to)
             for node, _ in path_info:
-
                 # If they share a boundary, then we need to update the number of quadrature points.
                 if node.ymin == add_to.ymin:
                     node.n_0 += q
@@ -406,7 +405,6 @@ def add_eight_children(add_to: Node, root: Node = None, q: int = None) -> None:
             if not tree_equal(add_to, root):
                 path_info = find_path_from_root_3D(root, add_to)
                 for node in path_info:
-
                     # If they share a boundary, then we need to update the number of quadrature points.
                     if node.xmin == add_to.xmin:
                         node.n_0 += 3 * q_squared
@@ -524,7 +522,16 @@ def get_eight_children(parent: Node) -> Tuple[Node]:
         depth=parent.depth + 1,
     )
 
-    return (child_a, child_b, child_c, child_d, child_e, child_f, child_g, child_h)
+    return (
+        child_a,
+        child_b,
+        child_c,
+        child_d,
+        child_e,
+        child_f,
+        child_g,
+        child_h,
+    )
 
 
 def get_all_leaves(node: Node) -> Tuple[Node]:
@@ -651,7 +658,6 @@ def find_node_at_corner(
     ymin: float = None,
     ymax: float = None,
 ) -> Node:
-
     at_corner = node_at(root, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
     if at_corner:
@@ -683,20 +689,36 @@ def find_node_at_corner(
         if in_upper_half_x:
             if in_upper_half_y:
                 return find_node_at_corner(
-                    root.children[2], xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax
+                    root.children[2],
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax,
                 )
             else:
                 return find_node_at_corner(
-                    root.children[1], xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax
+                    root.children[1],
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax,
                 )
         else:
             if in_upper_half_y:
                 return find_node_at_corner(
-                    root.children[3], xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax
+                    root.children[3],
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax,
                 )
             else:
                 return find_node_at_corner(
-                    root.children[0], xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax
+                    root.children[0],
+                    xmin=xmin,
+                    xmax=xmax,
+                    ymin=ymin,
+                    ymax=ymax,
                 )
 
 
@@ -717,12 +739,6 @@ def plot_tree(
     """
 
     fig, ax = plt.subplots()
-
-    # Plot the function
-    north_outer = root.ymax
-    south_outer = root.ymin
-    east_outer = root.xmax
-    west_outer = root.xmin
 
     for leaf in get_all_leaves(root):
         w = leaf.xmin

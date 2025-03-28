@@ -9,15 +9,12 @@ from hps.src.quadrature.quad_2D.indexing import (
 )
 from hps.src.quadrature.quadrature_utils import (
     chebyshev_points,
-    differentiation_matrix_1d,
     barycentric_lagrange_interpolation_matrix,
     barycentric_lagrange_2d_interpolation_matrix,
     affine_transform,
 )
 from hps.src.quadrature.quad_2D.differentiation import precompute_N_matrix
-from hps.src.quadrature.quad_2D.grid_creation import vmapped_corners
 from hps.src.quadrature.trees import Node, get_all_leaves
-from hps.src.utils import meshgrid_to_lst_of_pts
 
 
 def refinement_operator(p: int) -> jnp.array:
@@ -134,11 +131,11 @@ def precompute_Q_I_matrix(p: int, q: int) -> jnp.array:
     Q_I = jnp.kron(jnp.eye(4), Q)
     return Q_I
 
-    return Q_D
-
 
 @partial(jax.jit, static_argnums=(0,))
-def precompute_refining_coarsening_ops(q: int) -> Tuple[jnp.ndarray, jnp.ndarray]:
+def precompute_refining_coarsening_ops(
+    q: int,
+) -> Tuple[jnp.ndarray, jnp.ndarray]:
     """
     Precomputes a "refining" interpolation operator which maps from one
     Gauss-Legendre panel to two Gauss-Legendre panels, and a "coarsening"
@@ -244,11 +241,15 @@ def interp_operator_to_regular(
             leaf = leaves_iter[leaf_idx]
 
             # Get the 2D Cheby panel for this leaf
-            from_x = affine_transform(cheby_pts_1d, jnp.array([leaf.xmin, leaf.xmax]))
+            from_x = affine_transform(
+                cheby_pts_1d, jnp.array([leaf.xmin, leaf.xmax])
+            )
             # Have to flip this one because the y-axis is flipped in the standard
             # Chebyshev grid creation routine
             from_y = jnp.flip(
-                affine_transform(cheby_pts_1d, jnp.array([leaf.ymin, leaf.ymax]))
+                affine_transform(
+                    cheby_pts_1d, jnp.array([leaf.ymin, leaf.ymax])
+                )
             )
 
             # Form an interpolation matrix from the 2D Cheby panel to the point.
@@ -318,10 +319,10 @@ def interp_from_nonuniform_hps_to_regular_grid(
     y = jnp.linspace(ymin, ymax, n_pts, endpoint=False, dtype=jnp.float64)
     y = jnp.flip(y)
     X, Y = jnp.meshgrid(x, y)
-    target_pts = jnp.concatenate((jnp.expand_dims(X, 2), jnp.expand_dims(Y, 2)), axis=2)
+    target_pts = jnp.concatenate(
+        (jnp.expand_dims(X, 2), jnp.expand_dims(Y, 2)), axis=2
+    )
     pts_lst = target_pts.reshape(-1, 2)
-
-    corners = jnp.array([[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]])
 
     all_leaves = get_all_leaves(root)
     corners_lst = [
@@ -410,7 +411,9 @@ def _interp_to_point(
     # Annoyingly this is how the y vals are ordered
     from_y = jnp.flip(from_y)
 
-    I = barycentric_lagrange_2d_interpolation_matrix(from_x, from_y, xval, yval)
+    I = barycentric_lagrange_2d_interpolation_matrix(
+        from_x, from_y, xval, yval
+    )
 
     rearrange_idxes = _rearrange_indices(p)
     I = I[:, rearrange_idxes]
@@ -420,4 +423,6 @@ def _interp_to_point(
     return out
 
 
-vmapped_interp_to_point = jax.vmap(_interp_to_point, in_axes=(0, 0, 0, 0, None))
+vmapped_interp_to_point = jax.vmap(
+    _interp_to_point, in_axes=(0, 0, 0, 0, None)
+)

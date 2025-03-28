@@ -1,28 +1,18 @@
-"""This file has functions to create an adaptive mesh for 3D problems. 
-"""
+"""This file has functions to create an adaptive mesh for 3D problems."""
 
 import logging
 from functools import partial
 from typing import Callable, Tuple
-import numpy as np
 import jax
 import jax.numpy as jnp
 from hps.src.config import DEVICE_ARR, HOST_DEVICE
 from hps.src.quadrature.quadrature_utils import (
-    chebyshev_points,
-    affine_transform,
-    barycentric_lagrange_3d_interpolation_matrix,
     check_current_discretization_global_linf_norm,
-    EPS,
     chebyshev_weights,
 )
 from hps.src.quadrature.quad_3D.indexing import rearrange_indices_ext_int
 from hps.src.quadrature.quad_3D.grid_creation import (
     _corners_for_oct_subdivision,
-    _corners_for_quad_subdivision,
-    vmapped_corners_quad,
-    vmapped_corners,
-    corners_to_cheby_points_lst,
     get_all_leaf_3d_cheby_points_uniform_refinement,
     get_all_leaf_3d_cheby_points,
 )
@@ -30,8 +20,6 @@ from hps.src.quadrature.trees import (
     Node,
     add_eight_children,
     get_all_leaves,
-    get_node_area,
-    get_depth,
 )
 
 
@@ -98,7 +86,6 @@ def generate_adaptive_mesh(
     tol: float,
     p: int,
 ) -> None:
-
     return generate_adaptive_mesh_level_restriction(
         root, refinement_op, f_fn, tol, p, restrict_bool=False
     )
@@ -114,7 +101,6 @@ def generate_adaptive_mesh_level_restriction(
     restrict_bool: bool = True,
     l2_norm: bool = False,
 ) -> None:
-
     if l2_norm:
         # Get a rough estimate of the L2 norm of the function
         add_eight_children(root, root=root, q=q)
@@ -262,7 +248,10 @@ def generate_adaptive_mesh_level_restriction(
         # Update the queue and do it all again
         refinement_check_queue = new_refinement_check_queue
         refinement_check_corners = jnp.array(
-            [node_corners_to_3d_corners(node) for node in refinement_check_queue]
+            [
+                node_corners_to_3d_corners(node)
+                for node in refinement_check_queue
+            ]
         )
 
 
@@ -469,7 +458,9 @@ def find_or_add_child(
         raise ValueError("Requested volume is too large for the current node")
 
     else:
-        return find_or_add_child(child, root, q, xmin, xmax, ymin, ymax, zmin, zmax)
+        return find_or_add_child(
+            child, root, q, xmin, xmax, ymin, ymax, zmin, zmax
+        )
 
 
 @partial(jax.jit, static_argnums=(2,))

@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Tuple, List
 import numpy as np
 import jax
 import jax.numpy as jnp
@@ -7,7 +6,6 @@ import jax.numpy as jnp
 
 @partial(jax.jit, static_argnums=(0,))
 def rearrange_indices_ext_int(p: int) -> jnp.ndarray:
-
     # out = np.zeros(p**3, dtype=int)
     idxes = np.arange(p**3)
 
@@ -221,7 +219,8 @@ def indexing_for_refinement_operator(p: int) -> jnp.array:
     b_bools = jnp.logical_and(
         ii % (2 * p) >= p,
         jnp.logical_and(
-            (ii // (2 * p)) % (2 * p) < p, (ii // ((2 * p) ** 2)) % (2 * p) >= p
+            (ii // (2 * p)) % (2 * p) < p,
+            (ii // ((2 * p) ** 2)) % (2 * p) >= p,
         ),
     )
     b_idxes = ii[b_bools]
@@ -231,7 +230,8 @@ def indexing_for_refinement_operator(p: int) -> jnp.array:
     c_bools = jnp.logical_and(
         ii % (2 * p) >= p,
         jnp.logical_and(
-            (ii // (2 * p)) % (2 * p) >= p, (ii // ((2 * p) ** 2)) % (2 * p) >= p
+            (ii // (2 * p)) % (2 * p) >= p,
+            (ii // ((2 * p) ** 2)) % (2 * p) >= p,
         ),
     )
     c_idxes = ii[c_bools]
@@ -241,7 +241,8 @@ def indexing_for_refinement_operator(p: int) -> jnp.array:
     d_bools = jnp.logical_and(
         ii % (2 * p) >= p,
         jnp.logical_and(
-            (ii // (2 * p)) % (2 * p) >= p, (ii // ((2 * p) ** 2)) % (2 * p) < p
+            (ii // (2 * p)) % (2 * p) >= p,
+            (ii // ((2 * p) ** 2)) % (2 * p) < p,
         ),
     )
     d_idxes = ii[d_bools]
@@ -261,7 +262,8 @@ def indexing_for_refinement_operator(p: int) -> jnp.array:
     f_bools = jnp.logical_and(
         ii % (2 * p) < p,
         jnp.logical_and(
-            (ii // (2 * p)) % (2 * p) < p, (ii // ((2 * p) ** 2)) % (2 * p) >= p
+            (ii // (2 * p)) % (2 * p) < p,
+            (ii // ((2 * p) ** 2)) % (2 * p) >= p,
         ),
     )
     f_idxes = ii[f_bools]
@@ -271,7 +273,8 @@ def indexing_for_refinement_operator(p: int) -> jnp.array:
     g_bools = jnp.logical_and(
         ii % (2 * p) < p,
         jnp.logical_and(
-            (ii // (2 * p)) % (2 * p) >= p, (ii // ((2 * p) ** 2)) % (2 * p) >= p
+            (ii // (2 * p)) % (2 * p) >= p,
+            (ii // ((2 * p) ** 2)) % (2 * p) >= p,
         ),
     )
     g_idxes = ii[g_bools]
@@ -281,14 +284,24 @@ def indexing_for_refinement_operator(p: int) -> jnp.array:
     h_bools = jnp.logical_and(
         ii % (2 * p) < p,
         jnp.logical_and(
-            (ii // (2 * p)) % (2 * p) >= p, (ii // ((2 * p) ** 2)) % (2 * p) < p
+            (ii // (2 * p)) % (2 * p) >= p,
+            (ii // ((2 * p) ** 2)) % (2 * p) < p,
         ),
     )
     h_idxes = ii[h_bools]
     h_idxes = h_idxes[col_idxes]
 
     row_idxes = jnp.concatenate(
-        [a_idxes, b_idxes, c_idxes, d_idxes, e_idxes, f_idxes, g_idxes, h_idxes]
+        [
+            a_idxes,
+            b_idxes,
+            c_idxes,
+            d_idxes,
+            e_idxes,
+            f_idxes,
+            g_idxes,
+            h_idxes,
+        ]
     )
 
     return row_idxes, col_idxes

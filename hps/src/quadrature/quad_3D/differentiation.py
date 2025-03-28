@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple
 from functools import partial
 import jax.numpy as jnp
 import jax
@@ -7,13 +7,14 @@ import jax
 from hps.src.quadrature.quad_3D.indexing import rearrange_indices_ext_int
 from hps.src.quadrature.quadrature_utils import (
     chebyshev_points,
-    affine_transform,
     differentiation_matrix_1d,
 )
 
 
 @partial(jax.jit, static_argnums=(0,))
-def precompute_diff_operators(p: int, half_side_len: float) -> Tuple[jnp.ndarray]:
+def precompute_diff_operators(
+    p: int, half_side_len: float
+) -> Tuple[jnp.ndarray]:
     """
     Returns D_x, D_y, D_z, D_xx, D_yy, D_zz, D_xy, D_xz, D_yz
     """

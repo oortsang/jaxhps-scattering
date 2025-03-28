@@ -1,11 +1,11 @@
-from functools import partial
 import logging
-from typing import Tuple, List
+from typing import List
 
 import jax
 import jax.numpy as jnp
 
 from hps.src.config import HOST_DEVICE, DEVICE_ARR
+from hps.src.methods.local_solve_stage import _local_solve_stage_2D_chunked
 
 
 def _uniform_down_pass_3D_DtN(
@@ -31,10 +31,16 @@ def _uniform_down_pass_3D_DtN(
     leaf_Y_maps = jax.device_put(leaf_Y_maps, device)
     v_array = jax.device_put(v_array, device)
 
-    logging.debug("_down_pass_3D: S_maps_lst[0].device %s", S_maps_lst[0].devices())
+    logging.debug(
+        "_down_pass_3D: S_maps_lst[0].device %s", S_maps_lst[0].devices()
+    )
     logging.debug("_down_pass_3D: v_array.device %s", v_array.devices())
-    logging.debug("_down_pass_3D: v_int_lst[0].device %s", v_int_lst[0].devices())
-    logging.debug("_down_pass_3D: leaf_Y_maps.device %s", leaf_Y_maps.devices())
+    logging.debug(
+        "_down_pass_3D: v_int_lst[0].device %s", v_int_lst[0].devices()
+    )
+    logging.debug(
+        "_down_pass_3D: leaf_Y_maps.device %s", leaf_Y_maps.devices()
+    )
 
     # Change the last entry of the S_maps_lst and v_int_lst to have batch dimension 1
     S_maps_lst[-1] = jnp.expand_dims(S_maps_lst[-1], axis=0)
@@ -42,7 +48,6 @@ def _uniform_down_pass_3D_DtN(
 
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
-
         S_arr = S_maps_lst[level]
         v_int = v_int_lst[level]
 
@@ -56,7 +61,9 @@ def _uniform_down_pass_3D_DtN(
         bdry_data = bdry_data.reshape((-1, n_bdry))
 
     root_dirichlet_data = bdry_data
-    leaf_homog_solns = jnp.einsum("ijk,ik->ij", leaf_Y_maps, root_dirichlet_data)
+    leaf_homog_solns = jnp.einsum(
+        "ijk,ik->ij", leaf_Y_maps, root_dirichlet_data
+    )
     leaf_solns = leaf_homog_solns + v_array
     leaf_solns = jax.device_put(leaf_solns, HOST_DEVICE)
     return leaf_solns
@@ -113,7 +120,6 @@ def _uniform_down_pass_2D_DtN(
 
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
-
         S_arr = S_maps_lst[level]
         v_int = v_int_lst[level]
 
@@ -154,7 +160,9 @@ def _uniform_down_pass_2D_DtN(
 
     else:
         root_dirichlet_data = bdry_data
-        leaf_homog_solns = jnp.einsum("ijk,ik->ij", leaf_Y_maps, root_dirichlet_data)
+        leaf_homog_solns = jnp.einsum(
+            "ijk,ik->ij", leaf_Y_maps, root_dirichlet_data
+        )
         leaf_solns = leaf_homog_solns + v_array
         leaf_solns = jax.device_put(leaf_solns, HOST_DEVICE)
         return leaf_solns
@@ -194,7 +202,6 @@ def _uniform_down_pass_2D_ItI(
     f_lst = [jax.device_put(f, device) for f in f_lst]
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
-
         S_arr = S_maps_lst[level]
         f = f_lst[level]
 
@@ -222,7 +229,9 @@ def _uniform_down_pass_2D_ItI(
     #     "_down_pass_2D_ItI: leaf_Y_maps.devices() = %s", leaf_Y_maps.devices()
     # )
 
-    leaf_homog_solns = jnp.einsum("ijk,ik->ij", leaf_Y_maps, root_incoming_imp_data)
+    leaf_homog_solns = jnp.einsum(
+        "ijk,ik->ij", leaf_Y_maps, root_incoming_imp_data
+    )
     leaf_solns = leaf_homog_solns + v_array
     leaf_solns = jax.device_put(leaf_solns, host_device)
     return leaf_solns

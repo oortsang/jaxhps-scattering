@@ -1,7 +1,7 @@
 """
 This script runs a bunch of checks and makes plots inside the plots/accuracy_checks/ directory.
 
-These plots are then embedded in the accuracy_checks.md file in the root directory, which 
+These plots are then embedded in the accuracy_checks.md file in the root directory, which
 has some information about how to interpret the plots.
 """
 
@@ -27,24 +27,16 @@ from hps.accuracy_checks.single_leaf_checks import (
 )
 from hps.accuracy_checks.single_merge_checks import (
     single_merge_check_0,
-    single_merge_check_1,
     single_merge_check_2,
-    single_merge_check_3,
     single_merge_check_4,
-    single_merge_check_5,
     single_merge_check_6,
     single_merge_check_7,
-    single_merge_check_8,
-    single_merge_check_9,
     single_merge_check_10,
 )
 from hps.accuracy_checks.multi_merge_checks import (
     multi_merge_check_0,
     multi_merge_check_1,
-    multi_merge_check_2,
-    multi_merge_check_3,
     multi_merge_check_4,
-    multi_merge_check_5,
     multi_merge_check_6,
     multi_merge_check_7,
 )
@@ -54,13 +46,6 @@ from hps.accuracy_checks.single_leaf_checks_3D import (
     single_leaf_check_3D_2,
     single_leaf_check_3D_3,
     single_leaf_check_3D_4,
-)
-from hps.accuracy_checks.single_merge_checks_3D import (
-    single_merge_check_3D_0,
-    single_merge_check_3D_1,
-    single_merge_check_3D_2,
-    single_merge_check_3D_3,
-    single_merge_check_3D_4,
 )
 from hps.accuracy_checks.nonuniform_grid_checks import (
     nonuniform_grid_check_0,
@@ -192,11 +177,21 @@ def main_all():
     single_leaf_check_11(os.path.join(OUTPUT_DIR, "single_leaf_check_11.png"))
     single_leaf_check_12(os.path.join(OUTPUT_DIR, "single_leaf_check_12.png"))
 
-    single_leaf_check_3D_0(os.path.join(OUTPUT_DIR, "single_leaf_check_3D_0.png"))
-    single_leaf_check_3D_1(os.path.join(OUTPUT_DIR, "single_leaf_check_3D_1.png"))
-    single_leaf_check_3D_2(os.path.join(OUTPUT_DIR, "single_leaf_check_3D_2.png"))
-    single_leaf_check_3D_3(os.path.join(OUTPUT_DIR, "single_leaf_check_3D_3.png"))
-    single_leaf_check_3D_4(os.path.join(OUTPUT_DIR, "single_leaf_check_3D_4.png"))
+    single_leaf_check_3D_0(
+        os.path.join(OUTPUT_DIR, "single_leaf_check_3D_0.png")
+    )
+    single_leaf_check_3D_1(
+        os.path.join(OUTPUT_DIR, "single_leaf_check_3D_1.png")
+    )
+    single_leaf_check_3D_2(
+        os.path.join(OUTPUT_DIR, "single_leaf_check_3D_2.png")
+    )
+    single_leaf_check_3D_3(
+        os.path.join(OUTPUT_DIR, "single_leaf_check_3D_3.png")
+    )
+    single_leaf_check_3D_4(
+        os.path.join(OUTPUT_DIR, "single_leaf_check_3D_4.png")
+    )
 
     ##################################################
     # Single Leaf DtN Checks
@@ -225,7 +220,9 @@ def main_all():
     # Helmholtz problem with nonzero source
     # single_merge_check_8(os.path.join(OUTPUT_DIR, "single_merge_check_8.png"))
     # single_merge_check_9(os.path.join(OUTPUT_DIR, "single_merge_check_9.png"))
-    single_merge_check_10(os.path.join(OUTPUT_DIR, "single_merge_check_10.png"))
+    single_merge_check_10(
+        os.path.join(OUTPUT_DIR, "single_merge_check_10.png")
+    )
 
     # single_merge_check_3D_0(os.path.join(OUTPUT_DIR, "single_merge_check_3D_0.png"))
     # single_merge_check_3D_1(os.path.join(OUTPUT_DIR, "single_merge_check_3D_1.png"))
@@ -246,10 +243,18 @@ def main_all():
 
     # ################################################
     # Nonuniform Grid Checks
-    nonuniform_grid_check_0(os.path.join(OUTPUT_DIR, "nonuniform_grid_check_0.png"))
-    nonuniform_grid_check_1(os.path.join(OUTPUT_DIR, "nonuniform_grid_check_1.png"))
-    nonuniform_grid_check_2(os.path.join(OUTPUT_DIR, "nonuniform_grid_check_2.png"))
-    nonuniform_grid_check_3(os.path.join(OUTPUT_DIR, "nonuniform_grid_check_3.png"))
+    nonuniform_grid_check_0(
+        os.path.join(OUTPUT_DIR, "nonuniform_grid_check_0.png")
+    )
+    nonuniform_grid_check_1(
+        os.path.join(OUTPUT_DIR, "nonuniform_grid_check_1.png")
+    )
+    nonuniform_grid_check_2(
+        os.path.join(OUTPUT_DIR, "nonuniform_grid_check_2.png")
+    )
+    nonuniform_grid_check_3(
+        os.path.join(OUTPUT_DIR, "nonuniform_grid_check_3.png")
+    )
     nonuniform_grid_check_3D_0(
         os.path.join(OUTPUT_DIR, "nonuniform_grid_check_3D_0.png")
     )

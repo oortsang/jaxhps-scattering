@@ -2,7 +2,6 @@ import logging
 import pytest
 import jax.numpy as jnp
 import numpy as np
-from matplotlib import pyplot as plt
 
 from hps.src.methods.local_solve_stage import (
     _local_solve_stage_2D,
@@ -19,7 +18,7 @@ from hps.src.methods.local_solve_stage import (
     get_soln_DtN,
 )
 
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
+from hps.src.solver_obj import create_solver_obj_2D, create_solver_obj_3D
 from hps.src.quadrature.quad_2D.differentiation import (
     precompute_diff_operators,
     precompute_N_matrix,
@@ -28,23 +27,21 @@ from hps.src.quadrature.quad_2D.differentiation import (
     precompute_G_matrix,
 )
 from hps.src.quadrature.quad_2D.interpolation import (
-    precompute_P_matrix,
-    precompute_Q_D_matrix,
     precompute_I_P_0_matrix,
     precompute_Q_I_matrix,
 )
 from hps.src.quadrature.trees import (
     Node,
     get_all_leaves,
-    add_four_children,
     add_uniform_levels,
 )
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 from hps.src.quadrature.quad_2D.grid_creation import (
     get_all_boundary_gauss_legendre_points,
     get_all_leaf_2d_cheby_points,
 )
-from hps.accuracy_checks.dirichlet_neumann_data import TEST_CASE_POLY_PART_HOMOG
+from hps.accuracy_checks.dirichlet_neumann_data import (
+    TEST_CASE_POLY_PART_HOMOG,
+)
 
 
 class Test_gather_coeffs:
@@ -61,12 +58,12 @@ class Test_gather_coeffs:
         )
         assert out_coeffs.shape == (2, n_leaf_nodes, p_squared)
         assert out_bools.shape == (6,)
-        assert out_bools[0] == True
-        assert out_bools[1] == False
-        assert out_bools[2] == True
-        assert out_bools[3] == False
-        assert out_bools[4] == False
-        assert out_bools[5] == False
+        assert out_bools[0] is True
+        assert out_bools[1] is False
+        assert out_bools[2] is True
+        assert out_bools[3] is False
+        assert out_bools[4] is False
+        assert out_bools[5] is False
 
     def test_2(self) -> None:
         """Tests things return correct shape."""
@@ -85,20 +82,21 @@ class Test_gather_coeffs:
 
 class Test_assemble_diff_operator:
     def test_0(self) -> None:
-
         p = 8
-        q = 6
-        l = 2
-        n_leaves = 2**l
         half_side_len = 0.25
-        corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
-        d_x, d_y, d_xx, d_yy, d_xy = precompute_diff_operators(p, half_side_len)
+        d_x, d_y, d_xx, d_yy, d_xy = precompute_diff_operators(
+            p, half_side_len
+        )
 
-        stacked_diff_operators = jnp.stack([d_xx, d_xy, d_yy, d_x, d_y, jnp.eye(p**2)])
+        stacked_diff_operators = jnp.stack(
+            [d_xx, d_xy, d_yy, d_x, d_y, jnp.eye(p**2)]
+        )
         coeffs_arr = jnp.ones((3, p**2))
         which_coeffs = jnp.array([True, True, True, False, False, False])
-        out = assemble_diff_operator(coeffs_arr, which_coeffs, stacked_diff_operators)
+        out = assemble_diff_operator(
+            coeffs_arr, which_coeffs, stacked_diff_operators
+        )
         assert out.shape == (p**2, p**2)
 
 
@@ -107,10 +105,7 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
         """Check accuracy"""
         p = 3
         q = 6
-        l = 2
-        n_leaves = 2**l
         half_side_len = 0.25
-        corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         # First precompute the diff operators without the sidelen scaling. This is how things
         # work in the local solve stage code
@@ -139,8 +134,6 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
         """Checks accuracy with non-constant coefficients"""
         p = 3
         q = 6
-        l = 2
-        n_leaves = 2**l
         half_side_len = 0.25
         # First precompute the diff operators without the sidelen scaling. This is how things
         # work in the local solve stage code
@@ -156,7 +149,9 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
         d_x, d_y, d_xx, d_yy, d_xy = precompute_diff_operators(
             p, half_side_len=half_side_len
         )
-        expected_out = jnp.diag(coeffs_arr[0]) @ d_xy + jnp.diag(coeffs_arr[1]) @ d_x
+        expected_out = (
+            jnp.diag(coeffs_arr[0]) @ d_xy + jnp.diag(coeffs_arr[1]) @ d_x
+        )
 
         print("test_2: out = ", out)
         print("test_2: expected_out = ", expected_out)
@@ -177,7 +172,13 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
         sidelen = 1 / (2**l)
 
         node = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0, zmin=None, zmax=None
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            depth=0,
+            zmin=None,
+            zmax=None,
         )
         add_uniform_levels(root=node, l=l, q=q)
         t = create_solver_obj_2D(p, q, node)
@@ -188,24 +189,40 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
         print("test_3: coeffs_arr = ", coeffs_arr.shape)
 
         stacked_diff_operators = jnp.stack(
-            [t.D_xx, t.D_xy, t.D_yy, t.D_x, t.D_y, jnp.eye(p**2, dtype=jnp.float64)]
+            [
+                t.D_xx,
+                t.D_xy,
+                t.D_yy,
+                t.D_x,
+                t.D_y,
+                jnp.eye(p**2, dtype=jnp.float64),
+            ]
         )
         which_coeffs = jnp.array([True, False, True, False, False, False])
 
         f = t.leaf_cheby_points[..., 0] ** 2 + t.leaf_cheby_points[..., 1] ** 2
 
-        expected_g = 6 * t.leaf_cheby_points[..., 0] + 8 * t.leaf_cheby_points[..., 1]
+        expected_g = (
+            6 * t.leaf_cheby_points[..., 0] + 8 * t.leaf_cheby_points[..., 1]
+        )
 
         # Loop over all of the nodes and check that the operator is applied correctly
         for i in range(t.leaf_cheby_points.shape[0]):
             op_i, _ = _prep_nonuniform_refinement_diff_operators_2D(
-                sidelen, coeffs_arr[:, i], which_coeffs, stacked_diff_operators, p, q
+                sidelen,
+                coeffs_arr[:, i],
+                which_coeffs,
+                stacked_diff_operators,
+                p,
+                q,
             )
             print("test_3: i = ", i)
             print("test_3: op_i norm = ", jnp.linalg.norm(op_i))
             prod = op_i @ f[i]
             print("test_3: prod nrm = ", jnp.linalg.norm(prod))
-            print("test_3: expected_g[i] nrm = ", jnp.linalg.norm(expected_g[i]))
+            print(
+                "test_3: expected_g[i] nrm = ", jnp.linalg.norm(expected_g[i])
+            )
             # plot_soln_from_cheby_nodes(
             #     t.leaf_cheby_points[i], None, prod, expected_g[i]
             # )
@@ -234,7 +251,14 @@ class Test__prep_nonuniform_refinement_diff_operators_2D:
         coeffs_arr = jnp.stack([d_xx_coeffs, d_yy_coeffs, i_coeffs])
         which_coeffs = jnp.array([True, False, True, False, False, True])
         stacked_diff_operators = jnp.stack(
-            [t.D_xx, t.D_xy, t.D_yy, t.D_x, t.D_y, jnp.eye(p**2, dtype=jnp.float64)]
+            [
+                t.D_xx,
+                t.D_xy,
+                t.D_yy,
+                t.D_x,
+                t.D_y,
+                jnp.eye(p**2, dtype=jnp.float64),
+            ]
         )
 
         # Plane wave is e^{ikx}
@@ -271,9 +295,15 @@ class Test__local_solve_stage_2D:
         t = create_solver_obj_2D(p, q, root, uniform_levels=l)
 
         # This could be np.random.normal(size=(n_leaves, p**2))
-        d_xx_coeffs = TEST_CASE_POLY_PART_HOMOG["d_xx_coeff_fn"](t.leaf_cheby_points)
-        d_yy_coeffs = TEST_CASE_POLY_PART_HOMOG["d_yy_coeff_fn"](t.leaf_cheby_points)
-        source_term = TEST_CASE_POLY_PART_HOMOG["source_fn"](t.leaf_cheby_points)
+        d_xx_coeffs = TEST_CASE_POLY_PART_HOMOG["d_xx_coeff_fn"](
+            t.leaf_cheby_points
+        )
+        d_yy_coeffs = TEST_CASE_POLY_PART_HOMOG["d_yy_coeff_fn"](
+            t.leaf_cheby_points
+        )
+        source_term = TEST_CASE_POLY_PART_HOMOG["source_fn"](
+            t.leaf_cheby_points
+        )
         sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
         print("test_0: n_leaves = ", n_leaves)
@@ -309,16 +339,22 @@ class Test__local_solve_stage_2D:
         q = 6
         l = 2
         n_leaves = 4**l
-        n_quads = 4 ** (l - 1)
+        # n_quads = 4 ** (l - 1)
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
         t = create_solver_obj_2D(p, q, root, uniform_levels=l)
 
         # This could be np.random.normal(size=(n_leaves, p**2))
-        d_xx_coeffs = TEST_CASE_POLY_PART_HOMOG["d_xx_coeff_fn"](t.leaf_cheby_points)
-        d_yy_coeffs = TEST_CASE_POLY_PART_HOMOG["d_yy_coeff_fn"](t.leaf_cheby_points)
-        source_term = TEST_CASE_POLY_PART_HOMOG["source_fn"](t.leaf_cheby_points)
+        d_xx_coeffs = TEST_CASE_POLY_PART_HOMOG["d_xx_coeff_fn"](
+            t.leaf_cheby_points
+        )
+        d_yy_coeffs = TEST_CASE_POLY_PART_HOMOG["d_yy_coeff_fn"](
+            t.leaf_cheby_points
+        )
+        source_term = TEST_CASE_POLY_PART_HOMOG["source_fn"](
+            t.leaf_cheby_points
+        )
         sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
 
         print("test_0: n_leaves = ", n_leaves)
@@ -361,10 +397,15 @@ class Test__local_solutions_2D_DtN_uniform:
         t = create_solver_obj_2D(p, q, root, uniform_levels=l)
 
         # This could be np.random.normal(size=(n_leaves, p**2))
-        d_xx_coeffs = TEST_CASE_POLY_PART_HOMOG["d_xx_coeff_fn"](t.leaf_cheby_points)
-        d_yy_coeffs = TEST_CASE_POLY_PART_HOMOG["d_yy_coeff_fn"](t.leaf_cheby_points)
-        source_term = TEST_CASE_POLY_PART_HOMOG["source_fn"](t.leaf_cheby_points)
-        sidelens = jnp.array([l.xmax - l.xmin for l in get_all_leaves(t.root)])
+        d_xx_coeffs = TEST_CASE_POLY_PART_HOMOG["d_xx_coeff_fn"](
+            t.leaf_cheby_points
+        )
+        d_yy_coeffs = TEST_CASE_POLY_PART_HOMOG["d_yy_coeff_fn"](
+            t.leaf_cheby_points
+        )
+        source_term = TEST_CASE_POLY_PART_HOMOG["source_fn"](
+            t.leaf_cheby_points
+        )
 
         bdry_data = np.random.normal(size=(n_leaves, 4 * q))
 
@@ -409,9 +450,9 @@ class Test__local_solve_stage_2D_ItI:
         )
         n_leaves = 4**l
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=eta)
-
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=eta
+        )
 
         d_xx_coeffs = np.random.normal(size=(n_leaves, p**2))
         source_term = np.random.normal(size=(n_leaves, p**2))
@@ -459,7 +500,9 @@ class Test__local_solve_stage_3D:
 
         t = create_solver_obj_3D(p, q, root, uniform_levels=l)
 
-        sidelens = jnp.array([leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)])
+        sidelens = jnp.array(
+            [leaf.xmax - leaf.xmin for leaf in get_all_leaves(t.root)]
+        )
 
         d_xx_coeffs = np.random.normal(size=(n_leaves, p**3))
         source_term = np.random.normal(size=(n_leaves, p**3))
@@ -505,16 +548,16 @@ class Test__gather_coeffs_3D:
         )
         assert out_coeffs.shape == (3, n_leaf_nodes, p_cubed)
         assert out_bools.shape == (10,)
-        assert out_bools[0] == True
-        assert out_bools[1] == False
-        assert out_bools[2] == True
-        assert out_bools[3] == False
-        assert out_bools[4] == False
-        assert out_bools[5] == False
-        assert out_bools[6] == False
-        assert out_bools[7] == False
-        assert out_bools[8] == False
-        assert out_bools[9] == True
+        assert out_bools[0] is True
+        assert out_bools[1] is False
+        assert out_bools[2] is True
+        assert out_bools[3] is False
+        assert out_bools[4] is False
+        assert out_bools[5] is False
+        assert out_bools[6] is False
+        assert out_bools[7] is False
+        assert out_bools[8] is False
+        assert out_bools[9] is True
 
 
 class Test_get_DtN:
@@ -571,16 +614,20 @@ class Test_vmapped_prep_nonuniform_refinement_diff_operators_2D:
         n_cheby_pts = p**2
         n_leaves = 13
         n_diff_terms = 6
-        n_cheby_bdry = 4 * (p - 1)
+        # n_cheby_bdry = 4 * (p - 1)
         n_gauss_bdry = 4 * q
 
         sidelens = np.random.normal(size=(n_leaves,))
-        diff_ops_2D = np.random.normal(size=(n_diff_terms, n_cheby_pts, n_cheby_pts))
+        diff_ops_2D = np.random.normal(
+            size=(n_diff_terms, n_cheby_pts, n_cheby_pts)
+        )
         coeffs_arr = np.random.normal(size=(3, n_leaves, n_cheby_pts))
         which_coeffs = np.array([True, True, True, False, False, False])
 
-        diff_operators, Q_Ds = vmapped_prep_nonuniform_refinement_diff_operators_2D(
-            sidelens, coeffs_arr, which_coeffs, diff_ops_2D, p, q
+        diff_operators, Q_Ds = (
+            vmapped_prep_nonuniform_refinement_diff_operators_2D(
+                sidelens, coeffs_arr, which_coeffs, diff_ops_2D, p, q
+            )
         )
 
         assert diff_operators.shape == (n_leaves, n_cheby_pts, n_cheby_pts)
@@ -596,7 +643,9 @@ class Test_get_ItI:
         n_cheby_bdry = 4 * (p - 1)
         n_cheby_bdry_dbl = 4 * p
 
-        source_term = jnp.array(np.random.normal(size=(n_cheby,)).astype(np.float64))
+        source_term = jnp.array(
+            np.random.normal(size=(n_cheby,)).astype(np.float64)
+        )
         diff_operator = jnp.array(
             np.random.normal(size=(n_cheby, n_cheby)).astype(np.float64)
         )
@@ -608,12 +657,15 @@ class Test_get_ItI:
         )
 
         F = jnp.array(
-            np.random.normal(size=(n_cheby_bdry, n_cheby)).astype(np.complex128)
+            np.random.normal(size=(n_cheby_bdry, n_cheby)).astype(
+                np.complex128
+            )
         )
         G = jnp.array(
-            np.random.normal(size=(n_cheby_bdry_dbl, n_cheby)).astype(np.complex128)
+            np.random.normal(size=(n_cheby_bdry_dbl, n_cheby)).astype(
+                np.complex128
+            )
         )
-        eta = 4.0
 
         R, Y, g_part, part_soln = get_ItI(
             diff_operator=diff_operator,
@@ -652,12 +704,15 @@ class Test_get_ItI:
             np.random.normal(size=(4 * q, n_cheby_bdry_dbl)).astype(np.float64)
         )
         F = jnp.array(
-            np.random.normal(size=(n_cheby_bdry, n_cheby)).astype(np.complex128)
+            np.random.normal(size=(n_cheby_bdry, n_cheby)).astype(
+                np.complex128
+            )
         )
         G = jnp.array(
-            np.random.normal(size=(n_cheby_bdry_dbl, n_cheby)).astype(np.complex128)
+            np.random.normal(size=(n_cheby_bdry_dbl, n_cheby)).astype(
+                np.complex128
+            )
         )
-        eta = 4.0
 
         R, Y, g_part, part_soln = get_ItI(
             diff_operator=diff_operator,
@@ -686,9 +741,6 @@ class Test_get_ItI:
         south = -jnp.pi / 2
         east = jnp.pi / 2
         west = -jnp.pi / 2
-        corners = jnp.array(
-            [[west, south], [east, south], [east, north], [west, north]]
-        )
         half_side_len = jnp.pi / 2
         root = Node(xmin=west, xmax=east, ymin=south, ymax=north)
 
@@ -697,7 +749,9 @@ class Test_get_ItI:
         cheby_pts = get_all_leaf_2d_cheby_points(p, root)[0]
 
         # Precompute differential operators
-        d_x, d_y, d_xx, d_yy, d_xy = precompute_diff_operators(p, half_side_len)
+        d_x, d_y, d_xx, d_yy, d_xy = precompute_diff_operators(
+            p, half_side_len
+        )
         N = precompute_N_matrix(d_x, d_y, p)
         N_tilde = precompute_N_tilde_matrix(d_x, d_y, p)
 
@@ -710,7 +764,9 @@ class Test_get_ItI:
         Q_I = precompute_Q_I_matrix(p, q)
 
         # Stack the differential operators into a single array
-        stacked_diff_ops = jnp.stack([d_xx, d_xy, d_yy, d_x, d_y, jnp.eye(p**2)])
+        stacked_diff_ops = jnp.stack(
+            [d_xx, d_xy, d_yy, d_x, d_y, jnp.eye(p**2)]
+        )
 
         # Make Laplacian coefficients
         lap_coeffs = jnp.ones((2, p**2), dtype=jnp.float64)

@@ -1,21 +1,14 @@
-import logging
-from typing import Tuple, Callable
+from typing import Callable
 import jax.numpy as jnp
-import numpy as np
-import matplotlib.pyplot as plt
 
 from hps.src.up_down_passes import build_stage, down_pass, local_solve_stage
 from hps.src.solver_obj import create_solver_obj_2D
-from hps.src.quadrature.trees import Node, add_uniform_levels, add_four_children
-from hps.src.solver_obj import create_solver_obj_2D, create_solver_obj_3D
+from hps.src.quadrature.trees import Node
+from hps.src.solver_obj import create_solver_obj_3D
 from hps.src.up_down_passes import (
-    build_stage,
-    down_pass,
-    local_solve_stage,
     fused_pde_solve_2D,
     fused_pde_solve_2D_ItI,
 )
-from hps.accuracy_checks.utils import plot_soln_from_cheby_nodes
 
 
 def get_l_inf_error_2D(
@@ -44,13 +37,18 @@ def get_l_inf_error_2D(
     north = jnp.pi / 2
     east = jnp.pi / 2
     west = -jnp.pi / 2
-    corners = [(west, south), (east, south), (east, north), (west, north)]
 
     q = p - 2
 
     # Set up the root of the domain
     root = Node(
-        xmin=west, xmax=east, ymin=south, ymax=north, depth=0, zmin=None, zmax=None
+        xmin=west,
+        xmax=east,
+        ymin=south,
+        ymax=north,
+        depth=0,
+        zmin=None,
+        zmax=None,
     )
 
     solver_obj = create_solver_obj_2D(p=p, q=q, root=root, uniform_levels=l)
@@ -96,7 +94,9 @@ def get_l_inf_error_2D(
         boundary_data_lst = [
             dirichlet_data_fn(boundary_points[:n_per_side]),
             dirichlet_data_fn(boundary_points[n_per_side : 2 * n_per_side]),
-            dirichlet_data_fn(boundary_points[2 * n_per_side : 3 * n_per_side]),
+            dirichlet_data_fn(
+                boundary_points[2 * n_per_side : 3 * n_per_side]
+            ),
             dirichlet_data_fn(boundary_points[3 * n_per_side :]),
         ]
 

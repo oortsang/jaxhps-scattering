@@ -1,7 +1,3 @@
-import pytest
-
-import numpy as np
-import jax
 import jax.numpy as jnp
 
 from hps.src.quadrature.trees import (
@@ -20,7 +16,6 @@ from hps.src.quadrature.trees import (
     find_path_from_root_2D,
     find_nodes_along_interface_2D,
     find_nodes_along_interface_3D,
-    find_path_from_root_3D,
     get_all_uniform_leaves_2D,
 )
 
@@ -163,7 +158,9 @@ class Test_find_path_from_root_2D:
                     next_node,
                 )
             else:
-                assert tree_equal(current_node.children[current_child_idx], node)
+                assert tree_equal(
+                    current_node.children[current_child_idx], node
+                )
 
 
 class Test_find_path_from_root_3D:
@@ -198,7 +195,9 @@ class Test_find_path_from_root_3D:
                     next_node,
                 )
             else:
-                assert tree_equal(current_node.children[current_child_idx], node)
+                assert tree_equal(
+                    current_node.children[current_child_idx], node
+                )
 
 
 class Test_get_node_area:
@@ -284,7 +283,13 @@ class Test_add_four_children:
             node.n_2,
             node.n_3,
         )
-        print("test_1: Expected # of quadrature points: ", 4 * q, 4 * q, 4 * q, 4 * q)
+        print(
+            "test_1: Expected # of quadrature points: ",
+            4 * q,
+            4 * q,
+            4 * q,
+            4 * q,
+        )
         assert node.n_0 == 4 * q
         assert node.n_1 == 4 * q
         assert node.n_2 == 4 * q
@@ -330,7 +335,13 @@ class Test_add_four_children:
     def test_3(self) -> None:
         """Checks discretization point counting in uniform grid of 3 levels of refinement."""
         root = Node(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=None, zmax=None, depth=0
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=None,
+            zmax=None,
+            depth=0,
         )
         l = 3
         q = 3
@@ -465,9 +476,9 @@ class Test_get_all_leaves:
 
         leaves = get_all_leaves(node)
         assert len(leaves) == 10
-        assert (
-            get_node_area(leaves[0]) == 1 / 64
-        ), f"get_node_area(leaves[0]) = {get_node_area(leaves[0])} vs 1/64 = {1/64}"
+        assert get_node_area(leaves[0]) == 1 / 64, (
+            f"get_node_area(leaves[0]) = {get_node_area(leaves[0])} vs 1/64 = {1 / 64}"
+        )
         assert get_node_area(leaves[1]) == 1 / 64
         assert get_node_area(leaves[2]) == 1 / 64
         assert get_node_area(leaves[3]) == 1 / 64
@@ -596,17 +607,23 @@ class Test_find_node_at:
 
         # Search on xmin, ymax NOT at the corner of the domain.
         expected_c = node.children[0].children[0].children[1]
-        found_c = find_node_at_corner(node, xmin=expected_c.xmin, ymax=expected_c.ymax)
+        found_c = find_node_at_corner(
+            node, xmin=expected_c.xmin, ymax=expected_c.ymax
+        )
         assert tree_equal(found_c, expected_c)
 
         # Search on xmax, ymin NOT at the corner of the domain.
         expected_d = node.children[0].children[0].children[1]
-        found_d = find_node_at_corner(node, xmax=expected_d.xmax, ymin=expected_d.ymin)
+        found_d = find_node_at_corner(
+            node, xmax=expected_d.xmax, ymin=expected_d.ymin
+        )
         assert tree_equal(found_d, expected_d)
 
         # Search on xmax, ymax NOT at the corner of the domain.
         expected_e = node.children[0].children[0].children[1]
-        found_e = find_node_at_corner(node, xmax=expected_e.xmax, ymax=expected_e.ymax)
+        found_e = find_node_at_corner(
+            node, xmax=expected_e.xmax, ymax=expected_e.ymax
+        )
         assert tree_equal(found_e, expected_e)
 
 

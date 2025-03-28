@@ -1,18 +1,12 @@
 import os
 import logging
 import argparse
-import numpy as np
-import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from scipy.io import loadmat, savemat
+from scipy.io import loadmat
 
-# supress matplotlib debug messages
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
-logging.getLogger("matplotlib.font_manager").disabled = True
-logging.getLogger("jax").setLevel(logging.WARNING)
 
-from hps.src.logging_utils import FMT, TIMEFMT, DATESTR
+from hps.src.logging_utils import FMT, TIMEFMT
 from hps.src.plotting import (
     get_discrete_cmap,
     plot_func_with_grid,
@@ -26,6 +20,11 @@ from hps.accuracy_checks.test_cases_3D import (
     d_zz_adaptive_meshing_data_fn,
 )
 
+# supress matplotlib debug messages
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("matplotlib.font_manager").disabled = True
+logging.getLogger("jax").setLevel(logging.WARNING)
+
 K_TOL = "tol"
 K_N_LEAVES = "n_leaves"
 K_MAX_DEPTHS = "max_depths"
@@ -38,7 +37,9 @@ K_DOWN_PASS_TIMES = "down_pass_times"
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--plot_dir", type=str, default="data/adaptive_meshing_3D")
+    parser.add_argument(
+        "--plot_dir", type=str, default="data/adaptive_meshing_3D"
+    )
     parser.add_argument("--l2", action="store_true")
     parser.add_argument("--mesh_tol", type=float, default=1e-2)
     parser.add_argument("--mesh_p", type=int, default=16)
@@ -118,7 +119,9 @@ def plot_tol_vs_error(
     colors = get_discrete_cmap(len(p_vals), "plasma")
     for i, p in enumerate(p_vals):
         p_str = f"$p = {int(p)}$"
-        ax.plot(tol_vals[i], adaptive_errors[i], ".-", color=colors[i], label=p_str)
+        ax.plot(
+            tol_vals[i], adaptive_errors[i], ".-", color=colors[i], label=p_str
+        )
         ax.plot(tol_vals[i], tol_vals[i], "--", color="black")
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -207,7 +210,6 @@ def plot_different_meshing_strats(
 
 
 def main(args: argparse.Namespace) -> None:
-
     # Load the adaptive refinement data.
     adaptive_str = "adaptive_data"
     if args.l2:
@@ -267,7 +269,9 @@ def main(args: argparse.Namespace) -> None:
     for p in [8, 12, 16]:
         p_int = int(p)
         try:
-            data_fp = os.path.join(args.plot_dir, f"p_{p}", f"hp_data_p_{p_int}.mat")
+            data_fp = os.path.join(
+                args.plot_dir, f"p_{p}", f"hp_data_p_{p_int}.mat"
+            )
             data_dd = loadmat(data_fp)
             uniform_errors.append(data_dd[K_ERRORS].flatten())
             uniform_runtimes.append(

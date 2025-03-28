@@ -1,25 +1,14 @@
 import os
-from typing import Callable, Tuple, List
-import sys
 import argparse
-import pickle
 import logging
-import numpy as np
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-import matplotlib
 from timeit import default_timer
 from scipy.io import savemat
 
-
-# Suppress matplotlib debug messages
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
-logging.getLogger("jax").setLevel(logging.WARNING)
-
 from hps.src.quadrature.quad_3D.adaptive_meshing import (
     generate_adaptive_mesh_level_restriction,
-    node_corners_to_3d_corners,
     find_leaves_containing_pts,
 )
 from hps.src.solver_obj import (
@@ -37,8 +26,7 @@ from hps.src.quadrature.quad_3D.interpolation import (
     refinement_operator,
     interp_from_nonuniform_hps_to_uniform_grid,
 )
-from hps.src.plotting import plot_2D_adaptive_refinement, plot_adaptive_grid_histogram
-from hps.src.utils import meshgrid_to_lst_of_pts, points_to_2d_lst_of_points
+from hps.src.plotting import plot_adaptive_grid_histogram
 from hps.src.poisson_boltzmann_eqn_helpers import (
     permittivity,
     d_permittivity_d_x,
@@ -50,15 +38,22 @@ from hps.src.poisson_boltzmann_eqn_helpers import (
     d_vdw_permittivity_d_y,
     d_vdw_permittivity_d_z,
 )
-from hps.accuracy_checks.h_refinement_functions import get_l_inf_error_2D
 from hps.src.logging_utils import FMT, TIMEFMT
+
+
+# Suppress matplotlib debug messages
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+logging.getLogger("jax").setLevel(logging.WARNING)
 
 
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
     parser.add_argument(
-        "--tol", type=float, nargs="+", default=[1e-01, 1e-02, 1e-03, 1e-04, 1e-05]
+        "--tol",
+        type=float,
+        nargs="+",
+        default=[1e-01, 1e-02, 1e-03, 1e-04, 1e-05],
     )
     parser.add_argument("-p", type=int, default=8)
     parser.add_argument("-n", type=int, default=500)
@@ -93,7 +88,9 @@ def get_adaptive_mesh(tol: float, p: int, vdw: bool = False) -> Node:
     )
     interp = refinement_operator(p)
     logging.debug(
-        "get_adaptive_mesh: Generating adaptive mesh with tol %s and p=%i", tol, p
+        "get_adaptive_mesh: Generating adaptive mesh with tol %s and p=%i",
+        tol,
+        p,
     )
 
     if vdw:
@@ -261,7 +258,9 @@ def plot_solns(
     u_reg_x = u_reg_x.reshape(n, n)
     extent = [YMIN, YMAX, ZMIN, ZMAX]
 
-    im_0 = ax[0].imshow(u_reg_x, cmap="plasma", extent=extent, vmin=0.0, vmax=max_val)
+    im_0 = ax[0].imshow(
+        u_reg_x, cmap="plasma", extent=extent, vmin=0.0, vmax=max_val
+    )
     plt.colorbar(im_0, ax=ax[0])
     ax[0].set_title("$x=0$ slice", fontsize=TITLESIZE)
     ax[0].set_xlabel("y", fontsize=TITLESIZE)
@@ -273,7 +272,9 @@ def plot_solns(
     pts = pts.reshape(n, n, 3)
     extent = [XMIN, XMAX, ZMIN, ZMAX]
 
-    im_0 = ax[1].imshow(u_reg_y, cmap="plasma", extent=extent, vmin=0.0, vmax=max_val)
+    im_0 = ax[1].imshow(
+        u_reg_y, cmap="plasma", extent=extent, vmin=0.0, vmax=max_val
+    )
     plt.colorbar(im_0, ax=ax[1])
     ax[1].set_title("$y=0$ slice", fontsize=TITLESIZE)
     ax[1].set_xlabel("x", fontsize=TITLESIZE)
@@ -285,7 +286,9 @@ def plot_solns(
     pts = pts.reshape(n, n, 3)
     extent = [XMIN, XMAX, YMIN, YMAX]
 
-    im_0 = ax[2].imshow(u_reg_z, cmap="plasma", extent=extent, vmin=0.0, vmax=max_val)
+    im_0 = ax[2].imshow(
+        u_reg_z, cmap="plasma", extent=extent, vmin=0.0, vmax=max_val
+    )
     plt.colorbar(im_0, ax=ax[2])
     ax[2].set_title("$z=0$ slice", fontsize=TITLESIZE)
     ax[2].set_xlabel("x", fontsize=TITLESIZE)
@@ -341,7 +344,9 @@ def main(args: argparse.Namespace) -> None:
         D_z_coeffs=D_z_coeffs,
     )
     build_stage(t)
-    bdry_data = get_bdry_data_evals_lst_3D(t, f=lambda x: jnp.zeros_like(x[..., 0]))
+    bdry_data = get_bdry_data_evals_lst_3D(
+        t, f=lambda x: jnp.zeros_like(x[..., 0])
+    )
     down_pass(t, bdry_data)
 
     #############################################################
@@ -363,7 +368,9 @@ def main(args: argparse.Namespace) -> None:
         root = get_adaptive_mesh(tol, args.p, vdw=args.vdW)
         mesh_time = default_timer() - t0
         mesh_times = mesh_times.at[i].set(mesh_time)
-        logging.info("Generated adaptive mesh with L_inf error tolerance %s", tol)
+        logging.info(
+            "Generated adaptive mesh with L_inf error tolerance %s", tol
+        )
 
         ll = get_all_leaves(root)
         depths = [l.depth for l in ll]
@@ -478,7 +485,7 @@ def main(args: argparse.Namespace) -> None:
 
             plot_fp = os.path.join(args.plot_dir, f"soln_tol_{tol}.png")
             plot_solns(t, args.p, plot_fp)
-        except:
+        except:  # noqa: E722
             # If we run out of memory, still want to save the grid sizes
             logging.info("Could not compute for tol=%s", tol)
 

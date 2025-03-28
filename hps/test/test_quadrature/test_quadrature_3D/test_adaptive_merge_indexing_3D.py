@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 import jax.numpy as jnp
 
@@ -14,18 +13,15 @@ from hps.src.quadrature.quad_3D.adaptive_merge_indexing import (
     get_rearrange_indices,
 )
 from hps.src.quadrature.quad_3D.grid_creation import (
-    corners_to_cheby_points_lst,
     get_all_boundary_gauss_legendre_points,
-    get_all_leaf_3d_cheby_points,
     corners_to_gauss_points_lst,
     _corners_for_oct_subdivision,
-    affine_transform,
 )
-from hps.src.quadrature.quad_3D.interpolation import precompute_refining_coarsening_ops
-from hps.src.quadrature.quadrature_utils import chebyshev_points
+from hps.src.quadrature.quad_3D.interpolation import (
+    precompute_refining_coarsening_ops,
+)
 from hps.src.quadrature.trees import (
     Node,
-    get_all_leaves,
     add_uniform_levels,
     add_eight_children,
 )
@@ -97,9 +93,6 @@ class Test_get_a_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
 
@@ -189,9 +182,6 @@ class Test_get_a_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
 
@@ -200,14 +190,16 @@ class Test_get_a_submatrices:
 
         quad_pts = get_all_boundary_gauss_legendre_points(q, root)
 
-        root_0 = Node(xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0)
-        quad_pts_0 = get_all_boundary_gauss_legendre_points(q, root_0)
+        # root_0 = Node(xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0)
+        # quad_pts_0 = get_all_boundary_gauss_legendre_points(q, root_0)
 
         need_interp_9 = jnp.array([True, True, True, True])
         need_interp_12 = jnp.array([False])
         need_interp_17 = jnp.array([False])
 
-        T = np.random.normal(size=(6 * n_per_face_refined, 6 * n_per_face_refined))
+        T = np.random.normal(
+            size=(6 * n_per_face_refined, 6 * n_per_face_refined)
+        )
         L_2f1, L_1f2 = precompute_refining_coarsening_ops(q)
         print("test_2: L_2f1 shape: ", L_2f1.shape)
         print("test_2: L_1f2 shape: ", L_1f2.shape)
@@ -252,7 +244,9 @@ class Test_get_a_submatrices:
         v_a_1 = return_tuple[16]
         print("test_2: v_a_1 = ", v_a_1)
         assert jnp.all(v_a_1[:n_per_face_refined] != ymin)
-        assert jnp.all(v_a_1[n_per_face_refined : 2 * n_per_face_refined] == ymin)
+        assert jnp.all(
+            v_a_1[n_per_face_refined : 2 * n_per_face_refined] == ymin
+        )
         assert jnp.all(v_a_1[2 * n_per_face_refined :] != ymin)
 
         # Third test z direction
@@ -288,9 +282,6 @@ class Test_get_c_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
 
@@ -378,9 +369,6 @@ class Test_get_d_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
         L_1f2 = np.random.normal(size=(n_per_face, 4 * n_per_face))
@@ -466,9 +454,6 @@ class Test_get_h_submatrices:
         xmax = 1
         ymax = 1
         zmax = 1
-        xmid = (xmin + xmax) / 2
-        ymid = (ymin + ymax) / 2
-        zmid = (zmin + zmax) / 2
         corners = jnp.array([[xmin, ymin, zmin], [xmax, ymax, zmax]])
         quad_pts = corners_to_gauss_points_lst(q, corners)
         L_1f2 = np.random.normal(size=(n_per_face, 4 * n_per_face))
@@ -548,7 +533,6 @@ class Test_get_rearrange_indices:
         q = 4
         q_squared = q**2
         idxes = np.arange(24 * q**2)
-        q_idxes = np.arange(q).astype(int)
         out = get_rearrange_indices(
             idxes,
             n_a_0=q_squared,
@@ -751,7 +735,6 @@ class Test_get_rearrange_indices:
 
             # Step 5:
             idxes = np.arange(v_all.shape[0])
-            q_idxes = np.arange(q).astype(int)
             q_squared = q**2
             rearranged_idxes = get_rearrange_indices(
                 idxes,
@@ -786,7 +769,9 @@ class Test_get_rearrange_indices:
             # Check each face in order
             n_per_face = idxes.shape[0] // 6
             for j in range(6):
-                expected_face_j = gauss_pts[j * n_per_face : (j + 1) * n_per_face, i]
+                expected_face_j = gauss_pts[
+                    j * n_per_face : (j + 1) * n_per_face, i
+                ]
                 computed_face_j = v_all_rearranged[
                     j * n_per_face : (j + 1) * n_per_face
                 ]
@@ -813,7 +798,7 @@ class Test_get_rearrange_indices:
         """
         # Setup:
         q = 4
-        corners = jnp.array([[-1, -1, -1], [1, 1, 1]])
+        # corners = jnp.array([[-1, -1, -1], [1, 1, 1]])
 
         root = Node(xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1, depth=0)
         add_eight_children(root, root=root, q=q)
@@ -978,7 +963,6 @@ class Test_get_rearrange_indices:
 
             # Step 5:
             idxes = np.arange(v_all.shape[0])
-            q_idxes = np.arange(q).astype(int)
             rearranged_idxes = get_rearrange_indices(
                 idxes,
                 n_a_0=root.children[0].n_0,
@@ -1017,11 +1001,20 @@ class Test_get_rearrange_indices:
                 root.n_0 + root.n_1 + root.n_2,
                 root.n_0 + root.n_1 + root.n_2 + root.n_3,
                 root.n_0 + root.n_1 + root.n_2 + root.n_3 + root.n_4,
-                root.n_0 + root.n_1 + root.n_2 + root.n_3 + root.n_4 + root.n_5,
+                root.n_0
+                + root.n_1
+                + root.n_2
+                + root.n_3
+                + root.n_4
+                + root.n_5,
             ]
             for j in range(6):
-                expected_face_j = gauss_pts[face_idxes[j] : face_idxes[j + 1], i]
-                computed_face_j = v_all_rearranged[face_idxes[j] : face_idxes[j + 1]]
+                expected_face_j = gauss_pts[
+                    face_idxes[j] : face_idxes[j + 1], i
+                ]
+                computed_face_j = v_all_rearranged[
+                    face_idxes[j] : face_idxes[j + 1]
+                ]
 
                 v = jnp.allclose(expected_face_j, computed_face_j)
                 if not v:

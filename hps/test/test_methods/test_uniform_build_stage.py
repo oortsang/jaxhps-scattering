@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 import jax.numpy as jnp
 
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
+from hps.src.solver_obj import create_solver_obj_2D, create_solver_obj_3D
 
 from hps.src.methods.uniform_build_stage import (
     _uniform_build_stage_2D_DtN,
@@ -130,10 +130,12 @@ class Test__uniform_build_stage_3D_DtN:
             source_term=source_term,
         )
         assert Y_arr.shape == (num_leaves, p**3, 6 * q**2)
-        S_arr_lst, DtN_arr_lst, v_arr_lst, D_shape = _uniform_build_stage_3D_DtN(
-            root=root,
-            DtN_maps=DtN_arr,
-            v_prime_arr=v_prime_arr,
+        S_arr_lst, DtN_arr_lst, v_arr_lst, D_shape = (
+            _uniform_build_stage_3D_DtN(
+                root=root,
+                DtN_maps=DtN_arr,
+                v_prime_arr=v_prime_arr,
+            )
         )
         assert len(S_arr_lst) == l
         assert len(DtN_arr_lst) == l
@@ -145,7 +147,6 @@ class Test__uniform_build_stage_3D_DtN:
 
 class Test__uniform_quad_merge:
     def test_0(self) -> None:
-
         n_bdry = 28
         n_bdry_int = n_bdry // 4
         n_bdry_ext = 2 * (n_bdry // 4)
@@ -170,7 +171,6 @@ class Test__uniform_quad_merge:
 
 class Test__uniform_quad_merge_ItI:
     def test_0(self) -> None:
-
         n_bdry = 28
         n_bdry_int = n_bdry // 4
         n_bdry_ext = 2 * (n_bdry // 4)
@@ -249,11 +249,12 @@ class Test__uniform_build_stage_2D_ItI:
         l = 3
         eta = 4.0
         num_leaves = 4**l
-        domain_bounds = [(0, 0), (1, 0), (1, 1), (0, 1)]
 
         root = Node(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
 
-        t = create_solver_obj_2D(p, q, root, uniform_levels=l, use_ItI=True, eta=eta)
+        t = create_solver_obj_2D(
+            p, q, root, uniform_levels=l, use_ItI=True, eta=eta
+        )
         d_xx_coeffs = np.random.normal(size=(num_leaves, p**2))
         source_term = np.random.normal(size=(num_leaves, p**2))
         R_arr, Y_arr, h_arr, v_arr = _local_solve_stage_2D_ItI(
@@ -278,10 +279,12 @@ class Test__uniform_build_stage_2D_ItI:
         # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
         # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
 
-        S_arr_lst,  f_arr_lst = _uniform_build_stage_2D_ItI(
+        S_arr_lst, f_arr_lst = _uniform_build_stage_2D_ItI(
             R_maps=R_arr, h_arr=h_arr, l=l
         )
-        print("test_0: S_arr_lst shapes = ", [S_arr.shape for S_arr in S_arr_lst])
+        print(
+            "test_0: S_arr_lst shapes = ", [S_arr.shape for S_arr in S_arr_lst]
+        )
 
         assert len(S_arr_lst) == l
         assert len(f_arr_lst) == l

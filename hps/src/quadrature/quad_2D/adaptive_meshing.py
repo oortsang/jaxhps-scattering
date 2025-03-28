@@ -1,24 +1,17 @@
-"""This file has functions to create an adaptive mesh for 3D problems. 
-"""
+"""This file has functions to create an adaptive mesh for 3D problems."""
 
 import logging
 from functools import partial
-from typing import Callable, Tuple, List
-import numpy as np
+from typing import Callable, Tuple
 import jax
 import jax.numpy as jnp
 from hps.src.quadrature.quadrature_utils import (
-    chebyshev_points,
-    affine_transform,
-    barycentric_lagrange_3d_interpolation_matrix,
-    check_current_discretization,
     check_current_discretization_global_linf_norm,
     EPS,
     chebyshev_weights,
 )
 from hps.src.quadrature.quad_2D.indexing import (
     _rearrange_indices,
-    indexing_for_refinement_operator,
 )
 from hps.src.quadrature.quad_2D.grid_creation import (
     get_all_leaf_2d_cheby_points_uniform_refinement,
@@ -28,13 +21,8 @@ from hps.src.quadrature.trees import (
     Node,
     get_all_leaves,
     add_four_children,
-    get_four_children,
     get_all_leaves_jitted,
-    get_nodes_at_level,
-    tree_equal,
-    node_at,
     _corners_for_quad_subdivision,
-
 )
 
 
@@ -73,7 +61,9 @@ def get_squared_l2_norm_single_panel(
     cheby_weights_x = chebyshev_weights(p, jnp.array([xmin, xmax]))
     cheby_weights_y = chebyshev_weights(p, jnp.array([ymin, ymax]))
     r_idxes = _rearrange_indices(p)
-    cheby_weights_2d = jnp.outer(cheby_weights_x, cheby_weights_y).reshape(-1)[r_idxes]
+    cheby_weights_2d = jnp.outer(cheby_weights_x, cheby_weights_y).reshape(-1)[
+        r_idxes
+    ]
     out_val = jnp.sum(f_evals**2 * cheby_weights_2d)
     return out_val
 
@@ -88,7 +78,6 @@ def check_current_discretization_relative_global_l2_norm(
     corner_set: jnp.ndarray,
     p: int,
 ) -> bool:
-
     # first, interpolate f_evals to the four-panel grid
     f_interp = refinement_op @ f_evals
 
@@ -122,7 +111,6 @@ def generate_adaptive_mesh_l2(
     q: int,
     level_restriction_bool: bool = False,
 ) -> None:
-
     ###################################################
     # Define functions to be used in the main routine #
 
@@ -140,7 +128,9 @@ def generate_adaptive_mesh_l2(
 
     vmapped_get_l2_norm = jax.vmap(get_l2_norm, in_axes=(0,))
 
-    def check_single_node(corner_set: jnp.array, global_l2_norm: float) -> bool:
+    def check_single_node(
+        corner_set: jnp.array, global_l2_norm: float
+    ) -> bool:
         """Input has shape (4, 2). Gives the corners of the panel, starting with
         the SW corner and going counter-clockwise."""
         pts_0 = get_all_leaf_2d_cheby_points_uniform_refinement(
@@ -153,7 +143,13 @@ def generate_adaptive_mesh_l2(
         f_evals_refined = f_fn(pts_1)
 
         return check_current_discretization_relative_global_l2_norm(
-            f_evals, f_evals_refined, refinement_op, tol, global_l2_nrm, corner_set, p
+            f_evals,
+            f_evals_refined,
+            refinement_op,
+            tol,
+            global_l2_nrm,
+            corner_set,
+            p,
         )
 
     vmapped_check_queue = jax.vmap(check_single_node, in_axes=(0, None))
@@ -169,9 +165,12 @@ def generate_adaptive_mesh_l2(
     # Loop through the queue and refine nodes as necessary
     while len(refinement_check_queue):
         logging.debug(
-            "generate_adaptive_mesh_l2: Queue length: %s", len(refinement_check_queue)
+            "generate_adaptive_mesh_l2: Queue length: %s",
+            len(refinement_check_queue),
         )
-        checks_bool = vmapped_check_queue(refinement_check_corners, global_l2_nrm)
+        checks_bool = vmapped_check_queue(
+            refinement_check_corners, global_l2_nrm
+        )
 
         new_refinement_check_queue = []
 
@@ -182,7 +181,6 @@ def generate_adaptive_mesh_l2(
 
                 # Check the level restriction criterion
                 if level_restriction_bool:
-
                     level_restriction_check_queue = [
                         node,
                     ]
@@ -205,21 +203,31 @@ def generate_adaptive_mesh_l2(
 
         refinement_check_queue = new_refinement_check_queue
         refinement_check_corners = jnp.array(
-            [node_corners_to_2d_corners(node) for node in refinement_check_queue]
+            [
+                node_corners_to_2d_corners(node)
+                for node in refinement_check_queue
+            ]
         )
         all_leaf_corners = jnp.array(
             [node_corners_to_2d_corners(node) for node in get_all_leaves(root)]
         )
         all_l2_norms = vmapped_get_l2_norm(all_leaf_corners)
-        logging.debug("generate_adaptive_mesh_l2: # leaves: %i", len(all_leaf_corners))
+        logging.debug(
+            "generate_adaptive_mesh_l2: # leaves: %i", len(all_leaf_corners)
+        )
         global_l2_nrm = jnp.sqrt(jnp.sum(jnp.array(all_l2_norms)))
-        logging.debug("generate_adaptive_mesh_l2: global_l2_nrm: %f", global_l2_nrm)
+        logging.debug(
+            "generate_adaptive_mesh_l2: global_l2_nrm: %f", global_l2_nrm
+        )
         if jnp.isnan(global_l2_nrm):
             # Find the index of the NaN
             idx = jnp.where(jnp.isnan(all_l2_norms))[0][0]
             print("generate_adaptive_mesh_l2: NaN idx = ", idx)
             # Print out the particular node which gives us this index
-            print("generate_adaptive_mesh_l2: NaN node = ", get_all_leaves(root)[idx])
+            print(
+                "generate_adaptive_mesh_l2: NaN node = ",
+                get_all_leaves(root)[idx],
+            )
 
             raise ValueError("global_l2_nrm is NaN")
 
@@ -233,7 +241,6 @@ def generate_adaptive_mesh_linf(
     q: int,
     level_restriction_bool: bool = False,
 ) -> None:
-
     ###################################################
     # Define functions to be used in the main routine #
 
@@ -273,7 +280,8 @@ def generate_adaptive_mesh_linf(
     # Loop through the queue and refine nodes as necessary
     while len(refinement_check_queue):
         logging.debug(
-            "generate_adaptive_mesh_linf: Queue length: %i", len(refinement_check_queue)
+            "generate_adaptive_mesh_linf: Queue length: %i",
+            len(refinement_check_queue),
         )
         checks_bool, linf_nrms_arr = vmapped_check_queue(
             refinement_check_corners, global_linf_nrm
@@ -292,7 +300,6 @@ def generate_adaptive_mesh_linf(
 
                 # Check the level restriction criterion
                 if level_restriction_bool:
-
                     level_restriction_check_queue = [
                         node,
                     ]
@@ -318,7 +325,10 @@ def generate_adaptive_mesh_linf(
 
         refinement_check_queue = new_refinement_check_queue
         refinement_check_corners = jnp.array(
-            [node_corners_to_2d_corners(node) for node in refinement_check_queue]
+            [
+                node_corners_to_2d_corners(node)
+                for node in refinement_check_queue
+            ]
         )
         logging.debug(
             "generate_adaptive_mesh_linf: # leaves: %i",
@@ -343,22 +353,42 @@ def patches_to_check(newly_refined: Node, root: Node) -> jnp.array:
     if new_xmin >= root.xmin:
         # print("patches_to_check: new_xmin >= root.xmin")
         patches.append(
-            (new_xmin, newly_refined.xmin, newly_refined.ymin, newly_refined.ymax)
+            (
+                new_xmin,
+                newly_refined.xmin,
+                newly_refined.ymin,
+                newly_refined.ymax,
+            )
         )
     if new_xmax <= root.xmax:
         # print("patches_to_check: new_xmax <= root.xmax")
         patches.append(
-            (newly_refined.xmax, new_xmax, newly_refined.ymin, newly_refined.ymax)
+            (
+                newly_refined.xmax,
+                new_xmax,
+                newly_refined.ymin,
+                newly_refined.ymax,
+            )
         )
     if new_ymin >= root.ymin:
         # print("patches_to_check: new_ymin >= root.ymin")
         patches.append(
-            (newly_refined.xmin, newly_refined.xmax, new_ymin, newly_refined.ymin)
+            (
+                newly_refined.xmin,
+                newly_refined.xmax,
+                new_ymin,
+                newly_refined.ymin,
+            )
         )
     if new_ymax <= root.ymax:
         # print("patches_to_check: new_ymax <= root.ymax")
         patches.append(
-            (newly_refined.xmin, newly_refined.xmax, newly_refined.ymax, new_ymax)
+            (
+                newly_refined.xmin,
+                newly_refined.xmax,
+                newly_refined.ymax,
+                new_ymax,
+            )
         )
 
     # print("patches_to_check: patches = ", patches)
@@ -366,7 +396,13 @@ def patches_to_check(newly_refined: Node, root: Node) -> jnp.array:
 
 
 def find_or_add_child(
-    node: Node, root: Node, q: int, xmin: float, xmax: float, ymin: float, ymax: float
+    node: Node,
+    root: Node,
+    q: int,
+    xmin: float,
+    xmax: float,
+    ymin: float,
+    ymax: float,
 ) -> Tuple[Node] | None:
     """Given a node, search through the tree to see if a child with the specified bounds exist.
     This function expects such a child to be geometrically possible.

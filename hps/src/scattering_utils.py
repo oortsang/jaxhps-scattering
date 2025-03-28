@@ -1,8 +1,5 @@
-import jax
 import jax.numpy as jnp
 import scipy.special as sp
-
-from hps.src.solver_obj import SolverObj, create_solver_obj_2D, create_solver_obj_3D
 
 
 def _hankel1(x: jnp.array) -> jnp.array:
@@ -119,4 +116,6 @@ def double_layer_potential(boundary_pts: jnp.array, k: float) -> jnp.array:
     n_cols = helmholtz_kernel_grad_y(boundary_pts, n_points, k) @ n_normal
     w_cols = helmholtz_kernel_grad_y(boundary_pts, w_points, k) @ w_normal
 
-    return jnp.nan_to_num(jnp.hstack([s_cols, e_cols, n_cols, w_cols]), nan=0.0)
+    return jnp.nan_to_num(
+        jnp.hstack([s_cols, e_cols, n_cols, w_cols]), nan=0.0
+    )
