@@ -163,8 +163,8 @@ class Test_solve:
             "Here are S_lst shapes: %s", [s.shape for s in pde_problem.S_lst]
         )
 
-        assert pde_problem.S_lst[-1].shape == (1, n_bdry // 2, n_bdry)
-        assert pde_problem.g_tilde_lst[-1].shape == (1, n_bdry // 2)
+        assert pde_problem.S_lst[-1].shape == (n_bdry // 2, n_bdry)
+        assert pde_problem.g_tilde_lst[-1].shape == (n_bdry // 2,)
 
         # Solve the problem
         bdry_data = jnp.array(np.random.normal(size=n_bdry))

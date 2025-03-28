@@ -4,12 +4,13 @@ from hahps._domain import Domain
 from hahps._discretization_tree import (
     DiscretizationNode2D,
 )
-
+import pytest
 from hahps._pdeproblem import PDEProblem
 from hahps._subtree_recomp import (
     upward_pass_subtree,
     downward_pass_subtree,
 )
+from hahps._device_config import GPU_AVAILABLE
 
 
 class Test_upward_pass_subtree:
@@ -63,6 +64,9 @@ class Test_upward_pass_subtree:
 
 
 class Test_downward_pass_subtree:
+    @pytest.mark.skipif(
+        not GPU_AVAILABLE, reason="Skipping because GPU is not available"
+    )
     def test_0(self, caplog) -> None:
         """DtN case"""
         p = 7
@@ -89,6 +93,9 @@ class Test_downward_pass_subtree:
 
         assert solns.shape == domain.interior_points[..., 0].shape
 
+    @pytest.mark.skipif(
+        not GPU_AVAILABLE, reason="Skipping because GPU is not available"
+    )
     def test_1(self, caplog) -> None:
         """ItI case"""
         p = 7
