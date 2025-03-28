@@ -36,15 +36,27 @@ def solve_subtree(
     Unlike the .build_solver() method, this function does not save any of the solution matrices computed during the upward pass.
     Thus, it is most appropriate when we want to solve one instance of the problem very quickly.
 
-    Args:
-        :pde_problem: Specifies the differential operator, the domain, and the source function.
-        :boundary_data: Specifies the boundary data on the boundary discretization points. Can be a list or a jax.Array.
-        :subtree_height: Height of the subtrees used in our recomputation algorithm. The default is what we found to be optimal for DtN merges using fp64 on an NVIDIA H100 GPU. Defaults to 7.
-        :compute_device: Where the computation should be performed. Defaults to jax.devices()[0].
-        :host_device: Device where the returned data lives. Defaults to jax.devices("cpu")[0].
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        :solns: (jax.Array) Solutions to the boundary value problem on the HPS grid.
+    boundary_data : jax.Array | List
+        Specifies the boundary data on the boundary discretization points. Can be a list or a jax.Array.
+
+    subtree_height : int, optional
+        Height of the subtrees used in our recomputation algorithm. The default is what we found to be optimal for DtN merges using fp64 on an NVIDIA H100 GPU.
+
+    compute_device : jax.Device, optional
+        Where the computation should be performed. This is typically a GPU device. Defaults to ``jax.devices()[0]``.
+
+    host_device : jax.Device, optional
+        Device where the returned data lives. This is typically a CPU device. Defaults to ``jax.devices("cpu")[0]``.
+
+    Returns
+    -------
+    solns : jax.Array
+        Solutions to the boundary value problem on the HPS grid.
 
     """
     if not pde_problem.domain.bool_2D:
@@ -339,19 +351,29 @@ def upward_pass_subtree(
     host_device: jax.Device = HOST_DEVICE,
 ) -> jax.Array:
     """
-    Does the upward pass of the subtree recomputation algorithm, returns the top-level Poincare--Steklov matrix, and
-    stores the high-level :math:`S` and :math:`\\tilde{g}` data. This is meant to be used in conjunction with
-    hahps.downward_pass_subtree() for large problems where the boundary data must be specified after the upward pass,
-    such as a wave scattering context, where the boundary impedance values can not be computed without the top-level ItI matrix.
+     Does the upward pass of the subtree recomputation algorithm, returns the top-level Poincare--Steklov matrix, and
+     stores the high-level :math:`S` and :math:`\\tilde{g}` data. This is meant to be used in conjunction with
+     hahps.downward_pass_subtree() for large problems where the boundary data must be specified after the upward pass,
+     such as a wave scattering context, where the boundary impedance values can not be computed without the top-level ItI matrix.
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices. Stores the high-level :math:`S` and :math:`\\tilde{g}` data
-        :subtree_height: Height of the subtrees used in our recomputation algorithm. The default is what we found to be optimal for DtN merges using fp64 on an NVIDIA H100 GPU. Defaults to 7.
-        :compute_device: Where the computation should be performed. Defaults to jax.devices()[0].
-        :host_device: Device where the returned data lives. Defaults to jax.devices("cpu")[0].
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        :T_last: (jax.Array) the top-level Poincare--Steklov matrix, either a DtN matrix or an ItI matrix, depending on the specification in ``pde_problem.use_ItI``.
+    subtree_height : int, optional
+        Height of the subtrees used in our recomputation algorithm. The default is what we found to be optimal for DtN merges using fp64 on an NVIDIA H100 GPU.
+
+    compute_device : jax.Device, optional
+        Where the computation should be performed. This is typically a GPU device. Defaults to ``jax.devices()[0]``.
+
+    host_device : jax.Device, optional
+        Device where the returned data lives. This is typically a CPU device. Defaults to ``jax.devices("cpu")[0]``.
+
+    Returns
+    -------
+    T_last : jax.Array
+        Top-level Poincare--Steklov matrix for the whole domain.
 
     """
     if pde_problem.use_ItI:
@@ -394,19 +416,31 @@ def downward_pass_subtree(
     host_device: jax.Device = HOST_DEVICE,
 ) -> jax.Array:
     """
-    Does the downward pass of the subtree recomputation algorithm. This is meant to be used in conjunction with
-    hahps.upward_pass_subtree() for large problems where the boundary data must be specified after the upward pass,
-    such as a wave scattering context, where the boundary impedance values can not be computed without the top-level ItI matrix.
+     Does the downward pass of the subtree recomputation algorithm. This is meant to be used in conjunction with
+     hahps.upward_pass_subtree() for large problems where the boundary data must be specified after the upward pass,
+     such as a wave scattering context, where the boundary impedance values can not be computed without the top-level ItI matrix.
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices. Stores the high-level :math:`S` and :math:`\\tilde{g}` data
-        :boundary_data: Specifies the incoming boundary data at the boundary of the whole domain.
-        :subtree_height: Height of the subtrees used in our recomputation algorithm. The default is what we found to be optimal for DtN merges using fp64 on an NVIDIA H100 GPU. Defaults to 7. You must use the same value used in the call to ``hahps.upward_pass_subtree()``.
-        :compute_device: Where the computation should be performed. Defaults to jax.devices()[0].
-        :host_device: Device where the returned data lives. Defaults to jax.devices("cpu")[0].
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        :solns: (jax.Array). Solutions on the interior leaf points. Has shape (n_leaves, p^2).
+    boundary_data : jax.Array | List
+        Specifies the boundary data on the boundary discretization points. Can be a list or a jax.Array.
+
+    subtree_height : int, optional
+        Height of the subtrees used in our recomputation algorithm. Must be the same as used in the upward pass.
+
+    compute_device : jax.Device, optional
+        Where the computation should be performed. This is typically a GPU device. Defaults to ``jax.devices()[0]``.
+
+    host_device : jax.Device, optional
+        Device where the returned data lives. This is typically a CPU device. Defaults to ``jax.devices("cpu")[0]``.
+
+    Returns
+    -------
+    solns : jax.Array
+        Solutions to the boundary value problem on the HPS grid. Has shape (n_leaves, p^2)
 
     """
     if isinstance(boundary_data, list):

@@ -9,7 +9,6 @@ from examples.wave_scattering_utils import (
     solve_scattering_problem,
     load_SD_matrices,
     get_uin,
-    plot_field_for_wave_scattering_experiment,
 )
 from examples.scattering_potentials import (
     q_gaussian_bumps,
@@ -18,7 +17,7 @@ from examples.scattering_potentials import (
     q_luneburg,
     q_vertically_graded,
 )
-# from hps.src.plotting import plot_field_for_wave_scattering_experiment
+from examples.plotting_utils import plot_field_for_wave_scattering_experiment
 
 
 # Silence matplotlib debug messages

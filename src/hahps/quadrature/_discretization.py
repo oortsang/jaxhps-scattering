@@ -42,7 +42,7 @@ def chebyshev_weights(n: int, bounds: jnp.array) -> jnp.array:
     """
     Generates weights for a Chebyshev quadrature rule with n points over the interval [a, b].
 
-    Uses the Clenshaw-Curtis quadrature rule, specifically the version used in Chebfun. See [Chebfun]_.
+    Uses the Clenshaw-Curtis quadrature rule, specifically the version used in Chebfun. See [3]_.
 
     Args:
         n (int): Number of quadrature points

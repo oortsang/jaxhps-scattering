@@ -15,16 +15,25 @@ def local_solve_stage_uniform_2D_DtN(
     """
     This function performs the local solve stage for 2D problems with a uniform quadtree, creating DtN matrices.
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
-        :device: Where to perform the computation. Defaults to jax.devices()[0].
-        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+    device : jax.Device
+        Where to perform the computation. Defaults to ``jax.devices()[0]``.
+    host_device : jax.Device
+        Where to place the output. Defaults to ``jax.devices("cpu")[0]``.
 
-    Returns:
-        :Y: (jax.Array) Solution operators mapping from Dirichlet boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^2, 4q)
-        :T: (jax.Array) Dirichlet-to-Neumann matrices for each leaf. Has shape (n_leaves, 4q, 4q)
-        :v: (jax.Array) Leaf-level particular solutions. Has shape (n_leaves, p^2)
-        :h: (jax.Array) Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 4q)
+    Returns
+    -------
+    Y : jax.Array
+        Solution operators mapping from Dirichlet boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^2, 4q)
+    T : jax.Array
+        Dirichlet-to-Neumann matrices for each leaf. Has shape (n_leaves, 4q, 4q)
+    v : jax.Array
+        Leaf-level particular solutions. Has shape (n_leaves, p^2)
+    h : jax.Array
+        Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 4q)
     """
     logging.debug("local_solve_stage_uniform_2D_DtN: started")
 

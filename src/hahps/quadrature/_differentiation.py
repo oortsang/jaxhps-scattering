@@ -10,7 +10,7 @@ def differentiation_matrix_1D(
     points: jnp.ndarray,
 ) -> jnp.ndarray:
     """
-    Creates a 1-D Chebyshev differentiation matrix as described in [SpectralMATLAB]_ Ch 6.
+    Creates a 1-D Chebyshev differentiation matrix as described in [4]_ Ch 6.
 
     Expects Chebyshev points on the interval [-1, 1].
 

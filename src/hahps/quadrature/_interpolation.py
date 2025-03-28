@@ -16,20 +16,20 @@ EPS = jnp.finfo(jnp.float64).eps
 
 @jax.jit
 def barycentric_lagrange_interpolation_matrix_1D(
-    from_pts: jnp.ndarray, to_pts: jnp.ndarray
-) -> jnp.ndarray:
+    from_pts: jax.Array, to_pts: jax.Array
+) -> jax.Array:
     """
     Generates a Lagrange 1D polynomial interpolation matrix, which interpolates
     from the points in from_pts to the points in to_pts.
 
-    This function uses the barycentric formula for Lagrange interpolation, from [BarycentricLagrange]_
+    This function uses the barycentric formula for Lagrange interpolation, from [1]_
 
     Args:
-        from_pts (jnp.ndarray): Has shape (n,)
-        to_pts (jnp.ndarray): Has shape (p,)
+        from_pts (jax.Array): Has shape (n,)
+        to_pts (jax.Array): Has shape (p,)
 
     Returns:
-        jnp.ndarray: Has shape (p,n)
+        jax.Array: Has shape (p,n)
     """
     p = from_pts.shape[0]
     n = to_pts.shape[0]
@@ -91,22 +91,39 @@ def barycentric_lagrange_interpolation_matrix_1D(
 
 @jax.jit
 def barycentric_lagrange_interpolation_matrix_2D(
-    from_pts_x: jnp.ndarray,
-    from_pts_y: jnp.ndarray,
-    to_pts_x: jnp.ndarray,
-    to_pts_y: jnp.ndarray,
-) -> jnp.ndarray:
+    from_pts_x: jax.Array,
+    from_pts_y: jax.Array,
+    to_pts_x: jax.Array,
+    to_pts_y: jax.Array,
+) -> jax.Array:
     """
-    2D Barycentric Lagrange interpolation matrix.
+    2D Barycentric Lagrange interpolation matrix. A generalization of [1]_,
+    modeled after the MATLAB code snippet [2]_.
+
+    The grid of source points is specified by ``from_pts_x`` and ``from_pts_y``. The
+    resulting matrix has columns ordered to map from samples on this list of points:
+
+    .. code:: python
+
+       source_X, source_Y = jnp.meshgrid(from_pts_x, from_pts_y, indexing="ij")
+       source_pts = jnp.stack((source_X.flatten(), source_Y.flatten()), axis=-1)
+
+    Similarly, the rows are ordered to assume a grid of target points specified by:
+
+    .. code:: python
+
+       target_X, target_Y = jnp.meshgrid(to_pts_x, to_pts_y, indexing="ij")
+       target_pts = jnp.stack((target_X.flatten(), target_Y.flatten()), axis=-1)
+
 
     Args:
-        from_pts_x (jnp.ndarray): Has shape (n_x,)
-        from_pts_y (jnp.ndarray): Has shape (n_y,)
-        to_pts_x (jnp.ndarray): Has shape (p_x,)
-        to_pts_y (jnp.ndarray): Has shape (p_y,)
+        from_pts_x (jax.Array): Has shape (n_x,)
+        from_pts_y (jax.Array): Has shape (n_y,)
+        to_pts_x (jax.Array): Has shape (p_x,)
+        to_pts_y (jax.Array): Has shape (p_y,)
 
     Returns:
-        jnp.ndarray: Has shape (p_x * p_y, n_x * n_y)
+        jax.Array: Has shape (p_x * p_y, n_x * n_y)
     """
     n_x = from_pts_x.shape[0]
     p_x = to_pts_x.shape[0]
@@ -163,26 +180,41 @@ def barycentric_lagrange_interpolation_matrix_2D(
 
 @jax.jit
 def barycentric_lagrange_interpolation_matrix_3D(
-    from_pts_x: jnp.ndarray,
-    from_pts_y: jnp.ndarray,
-    from_pts_z: jnp.ndarray,
-    to_pts_x: jnp.ndarray,
-    to_pts_y: jnp.ndarray,
-    to_pts_z: jnp.ndarray,
-) -> jnp.ndarray:
+    from_pts_x: jax.Array,
+    from_pts_y: jax.Array,
+    from_pts_z: jax.Array,
+    to_pts_x: jax.Array,
+    to_pts_y: jax.Array,
+    to_pts_z: jax.Array,
+) -> jax.Array:
     """
-    3D Barycentric Lagrange interpolation matrix.
+    3D Barycentric Lagrange interpolation matrix. A generalization of [1]_.
+
+    The grid of source points is specified by ``from_pts_x``, ``from_pts_y``, and ``from_pts_z``. The
+    resulting matrix has columns ordered to map from samples on this list of points:
+
+    .. code:: python
+
+       source_X, source_Y, source_Z = jnp.meshgrid(from_pts_x, from_pts_y, from_pts_z indexing="ij")
+       source_pts = jnp.stack((source_X.flatten(), source_Y.flatten(), source_Z.flatten()), axis=-1)
+
+    Similarly, the rows are ordered to assume a grid of target points specified by:
+
+    .. code:: python
+
+       target_X, target_Y, target_Z = jnp.meshgrid(to_pts_x, to_pts_y, to_pts_z, indexing="ij")
+       target_pts = jnp.stack((target_X.flatten(), target_Y.flatten(), target_Z.flatten()), axis=-1)
 
     Args:
-        from_pts_x (jnp.ndarray): Has shape (n_x,)
-        from_pts_y (jnp.ndarray): Has shape (n_y,)
-        from_pts_z (jnp.ndarray): Has shape (n_z,)
-        to_pts_x (jnp.ndarray): Has shape (p_x,)
-        to_pts_y (jnp.ndarray): Has shape (p_y,)
-        to_pts_z (jnp.ndarray): Has shape (p_z,)
+        from_pts_x (jax.Array): Has shape (n_x,)
+        from_pts_y (jax.Array): Has shape (n_y,)
+        from_pts_z (jax.Array): Has shape (n_z,)
+        to_pts_x (jax.Array): Has shape (p_x,)
+        to_pts_y (jax.Array): Has shape (p_y,)
+        to_pts_z (jax.Array): Has shape (p_z,)
 
     Returns:
-        jnp.ndarray: Has shape (p_x * p_y * p_z, n_x * n_y * n_z)
+        jax.Array: Has shape (p_x * p_y * p_z, n_x * n_y * n_z)
     """
 
     n_x = from_pts_x.shape[0]

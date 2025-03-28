@@ -106,17 +106,24 @@ class Domain:
         matrix for each leaf on the HPS grid and maps the values to the leaf discretization points.
 
 
-        Args:
-            values (jax.Array): Has shape (n_x, n_y) or (n_x, n_y, n_z), and specifies the values of the function on the rectangular grid.
+        Parameters
+        ----------
+        values : (jax.Array)
+            Has shape (n_x, n_y) or (n_x, n_y, n_z), and specifies the values of the function on the rectangular grid.
 
-            sample_points_x (jax.Array): Has shape (n_x,). Specifies the x-coordinates of the rectangular grid.
+        sample_points_x : (jax.Array)
+            Has shape (n_x,). Specifies the x-coordinates of the rectangular grid.
 
-            sample_points_y (jax.Array): Has shape (n_y,). Specifies the y-coordinates of the rectangular grid.
+        sample_points_y : (jax.Array)
+            Has shape (n_y,). Specifies the y-coordinates of the rectangular grid.
 
-            sample_points_z (jax.Array, optional): Has shape (n_z,). Specifies the z-coordinates of the rectangular grid. Defaults to None.
+        sample_points_z : (optional, jax.Array)
+            Has shape (n_z,). Specifies the z-coordinates of the rectangular grid. This parameter is optional and should be provided only for 3D cases. Defaults to None.
 
-        Returns:
-            jax.Array: Samples on the HPS grid. Has shape (n_leaves, p^d), where d is the dimension of the problem.
+        Returns
+        -------
+        jax.Array
+            Samples on the HPS grid. Has shape (n_leaves, p^d), where d is the dimension of the problem.
         """
         n_x = sample_points_x.shape[0]
         n_y = sample_points_y.shape[0]
@@ -204,18 +211,24 @@ class Domain:
         from the leaf to that point.
 
 
+        Parameters
+        ----------
+            samples : jax.Array
+                Function sampled on the HPS grid. Has shape (n_leaves, p^d).
 
-        Args:
-            samples (jax.Array): Function sampled on the HPS grid. Has shape (n_leaves, p^d).
+            eval_points_x : jax.Array
+                Evaluation points in the x dimension. Has shape (n_x,).
 
-            eval_points_x (jax.Array): Evaluation points in the x dimension. Has shape (n_x,).
+            eval_points_y : jax.Array
+                Evaluation points in the y dimension. Has shape (n_y,).
 
-            eval_points_y (jax.Array): Evaluation points in the y dimension. Has shape (n_y,).
+            eval_points_z : optional, Jax.Array
+                Evaluation points in the z dimension. Has shape (n_z,). Defaults to None.
 
-            eval_points_z (jax.Array, optional): Evaluation points in the z dimension. Has shape (n_z,). Defaults to None.
-
-        Returns:
-            jax.Array: _description_
+        Returns
+        -------
+        jax.Array
+            Function sampled on a rectangular grid of shape (n_x, n_y) or (n_x, n_y, n_z)
         """
         # 2D vs 3D checking
         if isinstance(self.root, DiscretizationNode2D):
@@ -257,18 +270,22 @@ class Domain:
 
     def get_adaptive_boundary_data_lst(
         self, f: Callable[[jax.Array], jax.Array]
-    ) -> list[jax.Array]:
+    ) -> List[jax.Array]:
         """
         Given a callable object ``f``, this function evaluates the function at the
         boundary discretization points, and organizes the results into a list. This
         is helpful for specifying boundary conditions in the adaptive case,
         where it is not clear a priori how many points will be on each part of the boundary.
 
-        Args:
-            f (Callable[[jax.Array], jax.Array]): Must have signature [..., d] -> [...].
+        Parameters
+        ----------
+            f : Callable[[jax.Array], jax.Array]
+                Must have signature [..., d] -> [...].
 
-        Returns:
-            list[jax.Array]: Each element of the list corresponds to a side (2D) or face (3D) of the boundary.
+        Returns
+        -------
+        List[jax.Array]
+            Each element of the list corresponds to a side (2D) or face (3D) of the boundary.
         """
         if self.bool_2D:
             side_0_pts = self.boundary_points[
