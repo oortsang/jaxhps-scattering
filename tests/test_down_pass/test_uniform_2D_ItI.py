@@ -62,9 +62,7 @@ class Test_down_pass_uniform_2D_ItI:
             eta=eta,
         )
 
-        Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
-            pde_problem=t
-        )
+        Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(pde_problem=t)
 
         assert Y_arr.shape == (n_leaves, p**2, 4 * q)
         # n_leaves, n_bdry, _ = DtN_arr.shape
@@ -108,7 +106,7 @@ class Test_down_pass_uniform_2D_ItI:
         bdry_data = jnp.ones((n_bdry))
         out = down_pass_uniform_2D_ItI(
             boundary_imp_data=bdry_data,
-            S_maps_lst=S_lst,
+            S_lst=S_lst,
             g_tilde_lst=g_tilde_lst,
             Y_arr=None,
             v_arr=None,

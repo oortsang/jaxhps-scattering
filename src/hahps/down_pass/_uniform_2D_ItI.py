@@ -41,9 +41,11 @@ def down_pass_uniform_2D_ItI(
         :solns: (jax.Array) Has shape (n_leaf, p^2). Interior solution at the leaf nodes.
 
     """
-    logging.debug("_down_pass: started")
+    logging.debug(
+        "_down_pass: started. boundary_imp_data shape: %s", boundary_imp_data.shape
+    )
 
-    boundary_imp_data = jax.device_put(boundary_imp_data, device)
+    bdry_data = jax.device_put(boundary_imp_data, device)
     Y_arr = jax.device_put(Y_arr, device)
     v_arr = jax.device_put(v_arr, device)
     S_lst = [jax.device_put(S_arr, device) for S_arr in S_lst]
@@ -52,7 +54,8 @@ def down_pass_uniform_2D_ItI(
     n_levels = len(S_lst)
 
     # Reshape to (1, n_bdry)
-    bdry_data = jnp.expand_dims(boundary_imp_data, axis=0)
+    if len(bdry_data.shape) == 1:
+        bdry_data = jnp.expand_dims(bdry_data, axis=0)
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
         S_arr = S_lst[level]

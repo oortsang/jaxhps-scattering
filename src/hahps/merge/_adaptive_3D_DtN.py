@@ -82,11 +82,6 @@ def merge_stage_adaptive_3D_DtN(
     T_lowest_level = jax.device_put(T_lowest_level, device)
     h_lowest_level = jax.device_put(h_lowest_level, device)
 
-    logging.debug(
-        "merge_stage_adaptive_3D_DtN: After exiting, T_lowest_level.shape = %s",
-        T_lowest_level.shape,
-    )
-
     # Vmapped code works on the lowest level
     S, T, h, g_tilde = vmapped_uniform_oct_merge_DtN(
         q_idxes, T_lowest_level, h_lowest_level
@@ -104,7 +99,6 @@ def merge_stage_adaptive_3D_DtN(
         if parent.data.T is not None:
             # Filter out the leaves at this level; they already have DtN matrices
             continue
-        logging.debug("Filling parent= %s", parent)
         parent.data.T = T[counter]
         parent.data.h = h[counter]
         parent.data.S = S[counter]
@@ -112,43 +106,20 @@ def merge_stage_adaptive_3D_DtN(
         counter += 1
         D_shape = parent.data.S.shape[0]
 
-    logging.debug(
-        "merge_stage_adaptive_3D_DtN: After exiting, counter = %s", counter
-    )
-
     # Perform a merge operation for each level of the tree. Start at the leaves
     # and continue until the root.
     # For comments, suppose the for loop is in iteration j.
     for j, i in enumerate(range(max_depth - 2, -1, -1)):
         # logging.debug("_build_stage_3D: j = %s, i = %s", j, i)
 
-        logging.debug("merge_stage_adaptive_3D_DtN: i= %s", i)
-
         # Get the inpute to the merge operation from the tree.
         nodes_this_level = get_nodes_at_level(root, i)
 
-        logging.debug(
-            "merge_stage_adaptive_3D_DtN: len(nodes_this_level) = %s",
-            len(nodes_this_level),
-        )
-
         # Filter out the nodes which are leaves.
-        nodes_this_level = [
-            node for node in nodes_this_level if len(node.children)
-        ]
-        logging.debug(
-            "merge_stage_adaptive_3D_DtN: len(nodes_this_level) = %s",
-            len(nodes_this_level),
-        )
+        nodes_this_level = [node for node in nodes_this_level if len(node.children)]
 
         # Filter out the nodes which have DtN arrays already set
-        nodes_this_level = [
-            node for node in nodes_this_level if node.data.T is None
-        ]
-        logging.debug(
-            "merge_stage_adaptive_3D_DtN: len(nodes_this_level) = %s",
-            len(nodes_this_level),
-        )
+        nodes_this_level = [node for node in nodes_this_level if node.data.T is None]
 
         # The leaves in need of refinement are those who have more children than the min number
         # of children among siblings
@@ -419,10 +390,6 @@ def oct_merge_nonuniform_whole_level(
         v_prime_ext_lst: Boundary particular fluxes. Has length (m // 8).
         v_lst: Particular solutions evaluated on the merge interfaces. Has length (m // 8).
     """
-    logging.debug(
-        "oct_merge_nonuniform_whole_level: len(nodes_this_level) = %s",
-        len(nodes_this_level),
-    )
 
     # Set L_2f1 and L_1f2 in all of the Nodes
     for node in nodes_this_level:
@@ -461,9 +428,7 @@ def node_to_oct_merge_outputs(
     """
 
     # Print index and type of each entry in data_lst
-    node_a, node_b, node_c, node_d, node_e, node_f, node_g, node_h = (
-        node.children
-    )
+    node_a, node_b, node_c, node_d, node_e, node_f, node_g, node_h = node.children
 
     side_lens_a = jnp.array(
         [

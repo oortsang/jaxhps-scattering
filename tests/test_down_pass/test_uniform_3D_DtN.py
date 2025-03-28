@@ -40,22 +40,22 @@ class Test_down_pass_uniform_3D_DtN:
         d_xx_coeffs = np.random.normal(size=(n_leaves, p**3))
         source_term = np.random.normal(size=(n_leaves, p**3))
 
-        t = PDEProblem(
-            domain=domain, D_xx_coefficients=d_xx_coeffs, source=source_term
-        )
+        t = PDEProblem(domain=domain, D_xx_coefficients=d_xx_coeffs, source=source_term)
 
         Y_arr, T_arr, v, h = local_solve_stage_uniform_3D_DtN(t)
         assert Y_arr.shape == (n_leaves, p**3, 6 * q**2)
 
-        S_arr_lst, g_tilde_lst = merge_stage_uniform_3D_DtN(
-            T_arr=T_arr, h_arr=h, l=l
-        )
+        S_arr_lst, g_tilde_lst = merge_stage_uniform_3D_DtN(T_arr=T_arr, h_arr=h, l=l)
+
+        logging.debug("test_0: S_arr_lst[-1] shape: %s", S_arr_lst[-1].shape)
 
         boundary_data = jnp.ones_like(t.domain.boundary_points[..., 0])
 
+        logging.debug("test_0:bdry_data shape: %s", boundary_data.shape)
+
         solns = down_pass_uniform_3D_DtN(
             boundary_data=boundary_data,
-            S_maps_lst=S_arr_lst,
+            S_lst=S_arr_lst,
             g_tilde_lst=g_tilde_lst,
             Y_arr=Y_arr,
             v_arr=v,

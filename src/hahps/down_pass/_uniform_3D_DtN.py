@@ -10,7 +10,7 @@ from .._device_config import DEVICE_ARR, HOST_DEVICE
 
 def down_pass_uniform_3D_DtN(
     boundary_data: jax.Array,
-    S_maps_lst: List[jax.Array],
+    S_lst: List[jax.Array],
     g_tilde_lst: List[jax.Array],
     Y_arr: jax.Array,
     v_arr: jax.Array,
@@ -45,20 +45,29 @@ def down_pass_uniform_3D_DtN(
     boundary_data = jax.device_put(boundary_data, device)
     Y_arr = jax.device_put(Y_arr, device)
     v_arr = jax.device_put(v_arr, device)
-    S_maps_lst = [jax.device_put(S_arr, device) for S_arr in S_maps_lst]
+    S_lst = [jax.device_put(S_arr, device) for S_arr in S_lst]
     g_tilde_lst = [jax.device_put(g_tilde, device) for g_tilde in g_tilde_lst]
 
-    n_levels = len(S_maps_lst)
-    bdry_data = jnp.expand_dims(boundary_data, axis=0)
+    n_levels = len(S_lst)
 
-    # Change the last entry of the S_maps_lst and v_int_lst to have batch dimension 1
-    S_maps_lst[-1] = jnp.expand_dims(S_maps_lst[-1], axis=0)
+    if len(boundary_data.shape) == 1:
+        bdry_data = jnp.expand_dims(boundary_data, axis=0)
+    else:
+        bdry_data = boundary_data
+
+    # Change the last entry of the S_lst and v_int_lst to have batch dimension 1
+    S_lst[-1] = jnp.expand_dims(S_lst[-1], axis=0)
     g_tilde_lst[-1] = jnp.expand_dims(g_tilde_lst[-1], axis=0)
 
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
-        S_arr = S_maps_lst[level]
+        S_arr = S_lst[level]
         g_tilde = g_tilde_lst[level]
+
+        logging.debug("down_pass_uniform_3D_DtN: levele: %s", level)
+        logging.debug("down_pass_uniform_3D_DtN: bdry_data shape: %s", bdry_data.shape)
+        logging.debug("down_pass_uniform_3D_DtN: S_arr shape: %s", S_arr.shape)
+        logging.debug("down_pass_uniform_3D_DtN: g_tilde shape: %s", g_tilde.shape)
 
         bdry_data = vmapped_propogate_down_oct_DtN(S_arr, bdry_data, g_tilde)
         # Reshape from (-1, 4, n_bdry) to (-1, n_bdry)

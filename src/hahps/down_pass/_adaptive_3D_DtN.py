@@ -1,7 +1,6 @@
 import jax
 import jax.numpy as jnp
 from typing import List, Tuple
-import logging
 from .._discretization_tree import (
     get_depth,
     get_nodes_at_level,
@@ -50,23 +49,9 @@ def down_pass_adaptive_3D_DtN(
             # print("_down_pass_3D: working on node i=", i)
 
             if len(node.children):
-                logging.debug(
-                    "down_pass_adaptive_3D_DtN: working on node i=%s", node
-                )
+
                 S = node.data.S
                 g_tilde = node.data.g_tilde
-                logging.debug(
-                    "down_pass_adaptive_3D_DtN: S shape: %s", S.shape
-                )
-                logging.debug(
-                    "down_pass_adaptive_3D_DtN: bdry_data shapes: %s, %s",
-                    [b.shape for b in bdry_data],
-                    jnp.sum(jnp.array([b.shape for b in bdry_data])),
-                )
-                logging.debug(
-                    "down_pass_adaptive_3D_DtN: g_tilde shape: %s",
-                    g_tilde.shape,
-                )
 
                 # print("_down_pass_3D: calling _propagate_down_oct")
                 # print(

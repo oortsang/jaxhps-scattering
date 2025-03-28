@@ -54,7 +54,7 @@ class Test_down_pass_uniform_2D_DtN:
 
         leaf_solns = down_pass_uniform_2D_DtN(
             boundary_data=boundary_data,
-            S_maps_lst=S_arr_lst,
+            S_lst=S_arr_lst,
             g_tilde_lst=g_tilde_lst,
             Y_arr=Y_arr,
             v_arr=v_arr,
@@ -83,7 +83,7 @@ class Test_down_pass_uniform_2D_DtN:
         bdry_data = jnp.ones((n_bdry))
         out = down_pass_uniform_2D_DtN(
             boundary_data=bdry_data,
-            S_maps_lst=S_lst,
+            S_lst=S_lst,
             g_tilde_lst=g_tilde_lst,
             Y_arr=None,
             v_arr=None,
@@ -120,19 +120,11 @@ class Test__propagate_down_2D_DtN:
         # Check the interfaces match up
 
         # Edge 5
-        assert jnp.allclose(
-            g_a[n_child : 2 * n_child], jnp.flipud(g_b[3 * n_child :])
-        )
+        assert jnp.allclose(g_a[n_child : 2 * n_child], jnp.flipud(g_b[3 * n_child :]))
         # Edge 6
-        assert jnp.allclose(
-            g_b[2 * n_child : 3 * n_child], jnp.flipud(g_c[:n_child])
-        )
+        assert jnp.allclose(g_b[2 * n_child : 3 * n_child], jnp.flipud(g_c[:n_child]))
         # Edge 7
-        assert jnp.allclose(
-            g_c[3 * n_child :], jnp.flipud(g_d[n_child : 2 * n_child])
-        )
+        assert jnp.allclose(g_c[3 * n_child :], jnp.flipud(g_d[n_child : 2 * n_child]))
         # Edge 8
-        assert jnp.allclose(
-            g_d[:n_child], jnp.flipud(g_a[2 * n_child : 3 * n_child])
-        )
+        assert jnp.allclose(g_d[:n_child], jnp.flipud(g_a[2 * n_child : 3 * n_child]))
         jax.clear_caches()

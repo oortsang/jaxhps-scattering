@@ -1,101 +1,73 @@
 # ha-hps
-Hardware Acceleration for HPS Methods in Two and Three Dimensions
+A JAX package implementing hardware acceleration for HPS methods in two and three dimensions.
 
-## How to use this repository:
-Set up the environment with conda:
-```
-conda create --name ha-hps python=3.10 --file env.yaml
-conda activate ha-hps
-```
+See our preprint on arXiv: [Hardware Acceleration for HPS Methods in Two and Three Dimensions](https://arxiv.org/abs/2503.17535)
 
-Then, if you'd like, you can run the tests to make sure that everything is setup correctly:
+## Installation
+
+Currently, installation from GitHub: 
+
 ```
-python -m pytest hps/test/ -v
+pip install git+https://github.com/meliao/ha-hps.git
 ```
 
-
-## Usage
-
-We can solve sample 2D problems very quickly. Here is a sample command to run a timing script. This command takes 2 time samples for a problem with `L=8` levels of uniform refinement, using `p=16` Chebyshev nodes in each dimension on the leaves. The `--recomputation Ours` option runs the optimized code which either executes everything on the GPU or uses our recomputation strategy to minimize data transfers between the GPU and host. 
+Requirements are:
 ```
-python driver_time_solver.py \
--n_samples 2 \
--l 8 \
--p 16 \
--out_fp data/large_problem_instance.mat \
---recomputation Ours
+jax
+matplotlib
+scipy
 ```
 
-## Experiments
+## Documentation
 
-### H-P Convergence for 2D Problems
 
-This experiment measures the accuracy of our solver on two different 2D problems, one which is solved using DtN matrices and the other which is solved using ItI matrices. 
 
-To run the experiment,
-```
-python hp_convergence_example.py --l_vals 1 2 3 4 5 6 --p_vals 4 8 12 16 --DtN --ItI
-```
-To plot the experiment, 
-```
-plot_hp_convergence_experiment.py
-```
+## Examples
 
-### Wave Scattering Self-Convergence
 
-![Showing the total wave field of a scattering problem where k=100 and the scattering potential is a sum of randomly-placed Gaussian bumps.](.github/assets/k_100_gauss_bumps_utot_ground_truth_real.svg)
+### hp convergence on 2D problems with known solutions
 
-This experiment measures the self-convergence of our HPS solver on a variable-medium wave scattering problem with 33 or 66 wavelengths across the computational domain.
-
-This experiment can be reproduced by:
-
-1. Run the matlab script `exterior_bie_matlab_scripts/loop_gen_SD.m` to generate single- and double-layer potential matrices for different discretization sizes.
-2. Compute and save a reference solution by running:
+Shows convergence using uniform quadtrees using both DtN matrices and ItI matrices.
 ```
-sh scripts/wave_scattering_compute_reference_solns.sh
-```
-3. On a system with a GPU, measure the timing and accuracy by running:
-```
-sh scripts/wave_scattering_compute_approx_solns_gauss_bumps.sh
-sh scripts/wave_scattering_compute_approx_solns_GBM_1.sh
-```
-4. Plot results by running
-```
-python wave_scattering_plot_results.py --prefix k100_soln -k 100
-python wave_scattering_plot_results.py --prefix k200_soln -k 200
+python examples/hp_convergence_2D_problems.py --DtN --ItI
 ```
 
-### Inverse Wave Scattering Example
+### High-wavenumber scattering problem
 
-![Residuals of the inverse scattering objective function.](.github/assets/inverse_scattering_residuals.svg)
+First, run the matlab script `examples/driver_gen_SD_matrices.m`. This will generate and save exterior single and double-layer kernel matrices. These matrices are necessary to define a boundary integral equation for the scattering problem.
+Once in place, we can run the script:
+```
+python examples/wave_scattering_compute_reference_soln.py --scattering_potential gauss_bumps -k 100 --plot_utot
+```
+This will generate plots which looks like this, showing the scattering potential and real part and modulus of the total field: 
 
-This experiment uses automatic differentiation to solve an inverse medium scattering problem. To run the experiment:
+![Showing the scattering potential, a sum of randomly-placed Gaussian bumps.](.github/assets/k_100_gauss_bumps_q.svg)
+![Showing the real part of the total wave field of a scattering problem where k=100 and the scattering potential is a sum of randomly-placed Gaussian bumps.](.github/assets/k_100_gauss_bumps_utot_ground_truth_real.svg)
+![Showing the absolute value of the total wave field of a scattering problem where k=100 and the scattering potential is a sum of randomly-placed Gaussian bumps.](.github/assets/k_100_gauss_bumps_utot_ground_truth_abs.svg)
+
+
+### Adaptive discretization on a 3D problem with known solution
+
+We have a script for generating adaptive discretizations on the wavefront problem presented in our paper:
+
 ```
-python inverse_wave_scattering_example.py --n_iter 20
-```
-And then to generate plots: 
-```
-python plot_inverse_wave_scattering_example.py
+python examples/wavefront_adaptive_discretization_3D.py -p 10 --tol 1e-02 1e-05
 ```
 
-### Linearized Poisson-Boltzmann Equation
+This should produce an image showing the computed solution, generated grid, and error map:
 
-![Showing a 2D slice of the permittivity in the linearized Poisson-Boltzmann model, overlaid with the adaptive grid computed by our method.](.github/assets/poisson_boltzmann_permittivity_with_adaptive_grid.svg)
+![Showing the computed solution, the adaptive grid, and the errors on a 2D slice of our 3D wavefont probelm.](.github/assets/wavefront_soln_tol_1e-05.svg)
 
-To compute adaptive discretizations and solutions for the linearized Poisson-Boltzmann example, run the scripts in `scripts/poisson_boltzmann_example_*`. There are different scripts for different Chebyshev polynomial orders, and different versions of the permittivity function. 
 
-### 3D Wave Front Problem
-This experiment compares errors and runtimes for a 3D problem with an analytical solution that has a local region of non-smoothness. This is the type of experiment that we expect adaptive grid refinement to help a lot on.
+### Inverse wave scattering using automatic differentiation
 
-This experiment can be reproduced by:
-1. On a system with a GPU, run the adaptive 3D problem driver for adaptive and uniform meshing:
+We have an implementation of a low-dimensional optimization problem using automatic differentiation:
+
 ```
-sh scripts/wave_front_3D_adaptive_p_8.sh
-sh scripts/wave_front_3D_adaptive_p_12.sh
-sh scripts/wave_front_3D_adaptive_p_16.sh
-sh scripts/wave_front_3D_uniform.sh
+python examples/inverse_wave_scattering.py --n_iter 20
 ```
-2. Run the plotting code 
-```
-python plot_adaptive_meshing_accuracy_3D.py
-```
+
+This is an inverse scattering problem where we try to recover the locations of four Gaussian bumps which make up the scattering potential. Running the code should produce plots showing the optimization variables converging at the centers of the Gaussian bumps in the scattering potential, as well as a plot showing the convergence of the objective function:
+
+![Showing the convergence of the objective function in our inverse scattering example.](.github/assets/inverse_scattering_residuals.svg)
+![Showing the convergence of the iterates to the centers of the Gaussian bumps.](.github/assets/inverse_scattering_iterates.svg)

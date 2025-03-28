@@ -15,7 +15,9 @@ import numpy as np
 from functools import partial
 
 
-@partial(jax.jit, static_argnums=(1, 2))
+# Putting this under jit compilation raises a tracer leak error when using the
+# adaptive discretization routines.
+# @partial(jax.jit, static_argnums=(1, 2))
 def compute_interior_Chebyshev_points_uniform_2D(
     root: DiscretizationNode2D, L: int, p: int
 ) -> jax.Array:
@@ -78,12 +80,8 @@ def compute_boundary_Gauss_points_uniform_2D(
     gauss_pts_1d = gauss_points(q)
     n_patches_across_side = 2**L
 
-    x_breakpoints = jnp.linspace(
-        root.xmin, root.xmax, n_patches_across_side + 1
-    )
-    y_breakpoints = jnp.linspace(
-        root.ymin, root.ymax, n_patches_across_side + 1
-    )
+    x_breakpoints = jnp.linspace(root.xmin, root.xmax, n_patches_across_side + 1)
+    y_breakpoints = jnp.linspace(root.ymin, root.ymax, n_patches_across_side + 1)
 
     x_gauss_nodes = jnp.concatenate(
         [
@@ -150,28 +148,16 @@ def compute_boundary_Gauss_points_adaptive_2D(
     north = root.ymax
 
     south_gauss_nodes = jnp.concatenate(
-        [
-            affine_transform(gauss_pts_1d, [node.xmin, node.xmax])
-            for node in corners[0]
-        ]
+        [affine_transform(gauss_pts_1d, [node.xmin, node.xmax]) for node in corners[0]]
     )
     east_gauss_nodes = jnp.concatenate(
-        [
-            affine_transform(gauss_pts_1d, [node.ymin, node.ymax])
-            for node in corners[1]
-        ]
+        [affine_transform(gauss_pts_1d, [node.ymin, node.ymax]) for node in corners[1]]
     )
     north_gauss_nodes = jnp.concatenate(
-        [
-            affine_transform(gauss_pts_1d, [node.xmax, node.xmin])
-            for node in corners[2]
-        ]
+        [affine_transform(gauss_pts_1d, [node.xmax, node.xmin]) for node in corners[2]]
     )
     west_gauss_nodes = jnp.concatenate(
-        [
-            affine_transform(gauss_pts_1d, [node.ymax, node.ymin])
-            for node in corners[3]
-        ]
+        [affine_transform(gauss_pts_1d, [node.ymax, node.ymin]) for node in corners[3]]
     )
     gauss_nodes = jnp.concatenate(
         [
@@ -240,7 +226,6 @@ def get_all_uniform_leaves_2D(
         bounds = vmapped_bounds_2D(bounds).reshape(-1, 4)
 
     node_lst = [
-        DiscretizationNode2D(xmin=x[0], xmax=x[1], ymin=x[2], ymax=x[3])
-        for x in bounds
+        DiscretizationNode2D(xmin=x[0], xmax=x[1], ymin=x[2], ymax=x[3]) for x in bounds
     ]
     return node_lst

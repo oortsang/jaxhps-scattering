@@ -43,9 +43,7 @@ def solve(
         # pass to a different function.
         return _adaptive_solve(
             pde_problem=pde_problem,
-            boundary_data=boundary_data,
-            compute_device=compute_device,
-            host_device=host_device,
+            boundary_data_lst=boundary_data,
         )
 
     if isinstance(boundary_data, list):
@@ -86,6 +84,4 @@ def _adaptive_solve(
     else:
         down_pass_fn = down_pass_adaptive_3D_DtN
 
-    return down_pass_fn(
-        pde_problem=pde_problem, boundary_data=boundary_data_lst
-    )
+    return down_pass_fn(pde_problem=pde_problem, boundary_data=boundary_data_lst)

@@ -3,7 +3,6 @@ from ._discretization_tree import DiscretizationNode2D
 import jax.numpy as jnp
 import jax
 
-import logging
 
 
 @jax.jit
@@ -64,12 +63,12 @@ def add_four_children(
         root (Node, optional): The root of the tree. Specified if we want to count number of quadrature points along node boundaries. Defaults to None.
         q (int, optional): Number of quadrature points along the boundary of leaves of the tree. Specified if we want to count number of quadrature points along node boundaries. Defaults to None.
     """
-    logging.debug(
-        "add_four_children: Called with add_to=%s, root=%s, q=%s",
-        add_to,
-        root,
-        q,
-    )
+    # logging.debug(
+    #     "add_four_children: Called with add_to=%s, root=%s, q=%s",
+    #     add_to,
+    #     root,
+    #     q,
+    # )
     if len(add_to.children) == 0:
         children = get_four_children(add_to)
         add_to.children = children
@@ -92,8 +91,7 @@ def add_four_children(
             # if the root is not the same as add_to.
             if not tree_equal(add_to, root):
                 path_info = find_path_from_root_2D(root, add_to)
-                for node, _ in path_info:
-                    logging.debug("Trying to update node=%s", node)
+                for node in path_info:
                     # If they share a boundary, then we need to update the number of quadrature points.
                     if node.ymin == add_to.ymin:
                         node.n_0 += q
@@ -111,7 +109,7 @@ def add_four_children(
 def find_path_from_root_2D(
     root: DiscretizationNode2D,
     node: DiscretizationNode2D,
-) -> List[Tuple[DiscretizationNode2D, int]]:
+) -> List[DiscretizationNode2D]:
     """Find the path from the root to the node in a 2D tree.
 
     Args:
@@ -119,8 +117,7 @@ def find_path_from_root_2D(
         node (Node): The node who is being searched for.
 
     Returns:
-        List[Tuple[Node, int]]: A list of tuples, which provides a traversal from the root to the node.
-        Each element
+        List[Tuple[Node, int]]: A list of nodes, which provides a traversal from the root to the node.
     """
     if root.children == ():
         raise ValueError("Specified root has no children.")
@@ -128,7 +125,7 @@ def find_path_from_root_2D(
     for i, child in enumerate(root.children):
         if tree_equal(child, node):
             return [
-                (root, i),
+                root,
             ]
 
     # Find which child we need to continue searching in.
@@ -139,18 +136,18 @@ def find_path_from_root_2D(
         # Either child 0 or 3
         if node.ymin < root_ymid:
             # Child 0
-            return [(root, 0)] + find_path_from_root_2D(root.children[0], node)
+            return [root] + find_path_from_root_2D(root.children[0], node)
         else:
             # Child 3
-            return [(root, 3)] + find_path_from_root_2D(root.children[3], node)
+            return [root] + find_path_from_root_2D(root.children[3], node)
     else:
         # Either child 1 or 2
         if node.ymin < root_ymid:
             # Child 1
-            return [(root, 1)] + find_path_from_root_2D(root.children[1], node)
+            return [root] + find_path_from_root_2D(root.children[1], node)
         else:
             # Child 2
-            return [(root, 2)] + find_path_from_root_2D(root.children[2], node)
+            return [root] + find_path_from_root_2D(root.children[2], node)
 
 
 def get_ordered_lst_of_boundary_nodes(
@@ -353,9 +350,7 @@ def node_at(
 
 
 @jax.jit
-def tree_equal(
-    node_a: DiscretizationNode2D, node_b: DiscretizationNode2D
-) -> bool:
+def tree_equal(node_a: DiscretizationNode2D, node_b: DiscretizationNode2D) -> bool:
     """Checks equality between the metadata of two nodes."""
     _, a = jax.tree_util.tree_flatten(node_a)
     _, b = jax.tree_util.tree_flatten(node_b)

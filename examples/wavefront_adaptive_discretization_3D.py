@@ -18,7 +18,7 @@ from hahps import (
     DEVICE_ARR,
     get_all_leaves,
 )
-from examples.wavefront_data import (
+from wavefront_data import (
     wavefront_soln,
     d_xx_wavefront_soln,
     d_yy_wavefront_soln,
@@ -34,9 +34,7 @@ logging.getLogger("jax").setLevel(logging.WARNING)
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument(
-        "--plot_dir", type=str, default="data/adaptive_meshing_3D"
-    )
+
     parser.add_argument(
         "--tol", type=float, nargs="+", default=[1e-02, 1e-04, 1e-06, 1e-08]
     )
@@ -63,13 +61,14 @@ ZMAX = 1.0
 
 def plot_diffs(
     u_computed: jnp.array,
+    root: DiscretizationNode3D,
     eval_pts: jnp.array,
     plot_fp: str,
 ) -> None:
     TITLESIZE = 20
 
     # Make a figure with 3 panels. First col is computed u, second col is expected u, third col is the absolute error
-    fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 
     #############################################################
     # First column: Computed u
@@ -77,25 +76,45 @@ def plot_diffs(
     u_expected = wavefront_soln(eval_pts)
     extent = [YMIN, YMAX, ZMIN, ZMAX]
 
+    u_computed = u_computed.squeeze(2)
+    u_expected = u_expected.squeeze(2)
+
+    logging.debug(
+        "plot_diffs: u_computed shape = %s, u_expected shape = %s",
+        u_computed.shape,
+        u_expected.shape,
+    )
+
     im_0 = ax[0].imshow(u_computed, cmap="plasma", extent=extent)
     plt.colorbar(im_0, ax=ax[0])
-    ax[0, 0].set_title("Computed $u$", fontsize=TITLESIZE)
-    ax[0, 0].set_xlabel("x", fontsize=TITLESIZE)
-    ax[0, 0].set_ylabel("y", fontsize=TITLESIZE)
+    ax[0].set_title("Computed $u$", fontsize=TITLESIZE)
+    ax[0].set_xlabel("$x_1$", fontsize=TITLESIZE)
+    ax[0].set_ylabel("$x_2$", fontsize=TITLESIZE)
 
-    im_1 = ax[1].imshow(u_expected, cmap="plasma", extent=extent)
-    plt.colorbar(im_1, ax=ax[1])
-    ax[1].set_title("Expected $u$", fontsize=TITLESIZE)
-    ax[1].set_xlabel("x", fontsize=TITLESIZE)
-    ax[1].set_ylabel("y", fontsize=TITLESIZE)
-
-    im_2 = ax[2].imshow(
-        np.abs(u_computed - u_expected), cmap="hot", extent=extent
+    #############################################################
+    # Find all nodes that intersect z=0 and plot them.
+    leaves = get_all_leaves(root)
+    leaves_intersect_zero = [l for l in leaves if l.zmin <= 0 and l.zmax >= 0]
+    logging.debug(
+        "plot_diffs: Found %s leaves intersecting z=0", len(leaves_intersect_zero)
     )
-    plt.colorbar(im_2, ax=ax[2])
-    ax[2].set_title("Absolute Error", fontsize=TITLESIZE)
-    ax[2].set_xlabel("x", fontsize=TITLESIZE)
-    ax[2].set_ylabel("y", fontsize=TITLESIZE)
+
+    for l in leaves_intersect_zero:
+        x = [l.xmin, l.xmax, l.xmax, l.xmin, l.xmin]
+        y = [l.ymin, l.ymin, l.ymax, l.ymax, l.ymin]
+        ax[0].plot(x, y, "-", color="gray", linewidth=1)
+
+    # im_1 = ax[1].imshow(u_expected, cmap="plasma", extent=extent)
+    # plt.colorbar(im_1, ax=ax[1])
+    # ax[1].set_title("Expected $u$", fontsize=TITLESIZE)
+    # ax[1].set_xlabel("x", fontsize=TITLESIZE)
+    # ax[1].set_ylabel("y", fontsize=TITLESIZE)
+
+    im_2 = ax[1].imshow(np.abs(u_computed - u_expected), cmap="hot", extent=extent)
+    plt.colorbar(im_2, ax=ax[1])
+    ax[1].set_title("Absolute Error", fontsize=TITLESIZE)
+    ax[1].set_xlabel("$x_1$", fontsize=TITLESIZE)
+    ax[1].set_ylabel("$x_2$", fontsize=TITLESIZE)
 
     fig.tight_layout()
 
@@ -105,11 +124,7 @@ def plot_diffs(
 
 
 def source(x: jnp.array) -> jnp.array:
-    lap_u = (
-        d_xx_wavefront_soln(x)
-        + d_yy_wavefront_soln(x)
-        + d_zz_wavefront_soln(x)
-    )
+    lap_u = d_xx_wavefront_soln(x) + d_yy_wavefront_soln(x) + d_zz_wavefront_soln(x)
     return lap_u
 
 
@@ -194,7 +209,7 @@ def hp_convergence_study() -> None:
         #############################################################
         # Plot the solution
 
-        plot_fp = os.path.join(args.plot_dir, f"hp_soln_l_{l}_p_{args.p}.png")
+        plot_fp = os.path.join(args.plot_dir, f"hp_soln_l_{l}_p_{args.p}.pdf")
         plot_diffs(
             u_computed=u_reg,
             eval_pts=pts,
@@ -203,7 +218,7 @@ def hp_convergence_study() -> None:
 
 
 def adaptive_small_ex_for_jit() -> None:
-    logging.info("Doing a small example for jitted computation")
+    logging.info("Doing a small example to JIT compile the code")
     root = DiscretizationNode3D(
         xmin=XMIN,
         xmax=XMAX,
@@ -238,7 +253,7 @@ def adaptive_small_ex_for_jit() -> None:
 
 
 def uniform_small_ex_for_jit() -> None:
-    logging.info("Doing a small example for jitted computation")
+    logging.info("Doing a small to JIT compile code")
     root = DiscretizationNode3D(
         xmin=XMIN,
         xmax=XMAX,
@@ -275,14 +290,13 @@ def adaptive_convergence_study() -> None:
     # Do adaptive refinement by looping over tol values
     n_tol_vals = len(args.tol)
     linf_error_vals = jnp.zeros((n_tol_vals,), dtype=jnp.float64)
-    l2_error_vals = jnp.zeros((n_tol_vals,), dtype=jnp.float64)
     mesh_times = jnp.zeros((n_tol_vals,), dtype=jnp.float64)
     build_times = jnp.zeros((n_tol_vals,), dtype=jnp.float64)
     down_pass_times = jnp.zeros((n_tol_vals,), dtype=jnp.float64)
     n_leaves = jnp.zeros((n_tol_vals,))
     max_depths = jnp.zeros((n_tol_vals,))
 
-    nrm_str = "l2" if args.l2 else "linf"
+    nrm_str = "linf"
 
     for i, tol in enumerate(args.tol):
         root = DiscretizationNode3D(
@@ -320,9 +334,7 @@ def adaptive_convergence_study() -> None:
         )
 
         # Plot a histogram of the side lengths of the leaves
-        plot_fp = os.path.join(
-            args.plot_dir, f"adaptive_mesh_hist_tol_{tol}.png"
-        )
+        plot_fp = os.path.join(args.plot_dir, f"adaptive_mesh_hist_tol_{tol}.pdf")
 
         #############################################################
         # Do a PDE Solve
@@ -356,6 +368,10 @@ def adaptive_convergence_study() -> None:
         logging.info("Down pass in %f sec", t_down)
         down_pass_times = down_pass_times.at[i].set(t_down)
 
+        logging.debug(
+            "adaptive_convergence_study: computed_soln shape: %s", computed_soln.shape
+        )
+
         #############################################################
         # Compute the error
         expected_soln = wavefront_soln(domain.interior_points)
@@ -370,29 +386,31 @@ def adaptive_convergence_study() -> None:
         # Interpolate to a uniform grid
 
         x = jnp.linspace(XMIN, XMAX, args.n)
-        y = jnp.linspace(YMIN, YMAX, args.n)
+        y = jnp.flipud(jnp.linspace(YMIN, YMAX, args.n))
 
-        u_reg = domain.interp_from_interior_points(
+        u_reg, pts = domain.interp_from_interior_points(
             samples=computed_soln,
             eval_points_x=x,
             eval_points_y=y,
             eval_points_z=jnp.array([0.0]),
         )
-        # Construct the eval pts
-        X, Y = jnp.meshgrid(x, y, indexing="ij")
-        pts = jnp.stack([X, Y, jnp.zeros_like(X)], axis=-1)  # Shape (n,n,3)
+        # # Construct the eval pts
+        # X, Y = jnp.meshgrid(x, y, indexing="ij")
+        # pts = jnp.stack([X, Y, jnp.zeros_like(X)], axis=-1)  # Shape (n,n,3)
+
+        logging.debug("adaptive_convergence_study: u_reg shape: %s", u_reg.shape)
+        logging.debug("adaptive_convergence_study: pts shape: %s", pts.shape)
 
         #############################################################
         # Plot the solution
 
-        plot_fp = os.path.join(args.plot_dir, f"soln_tol_{tol}.png")
-        plot_diffs(u_reg, pts, plot_fp)
+        plot_fp = os.path.join(args.plot_dir, f"soln_tol_{tol}.pdf")
+        plot_diffs(u_reg, domain.root, pts, plot_fp)
 
     #############################################################
     # Plot accuracy vs tol
-    error_fp = os.path.join(args.plot_dir, "adaptive_error_vs_tol.png")
+    error_fp = os.path.join(args.plot_dir, "adaptive_error_vs_tol.pdf")
     plt.plot(args.tol, linf_error_vals, "-o", label="L_inf error")
-    plt.plot(args.tol, l2_error_vals, "-o", label="L_2 error")
 
     # Plot x = y line
     plt.plot(args.tol, args.tol, "--", label="x=y")
@@ -407,14 +425,11 @@ def adaptive_convergence_study() -> None:
 
     #############################################################
     # Save data
-    save_fp = os.path.join(
-        args.plot_dir, f"adaptive_data_{nrm_str}_p_{args.p}.mat"
-    )
+    save_fp = os.path.join(args.plot_dir, f"adaptive_data_{nrm_str}_p_{args.p}.mat")
 
     out_dd = {
         "tol": args.tol,
         "linf_errors": linf_error_vals,
-        "l2_errors": l2_error_vals,
         "n_leaves": n_leaves,
         "max_depths": max_depths,
         "mesh_times": mesh_times,
@@ -429,22 +444,19 @@ def main(args: argparse.Namespace) -> None:
     logging.info("Compute device: %s", DEVICE_ARR[0])
     ############################################################
     # Set up output directory
-    args.plot_dir = os.path.join("data", "adaptive_meshing_3D", f"p_{args.p}")
+    args.plot_dir = os.path.join(
+        "data", "examples", "adaptive_meshing_3D", f"p_{args.p}"
+    )
     os.makedirs(args.plot_dir, exist_ok=True)
+    logging.info("Saving outputs to %s", args.plot_dir)
+
     ############################################################
-    # Plot problem
-
-    # plot_fp = os.path.join(args.plot_dir, "soln_and_source.png")
-    # logging.info("Plotting problem to %s", plot_fp)
-    # plot_problem(plot_fp)
-
+    # Run meshing
     if args.hp_convergence:
         args.tol = None
         uniform_small_ex_for_jit()
         hp_convergence_study()
     else:
-        # In this branch we want to save the graph structures produced
-        # as well as solve statistics.
         adaptive_small_ex_for_jit()
         adaptive_convergence_study()
 

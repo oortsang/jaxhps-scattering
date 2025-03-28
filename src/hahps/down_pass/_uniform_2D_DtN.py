@@ -44,7 +44,10 @@ def down_pass_uniform_2D_DtN(
     n_levels = len(S_lst)
 
     # Reshape to (1, n_bdry)
-    bdry_data = jnp.expand_dims(boundary_data, axis=0)
+    if len(boundary_data.shape) == 1:
+        bdry_data = jnp.expand_dims(boundary_data, axis=0)
+    else:
+        bdry_data = boundary_data
 
     # propagate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):

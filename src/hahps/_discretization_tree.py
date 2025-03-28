@@ -11,9 +11,7 @@ class NodeData:
         self.T: jnp.array = None
         self.h: jnp.array = None
         self.S: jnp.array = None  # propagation operator
-        self.g_tilde: jnp.array = (
-            None  # g_tilde is the interface particular soln.
-        )
+        self.g_tilde: jnp.array = None  # g_tilde is the interface particular soln.
         # self.L_2f1: jnp.array = None
         # self.L_1f2: jnp.array = None
 
@@ -69,9 +67,7 @@ def unflatten_nodedata(aux_data: Tuple, children: Tuple) -> NodeData:
     return z
 
 
-jax.tree_util.register_pytree_node(
-    NodeData, flatten_nodedata, unflatten_nodedata
-)
+jax.tree_util.register_pytree_node(NodeData, flatten_nodedata, unflatten_nodedata)
 
 
 class DiscretizationNode2D:
@@ -110,12 +106,14 @@ class DiscretizationNode2D:
         self.children: Tuple[DiscretizationNode2D] = children
 
     def __repr__(self) -> str:
-        return "DiscretizationNode2D(xmin={}, xmax={}, ymin={}, ymax={}, depth={})".format(
-            self.xmin,
-            self.xmax,
-            self.ymin,
-            self.ymax,
-            self.depth,
+        return (
+            "DiscretizationNode2D(xmin={}, xmax={}, ymin={}, ymax={}, depth={})".format(
+                self.xmin,
+                self.xmax,
+                self.ymin,
+                self.ymax,
+                self.depth,
+            )
         )
 
 
@@ -271,9 +269,7 @@ def get_discretization_node_area(
     # Check if it's a 3D node
     if isinstance(node, DiscretizationNode3D):
         return (
-            (node.xmax - node.xmin)
-            * (node.ymax - node.ymin)
-            * (node.zmax - node.zmin)
+            (node.xmax - node.xmin) * (node.ymax - node.ymin) * (node.zmax - node.zmin)
         )
     else:
         return (node.xmax - node.xmin) * (node.ymax - node.ymin)

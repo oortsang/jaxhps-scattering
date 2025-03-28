@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 from typing import List, Callable
 from ._pdeproblem import PDEProblem, _get_PDEProblem_chunk
-
+import logging
 from ._device_config import (
     HOST_DEVICE,
     DEVICE_ARR,
@@ -60,9 +60,7 @@ def solve_subtree(
 
     """
     if not pde_problem.domain.bool_2D:
-        raise ValueError(
-            "Subtree recomputation is only supported for 2D problems."
-        )
+        raise ValueError("Subtree recomputation is only supported for 2D problems.")
     if not pde_problem.domain.bool_uniform:
         raise ValueError(
             "Subtree recomputation is only supported for uniform quadtrees."
@@ -242,6 +240,26 @@ def _local_solve_and_build(
     down_pass_fn: Callable,
     return_top_T: bool = False,
 ) -> jax.Array:
+    """
+    Performs the meat of the upward and downward pass of the subtree recomputation algorithm.
+
+    If boundary_data is specified, performs the downward pass. Otherwise, performs the upward
+    pass.
+
+    Args:
+        pde_problem (PDEProblem): _description_
+        boundary_data (jax.Array | None): _description_
+        subtree_height (int): _description_
+        compute_device (jax.Device): _description_
+        host_device (jax.Device): _description_
+        local_solve_fn (Callable): _description_
+        merge_fn (Callable): _description_
+        down_pass_fn (Callable): _description_
+        return_top_T (bool, optional): _description_. Defaults to False.
+
+    Returns:
+        jax.Array: _description_
+    """
     n_leaves = pde_problem.domain.n_leaves
     # Get the chunk size
     chunk_size = 4**subtree_height
@@ -252,8 +270,35 @@ def _local_solve_and_build(
     # If the boundary data is None, we are in the upward pass.
     upward_pass = boundary_data is None
 
+    logging.debug(
+        "_local_solve_and_build: n_leaves=%s, chunk_size=%s, n_chunks=%s, subtree_height=%s",
+        n_leaves,
+        chunk_size,
+        n_chunks,
+        subtree_height,
+    )
     # If the boundary data is not None, we are in the downward pass.
     if not upward_pass:
+
+        # # Do some downward passes to get the boundary data propagated to the
+        # # roots of the subtrees
+        # boundary_data = down_pass_fn(
+        #     boundary_data,
+        #     pde_problem.S_lst,
+        #     pde_problem.g_tilde_lst,
+        #     None,
+        #     None,
+        #     device=compute_device,
+        #     host_device=compute_device,
+        # )
+        logging.debug(
+            "_local_solve_and_build: boundary_data shape: %s", boundary_data.shape
+        )
+        # logging.debug(
+        #     "_local_solve_and_build: S_lst[-1].shape: %s", boundary_data.shape
+        # )
+
+        # Now that it's been reshaped, compute the chunksize
         bdry_data_chunksize = boundary_data.shape[0] // n_chunks
 
     # For storing the data at the top of the subtrees
@@ -296,6 +341,9 @@ def _local_solve_and_build(
 
         else:
             S_lst, g_tilde_lst = merge_out
+            logging.debug(
+                "_local_solve_and_build: S_lst[-1].shape = %s", S_lst[-1].shape
+            )
 
             T_arr_chunk.delete()
             h_chunk.delete()
@@ -376,7 +424,7 @@ def upward_pass_subtree(
         Top-level Poincare--Steklov matrix for the whole domain.
 
     """
-    if pde_problem.use_ItI:
+    if not pde_problem.use_ItI:
         merge_out = _local_solve_and_build(
             pde_problem=pde_problem,
             boundary_data=None,
@@ -405,7 +453,7 @@ def upward_pass_subtree(
     pde_problem.S_lst = merge_out[0]
     pde_problem.g_tilde_lst = merge_out[1]
 
-    return merge_out[3]
+    return merge_out[2]
 
 
 def downward_pass_subtree(
@@ -447,10 +495,22 @@ def downward_pass_subtree(
         # If the boundary data is a list, we need to concatenate it
         # into a single array.
         boundary_data = jnp.concatenate(boundary_data)
-    if pde_problem.use_ItI:
+    if not pde_problem.use_ItI:
+
+        # Perform a partial down pass
+        bdry_data = down_pass_uniform_2D_DtN(
+            boundary_data,
+            pde_problem.S_lst,
+            pde_problem.g_tilde_lst,
+            v_arr=None,
+            Y_arr=None,
+            device=compute_device,
+            host_device=host_device,
+        )
+
         return _local_solve_and_build(
             pde_problem=pde_problem,
-            boundary_data=boundary_data,
+            boundary_data=bdry_data,
             subtree_height=subtree_height,
             compute_device=compute_device,
             host_device=host_device,
@@ -460,9 +520,20 @@ def downward_pass_subtree(
         )
 
     else:
+
+        # Perform a partial down pass
+        bdry_data = down_pass_uniform_2D_ItI(
+            boundary_data,
+            pde_problem.S_lst,
+            pde_problem.g_tilde_lst,
+            v_arr=None,
+            Y_arr=None,
+            device=compute_device,
+            host_device=host_device,
+        )
         return _local_solve_and_build(
             pde_problem=pde_problem,
-            boundary_data=boundary_data,
+            boundary_data=bdry_data,
             subtree_height=subtree_height,
             compute_device=compute_device,
             host_device=host_device,

@@ -15,7 +15,7 @@ def plot_field_for_wave_scattering_experiment(
     field: jnp.array,
     target_pts: jnp.array,
     use_bwr_cmap: bool = False,
-    cmap_str: str = "parula",
+    cmap_str: str = "plasma",
     title: str = None,
     save_fp: str = None,
     ax: plt.Axes = None,
@@ -33,8 +33,8 @@ def plot_field_for_wave_scattering_experiment(
     extent = [
         target_pts[0, 0, 0],
         target_pts[-1, -1, 0],
-        target_pts[-1, -1, 1],
         target_pts[0, 0, 1],
+        target_pts[-1, -1, 1],
     ]
     logging.debug(
         "plot_field_for_wave_scattering_experiment: max_val: %s",
@@ -55,13 +55,21 @@ def plot_field_for_wave_scattering_experiment(
             vmax=max_val,
             extent=extent,
         )
+    elif cmap_str == "hot":
+        im = ax.imshow(
+            field,
+            cmap=cmap_str,
+            extent=extent,
+            vmin=0.0,
+            vmax=jnp.max(jnp.abs(field)),
+        )
     else:
         im = ax.imshow(
             field,
             cmap=cmap_str,
             extent=extent,
-            vmin=-3.65,  # Min val of the fields we plot in the paper
-            vmax=3.65,
+            # vmin=-3.65,  # Min val of the fields we plot in the paper
+            # vmax=3.65,
         )
 
     # Set ticks to [-1, 0, 1]
