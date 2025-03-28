@@ -25,18 +25,39 @@ def merge_stage_uniform_3D_DtN(
 
     If this function is called with the argument ``return_T=True``, the top-level DtN matrix is also returned.
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
-        :T_arr: Array of DtN matrices from the local solve stage. Has shape (n_leaves, 6q^2, 6q^2)
-        :h_arr: Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 6q^2)
-        :device: Where to perform the computation. Defaults to jax.devices()[0].
-        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        :S_lst: (List[jax.Array]) a list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
-        :g_tilde_lst: (List[jax.Array]) a list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
-        :T_last: (jax.Array, Optional) the top-level DtN matrix, which is only returned if ``return_T=True``.
+    T_arr : jax.Array
+        Array of DtN matrices from the local solve stage. Has shape (n_leaves, 6q^2, 6q^2)
 
+    h_arr : jax.Array
+        Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 6q^2)
+
+    l : int
+        The number of levels in the quadtree.
+
+    device : jax.Device
+        Where to perform the computation. Defaults to jax.devices()[0].
+
+    host_device : jax.Device
+        Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    return_T : bool
+        If True, the top-level DtN matrix is returned. Defaults to False.
+
+    Returns
+    -------
+    S_lst : List[jax.Array]
+        A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
+
+    g_tilde_lst: List[jax.Array]
+        A list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+
+    T_last : jax.Array
+        The top-level DtN matrix, which is only returned if ``return_T=True``. Has shape (4q, 4q).
 
     """
     # Move the data to the compute device if necessary
@@ -217,7 +238,9 @@ def get_a_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_9 = idxes[n_per_face : 2 * n_per_face]
     idxes_12 = idxes[3 * n_per_face : 4 * n_per_face]
     idxes_17 = idxes[4 * n_per_face : 5 * n_per_face]
-    return _return_submatrices_subvecs(T, v, idxes_1, idxes_9, idxes_12, idxes_17)
+    return _return_submatrices_subvecs(
+        T, v, idxes_1, idxes_9, idxes_12, idxes_17
+    )
 
 
 @jax.jit
@@ -233,7 +256,9 @@ def get_b_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_9 = idxes[:n_per_face]
     idxes_10 = idxes[3 * n_per_face : 4 * n_per_face]
     idxes_18 = idxes[4 * n_per_face : 5 * n_per_face]
-    return _return_submatrices_subvecs(T, v, idxes_2, idxes_9, idxes_10, idxes_18)
+    return _return_submatrices_subvecs(
+        T, v, idxes_2, idxes_9, idxes_10, idxes_18
+    )
 
 
 @jax.jit
@@ -250,7 +275,9 @@ def get_c_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_10 = idxes[2 * n_per_face : 3 * n_per_face]
     idxes_11 = idxes[:n_per_face]
     idxes_19 = idxes[4 * n_per_face : 5 * n_per_face]
-    return _return_submatrices_subvecs(T, v, idxes_3, idxes_10, idxes_11, idxes_19)
+    return _return_submatrices_subvecs(
+        T, v, idxes_3, idxes_10, idxes_11, idxes_19
+    )
 
 
 @jax.jit
@@ -267,7 +294,9 @@ def get_d_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_11 = idxes[n_per_face : 2 * n_per_face]
     idxes_12 = idxes[2 * n_per_face : 3 * n_per_face]
     idxes_20 = idxes[4 * n_per_face : 5 * n_per_face]
-    return _return_submatrices_subvecs(T, v, idxes_4, idxes_11, idxes_12, idxes_20)
+    return _return_submatrices_subvecs(
+        T, v, idxes_4, idxes_11, idxes_12, idxes_20
+    )
 
 
 @jax.jit
@@ -284,7 +313,9 @@ def get_e_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_13 = idxes[n_per_face : 2 * n_per_face]
     idxes_16 = idxes[3 * n_per_face : 4 * n_per_face]
     idxes_17 = idxes[5 * n_per_face :]
-    return _return_submatrices_subvecs(T, v, idxes_5, idxes_13, idxes_16, idxes_17)
+    return _return_submatrices_subvecs(
+        T, v, idxes_5, idxes_13, idxes_16, idxes_17
+    )
 
 
 @jax.jit
@@ -300,7 +331,9 @@ def get_f_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_13 = idxes[:n_per_face]
     idxes_14 = idxes[3 * n_per_face : 4 * n_per_face]
     idxes_18 = idxes[5 * n_per_face :]
-    return _return_submatrices_subvecs(T, v, idxes_6, idxes_13, idxes_14, idxes_18)
+    return _return_submatrices_subvecs(
+        T, v, idxes_6, idxes_13, idxes_14, idxes_18
+    )
 
 
 @jax.jit
@@ -316,7 +349,9 @@ def get_g_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_14 = idxes[2 * n_per_face : 3 * n_per_face]
     idxes_15 = idxes[:n_per_face]
     idxes_19 = idxes[5 * n_per_face :]
-    return _return_submatrices_subvecs(T, v, idxes_7, idxes_14, idxes_15, idxes_19)
+    return _return_submatrices_subvecs(
+        T, v, idxes_7, idxes_14, idxes_15, idxes_19
+    )
 
 
 @jax.jit
@@ -329,7 +364,9 @@ def get_h_submatrices(T: jnp.array, v: jnp.array) -> Tuple[jnp.array]:
     idxes_15 = idxes[n_per_face : 2 * n_per_face]
     idxes_16 = idxes[2 * n_per_face : 3 * n_per_face]
     idxes_20 = idxes[5 * n_per_face :]
-    return _return_submatrices_subvecs(T, v, idxes_8, idxes_15, idxes_16, idxes_20)
+    return _return_submatrices_subvecs(
+        T, v, idxes_8, idxes_15, idxes_16, idxes_20
+    )
 
 
 @jax.jit

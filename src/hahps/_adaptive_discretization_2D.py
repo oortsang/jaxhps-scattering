@@ -50,7 +50,9 @@ def generate_adaptive_mesh_level_restriction_2D(
         # Estimate the squared L2 norm of the function on each child
         patch_nrms = jnp.array(
             [
-                get_squared_l2_norm_single_panel(f_evals[i], node_to_bounds(node), p)
+                get_squared_l2_norm_single_panel(
+                    f_evals[i], node_to_bounds(node), p
+                )
                 for i, node in enumerate(get_all_leaves(root))
             ]
         )
@@ -63,9 +65,9 @@ def generate_adaptive_mesh_level_restriction_2D(
     else:
         # Get a rough estimate of the L_infinity norm of the function.
         # This will be refined as we go.
-        points_1 = compute_interior_Chebyshev_points_uniform_2D(root, L=1, p=p).reshape(
-            -1, 2
-        )
+        points_1 = compute_interior_Chebyshev_points_uniform_2D(
+            root, L=1, p=p
+        ).reshape(-1, 2)
         global_nrm = jnp.max(f_fn(points_1))
 
     if l2_norm:
@@ -97,7 +99,9 @@ def generate_adaptive_mesh_level_restriction_2D(
             f_evals = f_fn(points_0)
             f_evals_refined = f_fn(points_1)
             f_interp = L_4f1 @ f_evals
-            err = get_squared_l2_norm_four_panels(f_interp - f_evals_refined, bounds, p)
+            err = get_squared_l2_norm_four_panels(
+                f_interp - f_evals_refined, bounds, p
+            )
             return err / global_nrm < tol, 0.0
 
         vmapped_check_queue = jax.vmap(
@@ -148,7 +152,9 @@ def generate_adaptive_mesh_level_restriction_2D(
             "generate_adaptive_mesh_level_restriction: Queue length: %i",
             len(refinement_check_queue),
         )
-        refinement_check_bounds = jax.device_put(refinement_check_bounds, DEVICE_ARR[0])
+        refinement_check_bounds = jax.device_put(
+            refinement_check_bounds, DEVICE_ARR[0]
+        )
         global_nrm = jax.device_put(global_nrm, DEVICE_ARR[0])
         checks_bool, linf_nrms_arr = vmapped_check_queue(
             refinement_check_bounds, global_nrm
@@ -394,6 +400,8 @@ def get_squared_l2_norm_single_panel(
     cheby_weights_x = chebyshev_weights(p, bounds[:2])
     cheby_weights_y = chebyshev_weights(p, bounds[2:])
     r_idxes = rearrange_indices_ext_int(p)
-    cheby_weights_2d = jnp.outer(cheby_weights_x, cheby_weights_y).reshape(-1)[r_idxes]
+    cheby_weights_2d = jnp.outer(cheby_weights_x, cheby_weights_y).reshape(-1)[
+        r_idxes
+    ]
     out_val = jnp.sum(f_evals**2 * cheby_weights_2d)
     return out_val

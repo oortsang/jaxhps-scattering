@@ -33,7 +33,7 @@ def solve_subtree(
     for the root of the subtrees, and then performing the highest level merges. This allows us to
     greatly reduce the number of data movements between the CPU and GPU, at the cost of more floating point operations.
 
-    Unlike the .build_solver() method, this function does not save any of the solution matrices computed during the upward pass.
+    Unlike the :func:`hahps.build_solver` method, this function does not save any of the solution matrices computed during the upward pass.
     Thus, it is most appropriate when we want to solve one instance of the problem very quickly.
 
     Parameters
@@ -60,7 +60,9 @@ def solve_subtree(
 
     """
     if not pde_problem.domain.bool_2D:
-        raise ValueError("Subtree recomputation is only supported for 2D problems.")
+        raise ValueError(
+            "Subtree recomputation is only supported for 2D problems."
+        )
     if not pde_problem.domain.bool_uniform:
         raise ValueError(
             "Subtree recomputation is only supported for uniform quadtrees."
@@ -279,7 +281,6 @@ def _local_solve_and_build(
     )
     # If the boundary data is not None, we are in the downward pass.
     if not upward_pass:
-
         # # Do some downward passes to get the boundary data propagated to the
         # # roots of the subtrees
         # boundary_data = down_pass_fn(
@@ -292,7 +293,8 @@ def _local_solve_and_build(
         #     host_device=compute_device,
         # )
         logging.debug(
-            "_local_solve_and_build: boundary_data shape: %s", boundary_data.shape
+            "_local_solve_and_build: boundary_data shape: %s",
+            boundary_data.shape,
         )
         # logging.debug(
         #     "_local_solve_and_build: S_lst[-1].shape: %s", boundary_data.shape
@@ -401,7 +403,7 @@ def upward_pass_subtree(
     """
      Does the upward pass of the subtree recomputation algorithm, returns the top-level Poincare--Steklov matrix, and
      stores the high-level :math:`S` and :math:`\\tilde{g}` data. This is meant to be used in conjunction with
-     hahps.downward_pass_subtree() for large problems where the boundary data must be specified after the upward pass,
+     :func:`hahps.downward_pass_subtree` for large problems where the boundary data must be specified after the upward pass,
      such as a wave scattering context, where the boundary impedance values can not be computed without the top-level ItI matrix.
 
     Parameters
@@ -465,7 +467,7 @@ def downward_pass_subtree(
 ) -> jax.Array:
     """
      Does the downward pass of the subtree recomputation algorithm. This is meant to be used in conjunction with
-     hahps.upward_pass_subtree() for large problems where the boundary data must be specified after the upward pass,
+     func:`hahps.upward_pass_subtree` for large problems where the boundary data must be specified after the upward pass,
      such as a wave scattering context, where the boundary impedance values can not be computed without the top-level ItI matrix.
 
     Parameters
@@ -496,7 +498,6 @@ def downward_pass_subtree(
         # into a single array.
         boundary_data = jnp.concatenate(boundary_data)
     if not pde_problem.use_ItI:
-
         # Perform a partial down pass
         bdry_data = down_pass_uniform_2D_DtN(
             boundary_data,
@@ -520,7 +521,6 @@ def downward_pass_subtree(
         )
 
     else:
-
         # Perform a partial down pass
         bdry_data = down_pass_uniform_2D_ItI(
             boundary_data,

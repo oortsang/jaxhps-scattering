@@ -33,7 +33,9 @@ YMAX = 1
 
 SIGMA = 0.15
 SOURCE_DIRS = jnp.array([0.0])
-SD_MATRIX_FP = f"data/wave_scattering/SD_matrices/SD_k{K}_n{P - 2}_nside{2**L}_dom1.mat"
+SD_MATRIX_FP = (
+    f"data/wave_scattering/SD_matrices/SD_k{K}_n{P - 2}_nside{2**L}_dom1.mat"
+)
 S, D = load_SD_matrices(SD_MATRIX_FP)
 
 S = jax.device_put(S, DEVICE_ARR[0])
@@ -50,7 +52,9 @@ MIN_TOL = 1e-15
 nearest_x_coord_idx = jnp.argmin(
     jnp.abs(SAMPLE_DOMAIN.interior_points[..., 0].flatten() - 0.875)
 )
-nearest_x_coord = SAMPLE_DOMAIN.interior_points[..., 0].flatten()[nearest_x_coord_idx]
+nearest_x_coord = SAMPLE_DOMAIN.interior_points[..., 0].flatten()[
+    nearest_x_coord_idx
+]
 
 observation_bools_x = jnp.logical_and(
     jnp.abs(SAMPLE_DOMAIN.interior_points[..., 0]) == nearest_x_coord,
@@ -124,7 +128,9 @@ def source_locations_to_scattered_field(
 
     source_term = source_term = -1 * (K**2) * q_evals * uin_evals
 
-    SAMPLE_PDEPROBLEM.update_coefficients(source=source_term, I_coefficients=i_term)
+    SAMPLE_PDEPROBLEM.update_coefficients(
+        source=source_term, I_coefficients=i_term
+    )
 
     # Compute the local solve and build stages
     # local_solve_stage(
@@ -142,7 +148,9 @@ def source_locations_to_scattered_field(
     #     host_device=DEVICE_ARR[0],
     # )
     Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
-        pde_problem=SAMPLE_PDEPROBLEM, host_device=DEVICE_ARR[0], device=DEVICE_ARR[0]
+        pde_problem=SAMPLE_PDEPROBLEM,
+        host_device=DEVICE_ARR[0],
+        device=DEVICE_ARR[0],
     )
     S_arr_lst, g_tilde_lst, T_ItI = merge_stage_uniform_2D_ItI(
         T_arr=T_arr,

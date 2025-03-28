@@ -29,8 +29,8 @@ from ._schur_complement import _oct_merge_from_submatrices
 
 def merge_stage_adaptive_3D_DtN(
     pde_problem: PDEProblem,
-    T_arr: jnp.array,
-    h_arr: jnp.array,
+    T_arr: jax.Array,
+    h_arr: jax.Array,
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
 ) -> None:
@@ -48,15 +48,26 @@ def merge_stage_adaptive_3D_DtN(
     used in the uniform version of this algorithm. This gives us a slight performance boost.
     At higher levels, the merges are not vectorized.
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
-        :T_arr: Array of DtN matrices from the local solve stage. Has shape (n_leaves, 6q^2, 6q^2)
-        :h_arr: Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 6q^2)
-        :device: Where to perform the computation. Defaults to jax.devices()[0].
-        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        None.
+    T_arr : jax.Array
+        Array of DtN matrices from the local solve stage. Has shape (n_leaves, 6q^2, 6q^2)
+
+    h_arr : jax.Array
+        Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 6q^2)
+
+    device : jax.Device
+        Where to perform the computation. Defaults to jax.devices()[0].
+
+    host_device : jax.Device
+        Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    Returns
+    -------
+    None. All of the solution operators are stored inside the pde_problem object.
 
     """
     logging.debug("_build_stage_3D: started")
@@ -116,10 +127,14 @@ def merge_stage_adaptive_3D_DtN(
         nodes_this_level = get_nodes_at_level(root, i)
 
         # Filter out the nodes which are leaves.
-        nodes_this_level = [node for node in nodes_this_level if len(node.children)]
+        nodes_this_level = [
+            node for node in nodes_this_level if len(node.children)
+        ]
 
         # Filter out the nodes which have DtN arrays already set
-        nodes_this_level = [node for node in nodes_this_level if node.data.T is None]
+        nodes_this_level = [
+            node for node in nodes_this_level if node.data.T is None
+        ]
 
         # The leaves in need of refinement are those who have more children than the min number
         # of children among siblings
@@ -151,16 +166,16 @@ def _oct_merge(
     v_prime_h: jax.Array,
     L_2f1: jax.Array,
     L_1f2: jax.Array,
-    need_interp_lsts: Tuple[jnp.array],
-    side_lens_a: jnp.array,
-    side_lens_b: jnp.array,
-    side_lens_c: jnp.array,
-    side_lens_d: jnp.array,
-    side_lens_e: jnp.array,
-    side_lens_f: jnp.array,
-    side_lens_g: jnp.array,
-    side_lens_h: jnp.array,
-) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
+    need_interp_lsts: Tuple[jax.Array],
+    side_lens_a: jax.Array,
+    side_lens_b: jax.Array,
+    side_lens_c: jax.Array,
+    side_lens_d: jax.Array,
+    side_lens_e: jax.Array,
+    side_lens_f: jax.Array,
+    side_lens_g: jax.Array,
+    side_lens_h: jax.Array,
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     a_submatrices_subvecs = get_a_submatrices(
         T_a,
         v_prime_a,
@@ -384,7 +399,7 @@ def oct_merge_nonuniform_whole_level(
         nodes_this_level (List[Node]): List of Nodes being merged at this level. Has length (m,)
 
     Returns:
-        Tuple[List[jnp.array], List[jnp.array], List[jnp.array], List[jnp.array]]: In order:
+        Tuple[List[jax.Array], List[jax.Array], List[jax.Array], List[jax.Array]]: In order:
         S_lst: List of matrices mapping boundary data to merge interfaces. Has length (m // 8).
         T_lst: DtN matrices for the merged nodes. Has length (m // 8).
         v_prime_ext_lst: Boundary particular fluxes. Has length (m // 8).
@@ -420,7 +435,7 @@ def is_node_type(x: Any) -> bool:
 
 def node_to_oct_merge_outputs(
     node: DiscretizationNode3D,
-) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     Expect the first 8 entries of data_lst to be the Nodes we want to merge.
     Expect the next 8 entries to be the DtN matrices for these nodes.
@@ -428,7 +443,9 @@ def node_to_oct_merge_outputs(
     """
 
     # Print index and type of each entry in data_lst
-    node_a, node_b, node_c, node_d, node_e, node_f, node_g, node_h = node.children
+    node_a, node_b, node_c, node_d, node_e, node_f, node_g, node_h = (
+        node.children
+    )
 
     side_lens_a = jnp.array(
         [

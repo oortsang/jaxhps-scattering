@@ -17,16 +17,22 @@ def down_pass_adaptive_3D_DtN(
     boundary_data: List[jax.Array],
 ) -> jax.Array:
     """
-    This function performs the downward pass for 3D adaptive discretizations using DtN matrices.
+    This function performs the downward pass for 2D adaptive discretizations using DtN matrices.
 
     The boundary data is assumed to be **Dirichlet data**
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices. Has the pre-built :math:`S` and :math:`\\tilde{g}` data saved within the tree structure.
-        :boundary_data: A list of arrays specifying the boundary data on each face of the domain.
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        :solns: (jax.Array) Solutions on the interior Chebyshev discretization points. Has shape (n_leaves, p^3).
+    boundary_data : List[jax.Array]
+        A length-6 list of arrays, specifying samples of the boundary data. :func:`hahps.Domain.get_adaptive_boundary_data_lst` is a utility for constructing this list.
+
+    Returns
+    -------
+    solns : jax.Array
+        The solutions on the interior points. Has shape (n_leaves, p^3)
 
     """
     root = pde_problem.domain.root
@@ -49,7 +55,6 @@ def down_pass_adaptive_3D_DtN(
             # print("_down_pass_3D: working on node i=", i)
 
             if len(node.children):
-
                 S = node.data.S
                 g_tilde = node.data.g_tilde
 

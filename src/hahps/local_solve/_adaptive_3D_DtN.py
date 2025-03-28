@@ -14,8 +14,8 @@ from functools import partial
 
 def local_solve_stage_adaptive_3D_DtN(
     pde_problem: PDEProblem,
-    host_device: jax.Device = HOST_DEVICE,
     device: jax.Device = DEVICE_ARR[0],
+    host_device: jax.Device = HOST_DEVICE,
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     This function performs the local solve stage for 3D adaptive discretization problems, creating DtN matrices.

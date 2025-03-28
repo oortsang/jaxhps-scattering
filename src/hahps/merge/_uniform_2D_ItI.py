@@ -34,17 +34,42 @@ def merge_stage_uniform_2D_ItI(
 
     If this function is called with the argument ``return_T=True``, the top-level DtN matrix is also returned.
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
-        :T_arr: Array of ItI matrices from the local solve stage. Has shape (n_leaves, 4q, 4q)
-        :h_arr: Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 4q)
-        :device: Where to perform the computation. Defaults to jax.devices()[0].
-        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        :S_lst: (List[jax.Array]) a list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
-        :g_tilde_lst: (List[jax.Array]) a list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
-        :T_last: (jax.Array, Optional) the top-level ItI matrix, which is only returned if ``return_T=True``.
+    T_arr : jax.Array
+        Array of ItI matrices from the local solve stage. Has shape (n_leaves, 4q, 4q)
+
+    h_arr : jax.Array
+        Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 4q)
+
+    l : int
+        Number of levels to merge
+
+    device : jax.Device
+        Where to perform the computation. Defaults to jax.devices()[0].
+
+    host_device : jax.Device
+        Where to place the output. Defaults to jax.devices("cpu")[0].
+
+    subtree_recomp : bool
+        A flag for used by the subtree recomputation methods, which triggers an early return with just the top-level T and h.
+
+    return_T : bool
+        A flag to return the top-level T matrix. Defaults to False.
+
+    Returns
+    -------
+    S_lst : List[jax.Array]
+        A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
+
+    g_tilde_lst: List[jax.Array]
+        A list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+
+    T_last : jax.Array
+        The top-level DtN matrix, which is only returned if ``return_T=True``. Has shape (4q, 4q).
 
     """
 

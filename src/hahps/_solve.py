@@ -84,4 +84,6 @@ def _adaptive_solve(
     else:
         down_pass_fn = down_pass_adaptive_3D_DtN
 
-    return down_pass_fn(pde_problem=pde_problem, boundary_data=boundary_data_lst)
+    return down_pass_fn(
+        pde_problem=pde_problem, boundary_data=boundary_data_lst
+    )

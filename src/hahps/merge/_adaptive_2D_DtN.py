@@ -31,11 +31,14 @@ def merge_stage_adaptive_2D_DtN(pde_problem: PDEProblem) -> None:
     define the quadtree. After this function is called, the top-level DtN matrix can be accessed at
     ``pde_problem.domain.root.data.T``.
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        None.
+    Returns
+    -------
+    None. All of the solution operators are stored inside the pde_problem object.
 
     """
     logging.debug("merge_stage_adaptive_2D_DtN: started")

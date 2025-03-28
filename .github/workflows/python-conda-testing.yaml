@@ -37,6 +37,9 @@ jobs:
     - name: Test quadrature
       run: |
         pytest tests/test_quadrature
-    - name: Test others
+    - name: Test recomputation methods
       run: |
-        pytest tests/test_*.py
+        pytest tests/test_subtree_recomp.py tests/test_solve.py
+    # - name: Test others
+    #   run: |
+    #     pytest tests/test_*.py

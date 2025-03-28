@@ -20,7 +20,9 @@ class Test_generate_adaptive_mesh_level_restriction_2D:
 
         p = 4
         q = 2
-        root = DiscretizationNode2D(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0)
+        root = DiscretizationNode2D(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0
+        )
         add_four_children(root, root=root, q=q)
 
         def f(x: jax.Array) -> jax.Array:
@@ -28,12 +30,16 @@ class Test_generate_adaptive_mesh_level_restriction_2D:
             return jnp.sin(4 * x[..., 1]) + x[..., 0] ** 2
 
         # Generate the adaptive mesh level restriction
-        generate_adaptive_mesh_level_restriction_2D(root, f, tol=1e-3, p=p, q=q)
+        generate_adaptive_mesh_level_restriction_2D(
+            root, f, tol=1e-3, p=p, q=q
+        )
 
     def test_1(self, caplog) -> None:
         caplog.set_level(logging.DEBUG)
 
-        root_l2 = DiscretizationNode2D(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0)
+        root_l2 = DiscretizationNode2D(
+            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0
+        )
 
         def f(x: jax.Array) -> jax.Array:
             """f(x,y) = y + x**2"""

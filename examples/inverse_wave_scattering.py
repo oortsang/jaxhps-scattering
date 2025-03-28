@@ -44,7 +44,9 @@ def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
-        "--plots_dir", type=str, default="data/examples/inverse_wave_scattering"
+        "--plots_dir",
+        type=str,
+        default="data/examples/inverse_wave_scattering",
     )
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--n_iter", type=int, default=10)
@@ -94,7 +96,9 @@ def plot_uscat(
     # plt.clf()
 
 
-def plot_iterates(iterates: jnp.array, plot_fp: str, q_evals: jnp.array) -> None:
+def plot_iterates(
+    iterates: jnp.array, plot_fp: str, q_evals: jnp.array
+) -> None:
     """
     Make a plot of the evaluations of the ground-truth q and then draw arrows showing the iterates.
     """
@@ -361,7 +365,9 @@ def gauss_newton_iterations(
         delta_t = lsqr_out[0]
         cond = lsqr_out[6]
         cond_vals = cond_vals.at[t].set(cond)
-        logging.info("LSQR returned after %i iters with cond=%s", lsqr_out[2], cond)
+        logging.info(
+            "LSQR returned after %i iters with cond=%s", lsqr_out[2], cond
+        )
 
         logging.info("delta_t = %s", delta_t)
         x_t = x_t + delta_t
@@ -376,7 +382,9 @@ def main(args: argparse.Namespace) -> None:
 
     # Set up boolean array for observation points
 
-    observation_pts = SAMPLE_DOMAIN.interior_points[OBSERVATION_BOOLS].reshape(-1, 2)
+    observation_pts = SAMPLE_DOMAIN.interior_points[OBSERVATION_BOOLS].reshape(
+        -1, 2
+    )
     logging.debug("Observation points has shape %s", observation_pts.shape)
 
     # Set up ground-truth scatterer locations and evaluate the scattering potential by
@@ -387,8 +395,12 @@ def main(args: argparse.Namespace) -> None:
     )
 
     logging.info("Ground-truth locations: %s", ground_truth_locations)
-    ground_truth_locations = jax.device_put(ground_truth_locations, DEVICE_ARR[0])
-    q_evals_hps = q_point_sources(SAMPLE_DOMAIN.interior_points, ground_truth_locations)
+    ground_truth_locations = jax.device_put(
+        ground_truth_locations, DEVICE_ARR[0]
+    )
+    q_evals_hps = q_point_sources(
+        SAMPLE_DOMAIN.interior_points, ground_truth_locations
+    )
     n_X = 200
     xvals = jnp.linspace(SAMPLE_DOMAIN.root.xmin, SAMPLE_DOMAIN.root.xmax, n_X)
     yvals = jnp.flipud(
@@ -430,7 +442,9 @@ def main(args: argparse.Namespace) -> None:
 
     # Initialize the optimization variables randomly
     key = jax.random.key(1)
-    x_t = jax.random.uniform(key, minval=-0.5, maxval=0.5, shape=(N_BUMPS, 2)).flatten()
+    x_t = jax.random.uniform(
+        key, minval=-0.5, maxval=0.5, shape=(N_BUMPS, 2)
+    ).flatten()
 
     iterates, resid_norms, cond_vals = gauss_newton_iterations(
         u_star, x_t, args.n_iter, reg_lambda
@@ -447,10 +461,12 @@ def main(args: argparse.Namespace) -> None:
     # Get final estimate
     x_t = iterates[-1]
     u_scat_est = source_locations_to_scattered_field(x_t)[0]
-    u_scat_est_regular, regular_grid = SAMPLE_DOMAIN.interp_from_interior_points(
-        samples=u_scat_est,
-        eval_points_x=xvals,
-        eval_points_y=yvals,
+    u_scat_est_regular, regular_grid = (
+        SAMPLE_DOMAIN.interp_from_interior_points(
+            samples=u_scat_est,
+            eval_points_x=xvals,
+            eval_points_y=yvals,
+        )
     )
     fp = os.path.join(args.plots_dir, "uscat_est.svg")
     plot_uscat(u_scat_est_regular.real, observation_pts, fp)
@@ -465,7 +481,9 @@ def main(args: argparse.Namespace) -> None:
         "iterates": iterates,
         "resid_norms": resid_norms,
         "u_star": u_star,
-        "ground_truth_locations": jax.device_put(ground_truth_locations, HOST_DEVICE),
+        "ground_truth_locations": jax.device_put(
+            ground_truth_locations, HOST_DEVICE
+        ),
         "cond_vals": cond_vals,
     }
     save_fp = os.path.join(args.plots_dir, "iterates_data.mat")

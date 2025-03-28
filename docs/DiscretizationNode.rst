@@ -1,5 +1,5 @@
 Spatial discretization
-==================
+=======================
 
 At a high level, we represent the spatial domain with a tree of ``DiscretizationNode2D`` or ``DiscretizationNode3D`` objects. Generally, the user will specify a root Node, and then pass the root along with other information to a constructor of a ``Domain`` object. The ``Domain`` object will build the discretization tree and populate all of the discretization points. 
 

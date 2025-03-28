@@ -76,7 +76,9 @@ def load_SD_matrices(fp: str) -> Tuple[jnp.array, jnp.array]:
         # Helper function to convert structured array to complex array
         def to_complex(structured_array):
             # Convert structured array to complex numpy array
-            complex_array = structured_array["real"] + 1j * structured_array["imag"]
+            complex_array = (
+                structured_array["real"] + 1j * structured_array["imag"]
+            )
             # Convert to jax array
             return jnp.array(complex_array)
 
@@ -150,7 +152,9 @@ def get_uin_and_normals(
 
     uin = get_uin(k, bdry_pts, source_directions)
     # print("get_uin_and_normals: uin shape: ", uin.shape)
-    source_vecs = jnp.array([jnp.cos(source_directions), jnp.sin(source_directions)]).T
+    source_vecs = jnp.array(
+        [jnp.cos(source_directions), jnp.sin(source_directions)]
+    ).T
     # print("get_uin_and_normals: source_vecs shape: ", source_vecs.shape)
 
     normals = jnp.concatenate(
@@ -184,8 +188,12 @@ def get_uin_and_normals(
 
 
 @jax.jit
-def get_uin(k: float, pts: jnp.array, source_directions: jnp.array) -> jnp.array:
-    source_vecs = jnp.array([jnp.cos(source_directions), jnp.sin(source_directions)]).T
+def get_uin(
+    k: float, pts: jnp.array, source_directions: jnp.array
+) -> jnp.array:
+    source_vecs = jnp.array(
+        [jnp.cos(source_directions), jnp.sin(source_directions)]
+    ).T
     # jax.debug.print("get_uin: source_vecs: {x}", x=source_vecs)
     uin = jnp.exp(1j * k * jnp.dot(pts, source_vecs.T))
     return uin
@@ -287,7 +295,9 @@ def solve_scattering_problem(
     uin_evals = get_uin(k, domain.interior_points, source_dirs)[:, :, 0]
 
     source_term = -1 * (k**2) * q_fn(domain.interior_points) * uin_evals
-    logging.debug("solve_scattering_problem: source_term shape: %s", source_term.shape)
+    logging.debug(
+        "solve_scattering_problem: source_term shape: %s", source_term.shape
+    )
 
     logging.debug("solve_scattering_problem: S device: %s", S.devices())
 
@@ -330,7 +340,9 @@ def solve_scattering_problem(
 
     T_DtN = get_DtN_from_ItI(T_ItI, t.eta)
 
-    logging.info("solve_scattering_problem: Solving boundary integral equation...")
+    logging.info(
+        "solve_scattering_problem: Solving boundary integral equation..."
+    )
 
     if DEVICE_ARR[0] not in S.devices():
         S = jax.device_put(S, DEVICE_ARR[0])

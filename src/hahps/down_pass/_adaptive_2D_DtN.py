@@ -22,12 +22,18 @@ def down_pass_adaptive_2D_DtN(
 
     The boundary data is assumed to be **Dirichlet data**
 
-    Args:
-        :pde_problem: Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices. Has the pre-built :math:`S` and :math:`\\tilde{g}` data saved within the tree structure.
-        :boundary_data: A list of arrays specifying the boundary data on each side of the domain.
+    Parameters
+    ----------
+    pde_problem : PDEProblem
+        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
-    Returns:
-        :solns: (jax.Array) Solutions on the interior Chebyshev discretization points. Has shape (n_leaves, p^2).
+    boundary_data : List[jax.Array]
+        A length-4 list of arrays, specifying samples of the boundary data. :func:`hahps.Domain.get_adaptive_boundary_data_lst` is a utility for constructing this list.
+
+    Returns
+    -------
+    solns : jax.Array
+        The solutions on the interior points. Has shape (n_leaves, p^2)
 
     """
 

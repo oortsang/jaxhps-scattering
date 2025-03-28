@@ -13,8 +13,6 @@ from ._subtree_recomp import (
     downward_pass_subtree,
 )
 from ._device_config import (
-    DEVICE_ARR,
-    HOST_DEVICE,
     local_solve_chunksize_2D,
     local_solve_chunksize_3D,
 )
@@ -29,8 +27,6 @@ __all__ = [
     "build_solver",
     "solve",
     "solve_subtree",
-    "DEVICE_ARR",
-    "HOST_DEVICE",
     "local_solve_chunksize_2D",
     "local_solve_chunksize_3D",
     "upward_pass_subtree",

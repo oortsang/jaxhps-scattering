@@ -41,9 +41,7 @@ class PDEProblem:
         use_ItI: bool = False,
         eta: float = None,
     ):
-        self.domain: Domain = (
-            domain  #: The domain, which contains information about the discretization.
-        )
+        self.domain: Domain = domain  #: The domain, which contains information about the discretization.
 
         # Input validation
         # 2D problems shouldn't specify D_z_coefficients
@@ -72,7 +70,9 @@ class PDEProblem:
 
         # If ItI is being used, it must be a uniform 2D problem
         if use_ItI and not domain.bool_uniform:
-            raise ValueError("ItI merges are only supported for uniform 2D problems.")
+            raise ValueError(
+                "ItI merges are only supported for uniform 2D problems."
+            )
 
         # Check input shapes are OK
         check_input_shapes(
@@ -154,7 +154,9 @@ class PDEProblem:
             # In this version of the code, the diff operators are scaled separately by the sidelen of each leaf.
             half_side_len = 1.0
 
-        logging.debug("PDEProblem.__init__: using half_side_len = %s", half_side_len)
+        logging.debug(
+            "PDEProblem.__init__: using half_side_len = %s", half_side_len
+        )
 
         # Pre-compute spectral differentiation and interpolation matrices
         if bool_2D:
@@ -175,7 +177,9 @@ class PDEProblem:
             if not use_ItI:
                 # Interpolation / Differentiation matrices for DtN merges
                 self.P = precompute_P_2D_DtN(domain.p, domain.q)
-                self.Q = precompute_Q_2D_DtN(domain.p, domain.q, self.D_x, self.D_y)
+                self.Q = precompute_Q_2D_DtN(
+                    domain.p, domain.q, self.D_x, self.D_y
+                )
             else:
                 # Interpolation / Differentiation matrices for ItI merges
                 self.P = precompute_P_2D_ItI(domain.p, domain.q)
@@ -183,7 +187,9 @@ class PDEProblem:
                 # In the local solve stage code, F is what the paper calls G, and
                 # G is what the paper calls H. The notation in this part is following
                 # the paper's notation.
-                N_tilde = precompute_N_tilde_matrix_2D(self.D_x, self.D_y, domain.p)
+                N_tilde = precompute_N_tilde_matrix_2D(
+                    self.D_x, self.D_y, domain.p
+                )
                 self.G = precompute_G_2D_ItI(N_tilde, self.eta)
                 # QH always appear together so we can precompute their product.
                 N = precompute_N_matrix_2D(self.D_x, self.D_y, domain.p)
@@ -212,7 +218,9 @@ class PDEProblem:
                 self.D_xy,
                 self.D_xz,
                 self.D_yz,
-            ) = precompute_diff_operators_3D(p=domain.p, half_side_len=half_side_len)
+            ) = precompute_diff_operators_3D(
+                p=domain.p, half_side_len=half_side_len
+            )
             self.P = precompute_P_3D_DtN(domain.p, domain.q)
             self.Q = precompute_Q_3D_DtN(
                 domain.p, domain.q, self.D_x, self.D_y, self.D_z
@@ -223,18 +231,14 @@ class PDEProblem:
                 self.L_4f1, self.L_1f4 = precompute_projection_ops_3D(domain.q)
 
         # Set up containers for the solution operators.
-        self.Y: jax.Array = (
-            None  #: (jax.Array) Stores pre-computed interior solution operators.
-        )
-        self.v: jax.Array = (
-            None  #: (jax.Array) Stores pre-computed interior particular solutions.
-        )
-        self.S_lst: List[jax.Array] = (
-            []
-        )  #: (jax.Array) Stores pre-computed propagation operators when performing uniform merges.
-        self.g_tilde_lst: List[jax.Array] = (
-            []
-        )  #: (jax.Array) Stores pre-computed incoming data along merge interfaces when performing uniform merges.
+        self.Y: jax.Array = None  #: (jax.Array) Stores pre-computed interior solution operators.
+        self.v: jax.Array = None  #: (jax.Array) Stores pre-computed interior particular solutions.
+        self.S_lst: List[
+            jax.Array
+        ] = []  #: (jax.Array) Stores pre-computed propagation operators when performing uniform merges.
+        self.g_tilde_lst: List[
+            jax.Array
+        ] = []  #: (jax.Array) Stores pre-computed incoming data along merge interfaces when performing uniform merges.
 
     def reset(self) -> None:
         """

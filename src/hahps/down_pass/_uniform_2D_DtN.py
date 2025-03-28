@@ -21,17 +21,36 @@ def down_pass_uniform_2D_DtN(
 
     If Y_arr is None, the function will exit early after doing all of the downward propagation operations.
 
-    Args:
-        :boundary_data: An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,)
-        :S_lst: A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
-        :g_tilde_lst: A list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
-        :Y_arr: Matrices mapping the solution to the interior of the leaf nodes. Has shape (n_leaf, p^2, n_bdry).
-        :v_arr: Particular solutions at the interior of the leaves. Has shape (n_leaf, p^2).
-        :device: Where to perform the computation. Defaults to jax.devices()[0].
-        :host_device: Where to place the output. Defaults to jax.devices("cpu")[0].
+    Parameters
+    ----------
 
-    Returns:
-        :solns: (jax.Array) Has shape (n_leaf, p^2). Interior solution at the leaf nodes.
+    boundary_data : jax.Array
+        An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,)
+
+    S_lst : List[jax.Array]
+        A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
+
+    g_tilde_lst : List[jax.Array]
+        A list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+
+    Y_arr : jax.Array
+        Matrices mapping the solution to the interior of the leaf nodes. Has shape (n_leaf, p^2, 4q).
+
+    v_arr : jax.Array
+        Particular solution data at the interior of the leaves. Has shape (n_leaf, p^2).
+
+    device : jax.Device
+        Where to perform the computation. Defaults to jax.devices()[0].
+
+    host_device : jax.Device
+        Where to place the output. Defaults to jax.devices("cpu")[0].
+
+
+    Returns
+    -------
+
+    solns : jax.Array
+        Has shape (n_leaves, p^2). Interior solution on all of the leaf nodes.
 
     """
 

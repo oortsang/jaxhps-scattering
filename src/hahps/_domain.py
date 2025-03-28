@@ -67,11 +67,11 @@ class Domain:
                     compute_boundary_Gauss_points_uniform_2D(root, L, q)
                 )
             else:
-                self.interior_points = compute_interior_Chebyshev_points_uniform_3D(
-                    root, L, p
+                self.interior_points = (
+                    compute_interior_Chebyshev_points_uniform_3D(root, L, p)
                 )
-                self.boundary_points = compute_boundary_Gauss_points_uniform_3D(
-                    root, L, q
+                self.boundary_points = (
+                    compute_boundary_Gauss_points_uniform_3D(root, L, q)
                 )
 
         else:
@@ -79,18 +79,18 @@ class Domain:
             self.bool_uniform = False
             self.n_leaves = len(get_all_leaves(root))
             if self.bool_2D:
-                self.interior_points = compute_interior_Chebyshev_points_adaptive_2D(
-                    root, p
+                self.interior_points = (
+                    compute_interior_Chebyshev_points_adaptive_2D(root, p)
                 )
-                self.boundary_points = compute_boundary_Gauss_points_adaptive_2D(
-                    root, q
+                self.boundary_points = (
+                    compute_boundary_Gauss_points_adaptive_2D(root, q)
                 )
             else:
-                self.interior_points = compute_interior_Chebyshev_points_adaptive_3D(
-                    root, p
+                self.interior_points = (
+                    compute_interior_Chebyshev_points_adaptive_3D(root, p)
                 )
-                self.boundary_points = compute_boundary_Gauss_points_adaptive_3D(
-                    root, q
+                self.boundary_points = (
+                    compute_boundary_Gauss_points_adaptive_3D(root, q)
                 )
 
     def interp_to_interior_points(
@@ -101,9 +101,24 @@ class Domain:
         sample_points_z: jax.Array = None,
     ) -> jax.Array:
         """
+
         This is a utility for interpolating from values on a rectangular grid to values on
         the HPS grid. The interpolation method builds a separate barycentric Lagrange interpolation
         matrix for each leaf on the HPS grid and maps the values to the leaf discretization points.
+
+        The values are assumed to be defined on ``sample_points``:
+
+        .. code:: python
+
+           X, Y, Z = jnp.meshgrid(sample_points_x,
+                                sample_points_y,
+                                sample_points_z,
+                                indexing="ij")
+           sample_points = jnp.comcatenate((jnp.expand_dims(X, 3),
+                                          jnp.expand_dims(Y, 3),
+                                          jnp.expand_dims(Z, 3)),
+                                         axis=3
+                                        )
 
 
         Parameters
@@ -124,6 +139,7 @@ class Domain:
         -------
         jax.Array
             Samples on the HPS grid. Has shape (n_leaves, p^d), where d is the dimension of the problem.
+
         """
         n_x = sample_points_x.shape[0]
         n_y = sample_points_y.shape[0]
@@ -147,7 +163,10 @@ class Domain:
                 leaves = get_all_leaves(self.root)
             logging.debug("interp_to_interior_points: leaves: %s", len(leaves))
             leaf_bounds = jnp.array(
-                [[leaf.xmin, leaf.xmax, leaf.ymin, leaf.ymax] for leaf in leaves]
+                [
+                    [leaf.xmin, leaf.xmax, leaf.ymin, leaf.ymax]
+                    for leaf in leaves
+                ]
             )
             logging.debug(
                 "interp_to_interior_points: leaf_bounds: %s", leaf_bounds.shape
@@ -191,7 +210,9 @@ class Domain:
         sample_values: jax.Array,
         sample_f: Callable,
     ) -> jax.Array:
-        raise NotImplementedError("interp_to_boundary_points is not implemented yet.")
+        raise NotImplementedError(
+            "interp_to_boundary_points is not implemented yet."
+        )
 
     def interp_from_interior_points(
         self,
@@ -344,7 +365,8 @@ class Domain:
         p: int,
         q: int,
         root: DiscretizationNode2D | DiscretizationNode3D,
-        f: Callable[[jax.Array], jax.Array] | List[Callable[[jax.Array], jax.Array]],
+        f: Callable[[jax.Array], jax.Array]
+        | List[Callable[[jax.Array], jax.Array]],
         tol: float,
         use_level_restriction: bool = True,
         use_l_2_norm: bool = False,
@@ -368,7 +390,7 @@ class Domain:
 
             use_level_restriction (bool, optional): Whether to enforce the level restriction criterion. Defaults to True. If set to False, could cause errors in the merge stage.
 
-            use_l_2_norm (bool, optional): If set to True, the refinement uses a relative l_2 criterion instead of the standard l_infty criterion. Defaults to False.
+            use_l_2_norm (bool, optional): If set to True, the refinement uses a relative :math:`\\ell_2` criterion instead of the standard :math:`\\ell_\\infty` criterion. Defaults to False.
 
         Returns:
             Domain: The domain object with an adaptively-refined discretization tree.
@@ -379,7 +401,9 @@ class Domain:
 
         bool_2D = isinstance(root, DiscretizationNode2D)
         if bool_2D:
-            raise NotImplementedError("Adaptive meshing only implemented for 3D.")
+            raise NotImplementedError(
+                "Adaptive meshing only implemented for 3D."
+            )
 
         for i, func in enumerate(f):
             generate_adaptive_mesh_level_restriction(

@@ -62,7 +62,9 @@ class Test_down_pass_uniform_2D_ItI:
             eta=eta,
         )
 
-        Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(pde_problem=t)
+        Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
+            pde_problem=t
+        )
 
         assert Y_arr.shape == (n_leaves, p**2, 4 * q)
         # n_leaves, n_bdry, _ = DtN_arr.shape

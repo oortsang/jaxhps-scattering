@@ -40,12 +40,16 @@ class Test_down_pass_uniform_3D_DtN:
         d_xx_coeffs = np.random.normal(size=(n_leaves, p**3))
         source_term = np.random.normal(size=(n_leaves, p**3))
 
-        t = PDEProblem(domain=domain, D_xx_coefficients=d_xx_coeffs, source=source_term)
+        t = PDEProblem(
+            domain=domain, D_xx_coefficients=d_xx_coeffs, source=source_term
+        )
 
         Y_arr, T_arr, v, h = local_solve_stage_uniform_3D_DtN(t)
         assert Y_arr.shape == (n_leaves, p**3, 6 * q**2)
 
-        S_arr_lst, g_tilde_lst = merge_stage_uniform_3D_DtN(T_arr=T_arr, h_arr=h, l=l)
+        S_arr_lst, g_tilde_lst = merge_stage_uniform_3D_DtN(
+            T_arr=T_arr, h_arr=h, l=l
+        )
 
         logging.debug("test_0: S_arr_lst[-1] shape: %s", S_arr_lst[-1].shape)
 

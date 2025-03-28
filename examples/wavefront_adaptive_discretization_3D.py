@@ -96,7 +96,8 @@ def plot_diffs(
     leaves = get_all_leaves(root)
     leaves_intersect_zero = [l for l in leaves if l.zmin <= 0 and l.zmax >= 0]
     logging.debug(
-        "plot_diffs: Found %s leaves intersecting z=0", len(leaves_intersect_zero)
+        "plot_diffs: Found %s leaves intersecting z=0",
+        len(leaves_intersect_zero),
     )
 
     for l in leaves_intersect_zero:
@@ -110,7 +111,9 @@ def plot_diffs(
     # ax[1].set_xlabel("x", fontsize=TITLESIZE)
     # ax[1].set_ylabel("y", fontsize=TITLESIZE)
 
-    im_2 = ax[1].imshow(np.abs(u_computed - u_expected), cmap="hot", extent=extent)
+    im_2 = ax[1].imshow(
+        np.abs(u_computed - u_expected), cmap="hot", extent=extent
+    )
     plt.colorbar(im_2, ax=ax[1])
     ax[1].set_title("Absolute Error", fontsize=TITLESIZE)
     ax[1].set_xlabel("$x_1$", fontsize=TITLESIZE)
@@ -124,7 +127,11 @@ def plot_diffs(
 
 
 def source(x: jnp.array) -> jnp.array:
-    lap_u = d_xx_wavefront_soln(x) + d_yy_wavefront_soln(x) + d_zz_wavefront_soln(x)
+    lap_u = (
+        d_xx_wavefront_soln(x)
+        + d_yy_wavefront_soln(x)
+        + d_zz_wavefront_soln(x)
+    )
     return lap_u
 
 
@@ -334,7 +341,9 @@ def adaptive_convergence_study() -> None:
         )
 
         # Plot a histogram of the side lengths of the leaves
-        plot_fp = os.path.join(args.plot_dir, f"adaptive_mesh_hist_tol_{tol}.pdf")
+        plot_fp = os.path.join(
+            args.plot_dir, f"adaptive_mesh_hist_tol_{tol}.pdf"
+        )
 
         #############################################################
         # Do a PDE Solve
@@ -369,7 +378,8 @@ def adaptive_convergence_study() -> None:
         down_pass_times = down_pass_times.at[i].set(t_down)
 
         logging.debug(
-            "adaptive_convergence_study: computed_soln shape: %s", computed_soln.shape
+            "adaptive_convergence_study: computed_soln shape: %s",
+            computed_soln.shape,
         )
 
         #############################################################
@@ -398,7 +408,9 @@ def adaptive_convergence_study() -> None:
         # X, Y = jnp.meshgrid(x, y, indexing="ij")
         # pts = jnp.stack([X, Y, jnp.zeros_like(X)], axis=-1)  # Shape (n,n,3)
 
-        logging.debug("adaptive_convergence_study: u_reg shape: %s", u_reg.shape)
+        logging.debug(
+            "adaptive_convergence_study: u_reg shape: %s", u_reg.shape
+        )
         logging.debug("adaptive_convergence_study: pts shape: %s", pts.shape)
 
         #############################################################
@@ -425,7 +437,9 @@ def adaptive_convergence_study() -> None:
 
     #############################################################
     # Save data
-    save_fp = os.path.join(args.plot_dir, f"adaptive_data_{nrm_str}_p_{args.p}.mat")
+    save_fp = os.path.join(
+        args.plot_dir, f"adaptive_data_{nrm_str}_p_{args.p}.mat"
+    )
 
     out_dd = {
         "tol": args.tol,

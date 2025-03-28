@@ -4,7 +4,6 @@ import jax.numpy as jnp
 import jax
 
 
-
 @jax.jit
 def get_four_children(
     parent: DiscretizationNode2D,
@@ -350,7 +349,9 @@ def node_at(
 
 
 @jax.jit
-def tree_equal(node_a: DiscretizationNode2D, node_b: DiscretizationNode2D) -> bool:
+def tree_equal(
+    node_a: DiscretizationNode2D, node_b: DiscretizationNode2D
+) -> bool:
     """Checks equality between the metadata of two nodes."""
     _, a = jax.tree_util.tree_flatten(node_a)
     _, b = jax.tree_util.tree_flatten(node_b)

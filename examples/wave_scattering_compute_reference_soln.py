@@ -49,7 +49,9 @@ def setup_args() -> argparse.Namespace:
         help="Number of points per dimension for the output regular grid.",
     )
     parser.add_argument("-k", type=float, default=100.0, help="Wavenumber.")
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging."
+    )
     parser.add_argument(
         "--SD_matrix_prefix",
         default="data/examples/SD_matrices",
@@ -87,7 +89,9 @@ def main(args: argparse.Namespace) -> None:
     """
     # Check the scattering potential argument
     if args.scattering_potential == "luneburg":
-        args.output_dir = f"data/examples/wave_scattering/luneburg_k_{int(args.k)}"
+        args.output_dir = (
+            f"data/examples/wave_scattering/luneburg_k_{int(args.k)}"
+        )
         q_fn_handle = q_luneburg
         xmin = -1.0
         xmax = 1.0
@@ -103,23 +107,25 @@ def main(args: argparse.Namespace) -> None:
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "horizontally_graded":
-        args.output_dir = (
-            f"data/examples/wave_scattering/horizontally_graded_k_{int(args.k)}"
-        )
+        args.output_dir = f"data/examples/wave_scattering/horizontally_graded_k_{int(args.k)}"
         q_fn_handle = q_horizontally_graded
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "gauss_bumps":
-        args.output_dir = f"data/examples/wave_scattering/gauss_bumps_k_{int(args.k)}"
+        args.output_dir = (
+            f"data/examples/wave_scattering/gauss_bumps_k_{int(args.k)}"
+        )
         q_fn_handle = q_gaussian_bumps
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
         ymax = 1.0
     elif args.scattering_potential == "GBM_1":
-        args.output_dir = f"data/examples/wave_scattering/GBM_1_k_{int(args.k)}"
+        args.output_dir = (
+            f"data/examples/wave_scattering/GBM_1_k_{int(args.k)}"
+        )
         xmin = -1.0
         xmax = 1.0
         ymin = -1.0
