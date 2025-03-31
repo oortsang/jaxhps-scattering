@@ -114,7 +114,7 @@ class Domain:
                                 sample_points_y,
                                 sample_points_z,
                                 indexing="ij")
-           sample_points = jnp.comcatenate((jnp.expand_dims(X, 3),
+           sample_points = jnp.concatenate((jnp.expand_dims(X, 3),
                                           jnp.expand_dims(Y, 3),
                                           jnp.expand_dims(Z, 3)),
                                          axis=3

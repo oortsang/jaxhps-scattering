@@ -23,13 +23,13 @@ def solve(
 ) -> jax.Array:
     """
     This function performs the downward pass of the HPS algorithm, after the solution operators have
-    been formed by a call to hahps.build_solver().
+    been formed by a call to :func:`hahps.build_solver`.
 
 
     Args:
         pde_problem (PDEProblem): Specifies the differential operator, source, domain, and precomputed interpolation and differentiation matrices. Also contains all of the solution operators computed by hahps.build_solver().
 
-        boundary_data (jax.Array | List[jax.Array]): This specifies the data on the boundary of the domain that will be propagated down to the interior of the leaves. If using an adaptive discretization, this must be specified as a list of arrays, one for each side or face of the root boundary. This list can be specified using the Domain.get_adaptive_boundary_data_lst() utility. For uniform discretizations, this argument can be a jax.Array of shape (n_bdry,) or a list.
+        boundary_data (jax.Array | List[jax.Array]): This specifies the data on the boundary of the domain that will be propagated down to the interior of the leaves. If using an adaptive discretization, this must be specified as a list of arrays, one for each side or face of the root boundary. This list can be specified using the :func:`hahps.Domain.get_adaptive_boundary_data_lst` utility. For uniform discretizations, this argument can be a jax.Array of shape (n_bdry,) or a list.
 
         compute_device (jax.Device, optional): Where the computation should happen. Defaults to jax.devices()[0].
 

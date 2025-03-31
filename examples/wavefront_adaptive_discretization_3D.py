@@ -200,7 +200,7 @@ def hp_convergence_study() -> None:
         # Interpolate to a uniform grid
 
         x = jnp.linspace(XMIN, XMAX, args.n)
-        y = jnp.linspace(YMIN, YMAX, args.n)
+        y = jnp.flipud(jnp.linspace(YMIN, YMAX, args.n))
 
         u_reg = domain.interp_from_interior_points(
             computed_soln,

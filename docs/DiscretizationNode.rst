@@ -11,7 +11,7 @@ For instance, in the main page, we saw how to use the ``Domain`` constructor to 
 
    # Not distributed in the hahps package,
    # see https://github.com/meliao/ha-hps/blob/main/examples/poisson_boltzmann_utils.py
-   from examples.poisson_boltzmann_utils import permittivity_2D
+   from poisson_boltzmann_utils import permittivity_2D
 
    # Create a root node for the domain
    root = hahps.DiscretizationNode2D(xmin=-1.0, xmax=1.0, ymin=-1.0, ymax=1.0)

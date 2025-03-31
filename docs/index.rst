@@ -21,6 +21,10 @@ If you find this work useful, please cite our paper::
       url={https://arxiv.org/abs/2503.17535}, 
    }
 
+Source Repository
+-------------------
+Available on GitHub at `<https://github.com/meliao/ha-hps>`_.
+
 Installation
 ----------------
 
@@ -107,6 +111,7 @@ In the ``hahps`` package, there are many more utilities for working with HPS alg
    PDEProblem
    solution_methods
    quadrature
+   Examples
 
    
 

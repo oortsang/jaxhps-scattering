@@ -1,14 +1,14 @@
 Quadrature utilities
-==========
+=======================
 The ``quadrature`` module provides utilities for computing quadrature rules and weights for numerical integration. It also includes routines for building barycentric Lagrange interpolation matrices.
 
 
 .. automodule:: hahps.quadrature
    :members:
 
-=================
+
 References
-=================
+-------------
 
 .. [1] Berrut, J.-P., & Trefethen, L. N. (2004). Barycentric Lagrange Interpolation.
 .. [2] https://www.mathworks.com/matlabcentral/fileexchange/5511-2d-barycentric-lagrange-interpolation?s_tid=prof_contriblnk
