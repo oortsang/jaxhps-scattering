@@ -27,7 +27,7 @@ class PDEProblem:
     def __init__(
         self,
         domain: Domain,
-        source: jax.Array,
+        source: jax.Array = None,
         D_xx_coefficients: jax.Array = None,
         D_xy_coefficients: jax.Array = None,
         D_xz_coefficients: jax.Array = None,
@@ -90,27 +90,6 @@ class PDEProblem:
             D_z_coefficients=D_z_coefficients,
             I_coefficients=I_coefficients,
         )
-        # check_lst = [
-        #     (D_xx_coefficients, "D_xx_coefficients"),
-        #     (D_xy_coefficients, "D_xy_coefficients"),
-        #     (D_xz_coefficients, "D_xz_coefficients"),
-        #     (D_yy_coefficients, "D_yy_coefficients"),
-        #     (D_yz_coefficients, "D_yz_coefficients"),
-        #     (D_zz_coefficients, "D_zz_coefficients"),
-        #     (D_x_coefficients, "D_x_coefficients"),
-        #     (D_y_coefficients, "D_y_coefficients"),
-        #     (D_z_coefficients, "D_z_coefficients"),
-        #     (I_coefficients, "I_coefficients"),
-        # ]
-        # if not use_ItI:
-        #     # Other parts of the ItI code use source terms that have shape [n_leaves, p**2, n_src]
-        #     check_lst.append((source, "source"))
-        # for arr, name in check_lst:
-        #     if arr is not None:
-        #         if arr.shape != domain.interior_points[..., 0].shape:
-        #             raise ValueError(
-        #                 f"{name} has shape {arr.shape} but should have shape {domain.interior_points[..., 0].shape} to match the Domain's interior points."
-        #             )
 
         # Store coefficients
 
@@ -239,6 +218,12 @@ class PDEProblem:
         self.g_tilde_lst: List[
             jax.Array
         ] = []  #: (jax.Array) Stores pre-computed incoming data along merge interfaces when performing uniform merges.
+        self.D_inv_lst: List[
+            jax.Array
+        ] = []  #: (jax.Array) Stores pre-computed operators for the upward pass.
+        self.BD_inv_lst: List[
+            jax.Array
+        ] = []  #: (jax.Array) Stores pre-computed BD^{-1} operators for the upward pass.
 
     def reset(self) -> None:
         """
@@ -456,8 +441,12 @@ def _get_PDEProblem_chunk(
         if pde_problem.I_coefficients is not None
         else None
     )
-    # Source is always present.
-    new_pde_problem.source = pde_problem.source[start_idx:end_idx]
+    # Source term
+    new_pde_problem.source = (
+        pde_problem.source[start_idx:end_idx]
+        if pde_problem.source is not None
+        else None
+    )
 
     # Return the new instance
     return new_pde_problem
