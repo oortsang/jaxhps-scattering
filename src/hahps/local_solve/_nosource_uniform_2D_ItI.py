@@ -72,7 +72,7 @@ def nosource_local_solve_stage_uniform_2D_ItI(
     R_arr_host = jax.device_put(R_arr, host_device)
     Y_arr_host = jax.device_put(Y_arr, host_device)
 
-    return R_arr_host, Y_arr_host
+    return Y_arr_host, R_arr_host
 
 
 @jax.jit

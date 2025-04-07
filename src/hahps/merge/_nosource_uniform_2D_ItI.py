@@ -120,8 +120,12 @@ def nosource_merge_stage_uniform_2D_ItI(
     )
 
     S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
-    D_inv_lst.append(jax.device_put(D_inv_last, host_device))
-    BD_inverse_lst.append(jax.device_put(BD_inv_last, host_device))
+    D_inv_lst.append(
+        jax.device_put(jnp.expand_dims(D_inv_last, axis=0), host_device)
+    )
+    BD_inverse_lst.append(
+        jax.device_put(jnp.expand_dims(BD_inv_last, axis=0), host_device)
+    )
 
     if return_T:
         T_last_out = jax.device_put(T_last, host_device)

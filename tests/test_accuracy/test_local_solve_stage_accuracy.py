@@ -7,6 +7,9 @@ from hahps._discretization_tree import DiscretizationNode2D
 from hahps._domain import Domain
 from hahps._pdeproblem import PDEProblem
 from hahps.local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
+from hahps.local_solve._nosource_uniform_2D_ItI import (
+    nosource_local_solve_stage_uniform_2D_ItI,
+)
 from hahps.local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
 from .cases import (
     XMIN,
@@ -39,66 +42,81 @@ ROOT_ITI = DiscretizationNode2D(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
 DOMAIN_DTN = Domain(p=P, q=Q, root=ROOT_DTN, L=0)
 DOMAIN_ITI = Domain(p=P, q=Q, root=ROOT_ITI, L=0)
 
-# def check_solution_accuracy_DtN(solver: SolverObj, test_case: Dict) -> None:
-#     d_xx_coeffs = test_case[K_XX_COEFF](domain.interior_points)
-#     d_yy_coeffs = test_case[K_YY_COEFF](domain.interior_points)
-#     source = test_case[K_SOURCE](domain.interior_points).squeeze(2)
-#     boundary_g = jnp.expand_dims(
-#         test_case[K_DIRICHLET](domain.boundary_points), 0
-#     )
 
-#     logging.debug(
-#         "check_solution_accuracy_DtN: d_xx_coeffs shape: %s", d_xx_coeffs.shape
-#     )
-#     logging.debug(
-#         "check_solution_accuracy_DtN: d_yy_coeffs shape: %s", d_yy_coeffs.shape
-#     )
-#     logging.debug(
-#         "check_solution_accuracy_DtN: source shape: %s", source.shape
-#     )
+def check_leaf_accuracy_nosource_ItI_uniform(
+    domain: Domain, test_case: Dict
+) -> None:
+    d_xx_coeffs = test_case[K_XX_COEFF](domain.interior_points)
+    d_yy_coeffs = test_case[K_YY_COEFF](domain.interior_points)
+    pde_problem = PDEProblem(
+        domain=domain,
+        D_xx_coefficients=d_xx_coeffs,
+        D_yy_coefficients=d_yy_coeffs,
+        use_ItI=True,
+        eta=ETA,
+    )
 
-#     ##############################################################
-#     # Solve the local problem
-#     computed_soln = _local_solutions_2D_DtN_uniform(
-#         D_xx=solver.D_xx,
-#         D_yy=solver.D_yy,
-#         D_xy=solver.D_xy,
-#         D_x=solver.D_x,
-#         D_y=solver.D_y,
-#         P=solver.P,
-#         Q_D=solver.Q_D,
-#         p=solver.p,
-#         source_term=source,
-#         D_xx_coeffs=d_xx_coeffs,
-#         D_yy_coeffs=d_yy_coeffs,
-#         bdry_data=boundary_g,
-#     )
-#     logging.debug(
-#         "check_solution_accuracy_DtN: computed_soln shape: %s",
-#         computed_soln.shape,
-#     )
+    ##############################################################
+    # Solve the local problem
+    Y, T = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=pde_problem)
 
-#     ##############################################################
-#     # Check the accuracy of the homogeneous solution
-#     # Construct computed homogeneous solution
-#     expected_homogeneous_soln = test_case[K_HOMOG_SOLN](
-#         domain.interior_points
-#     ).flatten()
+    ##############################################################
+    # Check the accuracy of the ItI map
 
-#     logging.debug(
-#         "check_leaf_accuracy_DtN: expected_homogeneous_soln shape: %s",
-#         expected_homogeneous_soln.shape,
-#     )
-#     expected_part_soln = test_case[K_PART_SOLN](
-#         domain.interior_points
-#     ).flatten()
+    # Assemble incoming impedance data
+    q = domain.q
+    boundary_g = test_case[K_DIRICHLET](domain.boundary_points)
+    boundary_g_normals = jnp.concatenate(
+        [
+            -1 * test_case[K_DIRICHLET_DUDY](domain.boundary_points[:q]),
+            test_case[K_DIRICHLET_DUDX](domain.boundary_points[q : 2 * q]),
+            test_case[K_DIRICHLET_DUDY](domain.boundary_points[2 * q : 3 * q]),
+            -1 * test_case[K_DIRICHLET_DUDX](domain.boundary_points[3 * q :]),
+        ]
+    )
+    incoming_imp_data = boundary_g_normals + 1j * pde_problem.eta * boundary_g
+    expected_outgoing_imp_data = (
+        boundary_g_normals - 1j * pde_problem.eta * boundary_g
+    )
 
-#     logging.debug(
-#         "check_leaf_accuracy_DtN: expected_part_soln shape: %s",
-#         expected_part_soln.shape,
-#     )
-#     expected_soln = expected_homogeneous_soln + expected_part_soln
-#     assert jnp.allclose(computed_soln, expected_soln, atol=ATOL, rtol=RTOL)
+    # Construct computed outgoing imp data
+    computed_outgoing_imp_data = T @ incoming_imp_data
+    logging.debug(
+        "check_leaf_accuracy_ItI: computed_outgoing_imp_data shape: %s",
+        computed_outgoing_imp_data.shape,
+    )
+    logging.debug(
+        "check_leaf_accuracy_ItI: expected_outgoing_imp_data shape: %s",
+        expected_outgoing_imp_data.shape,
+    )
+    assert jnp.allclose(
+        computed_outgoing_imp_data,
+        expected_outgoing_imp_data,
+        atol=ATOL,
+        rtol=RTOL,
+    )
+
+    ##############################################################
+    # Check the accuracy of the homogeneous solution
+    # Construct computed homogeneous solution
+    computed_homogeneous_soln = Y @ incoming_imp_data
+    expected_homogeneous_soln = test_case[K_HOMOG_SOLN](
+        domain.interior_points
+    ).flatten()
+    logging.debug(
+        "check_leaf_accuracy_ItI: computed_homogeneous_soln shape: %s",
+        computed_homogeneous_soln.shape,
+    )
+    logging.debug(
+        "check_leaf_accuracy_ItI: expected_homogeneous_soln shape: %s",
+        expected_homogeneous_soln.shape,
+    )
+    assert jnp.allclose(
+        computed_homogeneous_soln,
+        expected_homogeneous_soln,
+        atol=ATOL,
+        rtol=RTOL,
+    )
 
 
 def check_leaf_accuracy_DtN(domain: Domain, test_case: Dict) -> None:
@@ -231,6 +249,8 @@ def check_leaf_accuracy_DtN(domain: Domain, test_case: Dict) -> None:
         atol=ATOL,
         rtol=RTOL,
     )
+    d_xx_coeffs = test_case[K_XX_COEFF](domain.interior_points)
+    d_yy_coeffs = test_case[K_YY_COEFF](domain.interior_points)
 
 
 def check_leaf_accuracy_ItI(domain: Domain, test_case: Dict) -> None:
@@ -394,6 +414,13 @@ class Test_accuracy_local_solve_stage_uniform_2D_ItI:
         check_leaf_accuracy_ItI(domain, test_case)
         jax.clear_caches()
 
+    # def test_1(self, caplog) -> None:
+    #     caplog.set_level(logging.DEBUG)
+    #     test_case = TEST_CASE_PART_ITI
+    #     domain = DOMAIN_ITI
+    #     check_leaf_accuracy_ItI(domain, test_case)
+    #     jax.clear_caches()
+
 
 class Test_accuracy_local_solve_stage_uniform_2D_DtN:
     def test_0(self, caplog) -> None:
@@ -428,6 +455,15 @@ class Test_accuracy_local_solve_stage_uniform_2D_DtN:
 
         check_leaf_accuracy_DtN(domain, test_case)
 
+        jax.clear_caches()
+
+
+class Test_accuracy_nosource_local_solve_stage_uniform_2D_ItI:
+    def test_0(self, caplog) -> None:
+        caplog.set_level(logging.DEBUG)
+        test_case = TEST_CASE_POLY_ZERO_SOURCE
+        domain = DOMAIN_ITI
+        check_leaf_accuracy_nosource_ItI_uniform(domain, test_case)
         jax.clear_caches()
 
 

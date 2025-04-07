@@ -256,7 +256,7 @@ def _nosource_build_solver(
                 "build_solver: chunk_i.source.shape = %s", chunk_i.source.shape
             )
             # Perform the local solve stage on the chunk
-            T_arr_chunk, Y_arr_chunk = (
+            Y_arr_chunk, T_arr_chunk = (
                 nosource_local_solve_stage_uniform_2D_ItI(
                     pde_problem=chunk_i,
                     device=compute_device,
@@ -273,7 +273,7 @@ def _nosource_build_solver(
         # h_host = jnp.concatenate(h_lst, axis=0)
     else:
         # Perform the local solve stage all at once for smaller problem sizes
-        T_arr_host, Y_arr_host = nosource_local_solve_stage_uniform_2D_ItI(
+        Y_arr_host, T_arr_host = nosource_local_solve_stage_uniform_2D_ItI(
             pde_problem=pde_problem,
             device=compute_device,
             host_device=host_device,
