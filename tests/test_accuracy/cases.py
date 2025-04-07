@@ -14,6 +14,7 @@ K_DIRICHLET_DUDY = "d_dy_dirichlet_data_fn"
 K_DIRICHLET_DUDZ = "d_dz_dirichlet_data_fn"
 K_PART_SOLN = "part_soln_fn"
 K_HOMOG_SOLN = "homog_soln_fn"
+K_SOLN = "soln_fn"
 K_PART_SOLN_DUDX = "d_dx_part_soln_fn"
 K_PART_SOLN_DUDY = "d_dy_part_soln_fn"
 K_PART_SOLN_DUDZ = "d_dz_part_soln_fn"
@@ -143,35 +144,56 @@ TEST_CASE_POLY_ZERO_SOURCE = {
 # # u(x,y) = e^{i  \pi x} + e^{i  \pi y}
 
 
-def part_soln_iti_fn(x: jnp.ndarray) -> jnp.ndarray:
-    # v(x,y) = (x^2 + 2i x) + (y^2 + 2i y)
-    return (
-        jnp.square(x[..., 0])
-        + 2j * x[..., 0]
-        + jnp.square(x[..., 1])
-        + 2j * x[..., 1]
+def q(x):
+    # q(x,y) = 1 + e^{- \lambda_1 ||x||^2}
+    return jnp.ones_like(x[..., 0]) + jnp.exp(
+        -jnp.square(x[..., 0]) - jnp.square(x[..., 1])
     )
 
 
-def part_soln_iti_dudx_fn(x: jnp.ndarray) -> jnp.ndarray:
-    # dv/dx = 2x + 2i
-    return jnp.expand_dims(2 * x[..., 0] + 2j, -1)
+def f(x):
+    # f(x,y) = - pi^2 (  e^{i \pi x} + e^{i \pi y} )
+    return -(jnp.pi**2) * (
+        jnp.exp(1j * jnp.pi * x[..., 0]) + jnp.exp(1j * jnp.pi * x[..., 1])
+    )
 
 
-def part_soln_iti_dudy_fn(x: jnp.ndarray) -> jnp.ndarray:
-    # dv/dy = 2y + 2i
-    return jnp.expand_dims(2 * x[..., 1] + 2j, -1)
+def u(x):
+    # u(x,y) = e^{i  \pi x} + e^{i  \pi y}
+    return jnp.exp(1j * jnp.pi * x[..., 0]) + jnp.exp(1j * jnp.pi * x[..., 1])
+
+
+def g(x: jnp.array) -> jnp.array:
+    """
+    Expect x to have shape (..., 2).
+    Output has shape (...)
+
+    Want to return the incoming impedance data
+
+    g = u + i * eta * du/dn
+    """
+    n_per_side = x.shape[0] // 4
+    south = x[:n_per_side]
+    east = x[n_per_side : 2 * n_per_side]
+    north = x[2 * n_per_side : 3 * n_per_side]
+    west = x[3 * n_per_side :]
+
+    dudn = jnp.concatenate(
+        [
+            -1j * jnp.pi * jnp.exp(1j * jnp.pi * south[..., 1]),
+            1j * jnp.pi * jnp.exp(1j * jnp.pi * east[..., 0]),
+            1j * jnp.pi * jnp.exp(1j * jnp.pi * north[..., 1]),
+            -1j * jnp.pi * jnp.exp(1j * jnp.pi * west[..., 0]),
+        ]
+    )
+    return dudn + 1j * ETA * u(x)
 
 
 TEST_CASE_PART_ITI = {
-    K_DIRICHLET: lambda x: jnp.zeros_like(x[..., 0]),
-    K_DIRICHLET_DUDX: lambda x: jnp.zeros_like(x[..., 0]),
-    K_DIRICHLET_DUDY: lambda x: jnp.zeros_like(x[..., 0]),
+    K_DIRICHLET: g,
     K_XX_COEFF: default_lap_coeffs,
     K_YY_COEFF: default_lap_coeffs,
-    K_HOMOG_SOLN: lambda x: jnp.zeros_like(x[..., 0]),
-    K_SOURCE: lambda x: 4 * jnp.expand_dims(jnp.ones_like(x[..., 0]), -1),
-    K_PART_SOLN: part_soln_iti_fn,
-    K_PART_SOLN_DUDX: part_soln_iti_dudx_fn,
-    K_PART_SOLN_DUDY: part_soln_iti_dudy_fn,
+    K_I_COEFF: q,
+    K_SOURCE: f,
+    K_SOLN: u,
 }
