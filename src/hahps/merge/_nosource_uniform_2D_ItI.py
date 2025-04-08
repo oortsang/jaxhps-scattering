@@ -34,8 +34,6 @@ def nosource_merge_stage_uniform_2D_ItI(
 
     Parameters
     ----------
-    pde_problem : PDEProblem
-        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
     T_arr : jax.Array
         Array of ItI matrices from the local solve stage. Has shape (n_leaves, 4q, 4q)

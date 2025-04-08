@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-
+import jax
 
 ####################################################################
 # Define the keys that will be used in the test cases
@@ -18,6 +18,8 @@ K_SOLN = "soln_fn"
 K_PART_SOLN_DUDX = "d_dx_part_soln_fn"
 K_PART_SOLN_DUDY = "d_dy_part_soln_fn"
 K_PART_SOLN_DUDZ = "d_dz_part_soln_fn"
+K_DUDX = "d_dx_soln_fn"
+K_DUDY = "d_dy_soln_fn"
 
 
 ######################################################################
@@ -152,10 +154,8 @@ def q(x):
 
 
 def f(x):
-    # f(x,y) = - pi^2 (  e^{i \pi x} + e^{i \pi y} )
-    return -(jnp.pi**2) * (
-        jnp.exp(1j * jnp.pi * x[..., 0]) + jnp.exp(1j * jnp.pi * x[..., 1])
-    )
+    # f(x,y) = - pi^2 u(x) + q(x) u(x)
+    return -(jnp.pi**2) * u(x) + q(x) * u(x)
 
 
 def u(x):
@@ -189,11 +189,21 @@ def g(x: jnp.array) -> jnp.array:
     return dudn + 1j * ETA * u(x)
 
 
-TEST_CASE_PART_ITI = {
+def dudx(x: jax.Array) -> jax.Array:
+    return 1j * jnp.pi * jnp.exp(1j * jnp.pi * x[..., 0])
+
+
+def dudy(x: jax.Array) -> jax.Array:
+    return 1j * jnp.pi * jnp.exp(1j * jnp.pi * x[..., 1])
+
+
+TEST_CASE_HELMHOLTZ_ITI = {
     K_DIRICHLET: g,
     K_XX_COEFF: default_lap_coeffs,
     K_YY_COEFF: default_lap_coeffs,
     K_I_COEFF: q,
     K_SOURCE: f,
     K_SOLN: u,
+    K_DUDX: dudx,
+    K_DUDY: dudy,
 }

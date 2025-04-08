@@ -1,7 +1,7 @@
 from typing import List, Tuple
 import jax
 import jax.numpy as jnp
-
+import logging
 from .._device_config import HOST_DEVICE, DEVICE_ARR
 from .._pdeproblem import PDEProblem
 from ..local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
@@ -59,10 +59,15 @@ def up_pass_uniform_2D_ItI(
 
     for i in range(len(D_inv_lst)):
         # Get h and g_tilde for this level
+        logging.debug("up_pass_uniform_2D_ItI: i: %s", i)
+        logging.debug("up_pass_uniform_2D_ItI: h_in shape: %s", h_in.shape)
         nbdry = h_in.shape[-1]
         h_in = h_in.reshape(4, -1, nbdry)
         D_inv = D_inv_lst[i]
         BD_inv = BD_inv_lst[i]
+        logging.debug("up_pass_uniform_2D_ItI: D_inv shape: %s", D_inv.shape)
+        logging.debug("up_pass_uniform_2D_ItI: BD_inv shape: %s", BD_inv.shape)
+        logging.debug("up_pass_uniform_2D_ItI: h_in shape: %s", h_in.shape)
         h_in, g_tilde = vmapped_assemble_boundary_data(h_in, D_inv, BD_inv)
         g_tilde_lst.append(g_tilde)
 
