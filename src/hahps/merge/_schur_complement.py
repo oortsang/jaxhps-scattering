@@ -42,6 +42,40 @@ def assemble_merge_outputs_ItI(
 
 
 @jax.jit
+def nosource_assemble_merge_outputs_ItI(
+    A_lst: List[jnp.array],
+    B: jnp.array,
+    C: jnp.array,
+    D_12: jnp.array,
+    D_21: jax.Array,
+) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
+    """
+    Performs a merge for ItI matrices. In the ItI case, the D matrix is structured like:
+            ------------
+    D = I + | 0    D_12 |
+            | D_21 0    |
+            -------------
+    So we invert it with a Schur complement method and then pass the data to _assemble_merge_outputs()
+    Args:
+        A_lst (List[jnp.array]): _description_
+        B (jnp.array): _description_
+        C (jnp.array): _description_
+        D (jnp.array): _description_
+
+    Returns:
+        Tuple[jnp.array, jnp.array, jnp.array, jnp.array]
+
+        T (jnp.array): DtN matrix
+        S (jnp.array): ext_to_int matrix
+        D^{-1} (jnp.array):
+        BD^{-1} (jnp.array):
+    """
+
+    D_inv = _invert_D_ItI(D_12, D_21)
+    return _nosource_assemble_merge_outputs(A_lst, B, C, D_inv)
+
+
+@jax.jit
 def _invert_D_ItI(D_12: jax.Array, D_21: jax.Array) -> jax.Array:
     """
     In the ItI case, D has this structure:
@@ -166,6 +200,59 @@ def _assemble_merge_outputs(
     h_ext_out = h_ext + B @ g_tilde_int
 
     return (T, S, h_ext_out, g_tilde_int)
+
+
+@jax.jit
+def _nosource_assemble_merge_outputs(
+    A_lst: List[jnp.array],
+    B: jnp.array,
+    C: jnp.array,
+    D_inv: jnp.array,
+) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
+    """
+    Computes a Schur complement that shows up in merging
+    four patches together. Assumes D is already inverted.
+
+    Given the system
+
+    [ A B ][g_ext] = [u_ext - h_ext]
+    [ C D ][g_int]   [-h_int]
+
+    After two steps of block Gaussian elimination, we get
+
+    [A-BD^{-1}C    0][g_ext] = [u_ext - h_ext + BD^{-1} h_int]
+    [D^{-1}C       I][g_int]   [-D^{-1} h_int]
+
+    This returns the matrices T, S, D^{-1}, BD^{-1}
+
+    Args:
+        A_lst (List[jnp.array]): List of square diagonal blocks which make up A
+        B (jnp.array):
+        C (jnp.array): _description_
+        D_inv (jnp.array): _description_
+
+    Returns:
+        Tuple[jnp.array, jnp.array, jnp.array, jnp.array]
+
+        T (jnp.array): DtN matrix
+        S (jnp.array): Propagation matrix
+        D^{-1} (jnp.array):
+        BD^{-1} (jnp.array):
+    """
+
+    S = -1 * D_inv @ C
+    T = B @ S
+    # Need to add A to T block-wise
+    counter = 0
+    for A in A_lst:
+        block_start = counter
+        block_end = counter + A.shape[0]
+        T = T.at[block_start:block_end, block_start:block_end].set(
+            A + T[block_start:block_end, block_start:block_end]
+        )
+        counter = block_end
+    BD_inv = B @ D_inv
+    return (T, S, D_inv, BD_inv)
 
 
 @jax.jit

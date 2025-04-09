@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-
+import jax
 
 ####################################################################
 # Define the keys that will be used in the test cases
@@ -7,15 +7,19 @@ K_DIRICHLET = "dirichlet_data_fn"
 K_XX_COEFF = "d_xx_coeff_fn"
 K_YY_COEFF = "d_yy_coeff_fn"
 K_ZZ_COEFF = "d_zz_coeff_fn"
+K_I_COEFF = "i_coeff_fn"
 K_SOURCE = "source_fn"
 K_DIRICHLET_DUDX = "d_dx_dirichlet_data_fn"
 K_DIRICHLET_DUDY = "d_dy_dirichlet_data_fn"
 K_DIRICHLET_DUDZ = "d_dz_dirichlet_data_fn"
 K_PART_SOLN = "part_soln_fn"
 K_HOMOG_SOLN = "homog_soln_fn"
+K_SOLN = "soln_fn"
 K_PART_SOLN_DUDX = "d_dx_part_soln_fn"
 K_PART_SOLN_DUDY = "d_dy_part_soln_fn"
 K_PART_SOLN_DUDZ = "d_dz_part_soln_fn"
+K_DUDX = "d_dx_soln_fn"
+K_DUDY = "d_dy_soln_fn"
 
 
 ######################################################################
@@ -125,4 +129,81 @@ TEST_CASE_POLY_ZERO_SOURCE = {
     K_PART_SOLN: lambda x: jnp.expand_dims(jnp.zeros_like(x[..., 0]), -1),
     K_PART_SOLN_DUDX: lambda x: jnp.expand_dims(jnp.zeros_like(x[..., 0]), -1),
     K_PART_SOLN_DUDY: lambda x: jnp.expand_dims(jnp.zeros_like(x[..., 0]), -1),
+}
+
+
+# ######################################################################
+# # Test Case 2: Polynomial Source Function for ItI Problems
+# # \Delta u + q(x) u(x) = f     in \Omega
+# # u_n + i u = 0                in \partial \Omega
+# #
+# #
+# # q(x,y) = 1 + e^{- \lambda_1 ||x||^2}
+# # f(x,y) = - pi^2 (  e^{i \pi x} + e^{i \pi y} )
+# # g(x,y) = defined piecewise
+# # Can't separate the solution into homogeneous and particular parts, but here
+# # is the solution:
+# # u(x,y) = e^{i  \pi x} + e^{i  \pi y}
+
+
+def q(x):
+    # q(x,y) = 1 + e^{- \lambda_1 ||x||^2}
+    return jnp.ones_like(x[..., 0]) + jnp.exp(
+        -jnp.square(x[..., 0]) - jnp.square(x[..., 1])
+    )
+
+
+def f(x):
+    # f(x,y) = - pi^2 u(x) + q(x) u(x)
+    return -(jnp.pi**2) * u(x) + q(x) * u(x)
+
+
+def u(x):
+    # u(x,y) = e^{i  \pi x} + e^{i  \pi y}
+    return jnp.exp(1j * jnp.pi * x[..., 0]) + jnp.exp(1j * jnp.pi * x[..., 1])
+
+
+def g(x: jnp.array) -> jnp.array:
+    """
+    Expect x to have shape (..., 2).
+    Output has shape (...)
+
+    Want to return the incoming impedance data
+
+    g = u + i * eta * du/dn
+    """
+    n_per_side = x.shape[0] // 4
+    south = x[:n_per_side]
+    east = x[n_per_side : 2 * n_per_side]
+    north = x[2 * n_per_side : 3 * n_per_side]
+    west = x[3 * n_per_side :]
+
+    dudn = jnp.concatenate(
+        [
+            -1j * jnp.pi * jnp.exp(1j * jnp.pi * south[..., 1]),
+            1j * jnp.pi * jnp.exp(1j * jnp.pi * east[..., 0]),
+            1j * jnp.pi * jnp.exp(1j * jnp.pi * north[..., 1]),
+            -1j * jnp.pi * jnp.exp(1j * jnp.pi * west[..., 0]),
+        ]
+    )
+    return dudn + 1j * ETA * u(x)
+
+
+def dudx(x: jax.Array) -> jax.Array:
+    return 1j * jnp.pi * jnp.exp(1j * jnp.pi * x[..., 0])
+
+
+def dudy(x: jax.Array) -> jax.Array:
+    return 1j * jnp.pi * jnp.exp(1j * jnp.pi * x[..., 1])
+
+
+TEST_CASE_HELMHOLTZ_ITI = {
+    K_DIRICHLET: g,
+    K_XX_COEFF: default_lap_coeffs,
+    K_YY_COEFF: default_lap_coeffs,
+    K_I_COEFF: q,
+    K_SOURCE: f,
+    K_SOLN: u,
+    K_DUDX: dudx,
+    K_DUDY: dudy,
 }

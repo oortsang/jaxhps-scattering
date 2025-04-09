@@ -273,7 +273,6 @@ def problem_2(l_vals: int, p_vals: int) -> None:
             domain = Domain(p=p, q=p - 2, root=root, L=l)
 
             # Create the right-hand side
-            source = problem_2_source(domain.interior_points)
 
             # Get the coefficients for the Laplacian
             lap_coeffs = problem_2_lap_coeffs(domain.interior_points)
@@ -286,7 +285,6 @@ def problem_2(l_vals: int, p_vals: int) -> None:
                 D_xx_coefficients=lap_coeffs,
                 D_yy_coefficients=lap_coeffs,
                 I_coefficients=I_term,
-                source=source,
                 use_ItI=True,
                 eta=eta,
             )
@@ -294,16 +292,23 @@ def problem_2(l_vals: int, p_vals: int) -> None:
             # Build the solver
             build_solver(pde_problem)
 
-            # Get the boundary data
+            # Get the boundary data and source
             g = problem_2_boundary_data(domain.boundary_points, eta=eta)
+            source = problem_2_source(domain.interior_points)
 
             # Solve the problem
-            computed_soln = solve(pde_problem, g)
+            computed_soln = solve(pde_problem, g, source=source)
 
             # Compute the error
             expected_soln = problem_2_soln(domain.interior_points)
 
-            # plot soln
+            # plot soln. This function can be found in src/hahps/_utils.py
+            # plot_soln_from_cheby_nodes(
+            #     cheby_nodes=domain.interior_points.reshape(-1, 2),
+            #     corners=None,
+            #     expected_soln=expected_soln.real.flatten(),
+            #     computed_soln=computed_soln.real.flatten(),
+            # )
 
             # Compute the error
             err = jnp.max(jnp.abs(computed_soln - expected_soln))

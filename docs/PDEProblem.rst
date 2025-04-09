@@ -16,6 +16,10 @@ The ``PDEProblem`` class has two utility functions, :func:`hahps.PDEProblem.rese
 .. note::
    In the future, I would like to make the boundary condition more explicit when initializing the ``PDEProblem``.
 
+.. note::
+   When initializing the ``PDEProblem`` class, the ``source`` argument is optional. This is because the :func:`hahps.build_solver` routine for 2D uniform ItI problems is implemented to build the solver for an arbitrary source term. In this case, :func:`hahps.solve` performs an upward pass to compute a particular solution given a new source term, and then a downward pass to compute the homogeneous solution.
+
+   If ``source`` is specified when initializing the ``PDEProblem`` instance, the :func:`hahps.build_solver` routine will only build a solver for that particular source term.
 
 .. autoclass:: hahps.PDEProblem
    :members:
