@@ -44,6 +44,10 @@ class PDEProblem:
         self.domain: Domain = domain  #: The domain, which contains information about the discretization.
 
         # Input validation
+        # If it's not an ItI problem, we need to check the source term exists
+        if not use_ItI and source is None:
+            raise ValueError("Source must be specified for non-ItI problems.")
+
         # 2D problems shouldn't specify D_z_coefficients
         if isinstance(domain.root, DiscretizationNode3D):
             bool_2D = False
@@ -234,6 +238,8 @@ class PDEProblem:
         self.v = None
         self.S_lst = []
         self.g_tilde_lst = []
+        self.D_inv_lst = []
+        self.BD_inv_lst = []
 
     def update_coefficients(
         self,

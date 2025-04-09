@@ -12,7 +12,7 @@ Please see our preprint `Hardware Acceleration for HPS Algorithms in Two and Thr
 If you find this work useful, please cite our paper::
 
    @misc{melia2025hahps,
-      title={Hardware Acceleration for HPS Algorithms in Two and Three Dimensions}, 
+      title={Hardware Acceleration for {HPS} Algorithms in Two and Three Dimensions}, 
       author={Owen Melia and Daniel Fortunato and Jeremy Hoskins and Rebecca Willett},
       year={2025},
       eprint={2503.17535},

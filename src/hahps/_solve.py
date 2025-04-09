@@ -25,7 +25,9 @@ def solve(
 ) -> jax.Array:
     """
     This function performs the downward pass of the HPS algorithm, after the solution operators have
-    been formed by a call to hahps.build_solver().
+    been formed by a call to :func:`hahps.build_solver`.
+
+    If the problem is a 2D uniform ItI problem, the source term can be specified here. For other problems, the source term must be specified at the time the solver is built.
 
 
     Args:

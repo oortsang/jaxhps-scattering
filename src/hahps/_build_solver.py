@@ -42,7 +42,9 @@ def build_solver(
     """
     This function builds all of the matrices for the fast direct solver. This comprises of
     performing a local solve stage on each leaf, and merging information from the leaves to
-    the root of the domain.
+    the root of the domain. If the ``PDEProblem`` specifies a uniform 2D ItI problem, and
+    the source term is not specified, this method will build a solver for arbitrary source terms.
+    This requires storing a few more matrices.
 
     This function performs the computation on compute_device and then transfers the data to
     host_device.
