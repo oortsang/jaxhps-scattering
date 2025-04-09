@@ -295,11 +295,12 @@ def _nosource_uniform_quad_merge_ItI(
     )
 
     # Roll the exterior by n_int to get the correct ordering
+    # of the exterior discretization points. Right now, the exterior points are ordered like [a_1, b_2, c_3, d_4]
+    # but we want [bottom, left, top, right]. This requires
+    # rolling the exterior points by n_int.
     T = jnp.roll(T, -n_int, axis=0)
     T = jnp.roll(T, -n_int, axis=1)
     S = jnp.roll(S, -n_int, axis=1)
-
-    BD_inv = jnp.roll(BD_inv, -n_int, axis=0)
 
     # rows of S and D_inv are ordered like a_5, a_8, c_6, c_7, b_5, b_6, d_7, d_8.
     # Want to rearrange them so they are ordered like
@@ -317,7 +318,6 @@ def _nosource_uniform_quad_merge_ItI(
         ]
     )
     S = S[r]
-    D_inv = D_inv[r]
 
     return S, T, D_inv, BD_inv
 

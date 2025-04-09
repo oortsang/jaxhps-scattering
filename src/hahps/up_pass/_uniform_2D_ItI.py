@@ -61,8 +61,8 @@ def up_pass_uniform_2D_ItI(
         # Get h and g_tilde for this level
         logging.debug("up_pass_uniform_2D_ItI: i: %s", i)
         logging.debug("up_pass_uniform_2D_ItI: h_in shape: %s", h_in.shape)
-        nbdry = h_in.shape[-1]
-        h_in = h_in.reshape(4, -1, nbdry)
+        nnodes, nbdry = h_in.shape
+        h_in = h_in.reshape(nnodes // 4, 4, nbdry)
         D_inv = D_inv_lst[i]
         BD_inv = BD_inv_lst[i]
         logging.debug("up_pass_uniform_2D_ItI: D_inv shape: %s", D_inv.shape)
@@ -96,24 +96,28 @@ def assemble_boundary_data(
             Has shape (8 * nside) and is the incoming impedance data due to the particular solution on the merged node, evaluated along the merge interfaces.
     """
 
-    nside = h_in.shape[1] // 4
+    nside = h_in.shape[-1] // 4
 
     # Remember, the slices along the merge interface go from OUTSIDE to INSIDE
-    h_a_1 = jnp.concatenate([h_in[0, -nside:], h_in[0, :nside]])
-    h_a_5 = h_in[0, nside : 2 * nside]
-    h_a_8 = jnp.flipud(h_in[0, 2 * nside : 3 * nside])
+    h_a = h_in[0]
+    h_a_1 = jnp.concatenate([h_a[-nside:], h_a[:nside]])
+    h_a_5 = h_a[nside : 2 * nside]
+    h_a_8 = jnp.flipud(h_a[2 * nside : 3 * nside])
 
-    h_b_2 = h_in[1, : 2 * nside]
-    h_b_6 = h_in[1, 2 * nside : 3 * nside]
-    h_b_5 = jnp.flipud(h_in[1, 3 * nside : 4 * nside])
+    h_b = h_in[1]
+    h_b_2 = h_b[: 2 * nside]
+    h_b_6 = h_b[2 * nside : 3 * nside]
+    h_b_5 = jnp.flipud(h_b[3 * nside : 4 * nside])
 
-    h_c_6 = jnp.flipud(h_in[2, :nside])
-    h_c_3 = h_in[2, nside : 3 * nside]
-    h_c_7 = h_in[2, 3 * nside : 4 * nside]
+    h_c = h_in[2]
+    h_c_6 = jnp.flipud(h_c[:nside])
+    h_c_3 = h_c[nside : 3 * nside]
+    h_c_7 = h_c[3 * nside : 4 * nside]
 
-    h_d_8 = h_in[3, :nside]
-    h_d_7 = jnp.flipud(h_in[3, nside : 2 * nside])
-    h_d_4 = h_in[3, 2 * nside : 4 * nside]
+    h_d = h_in[3]
+    h_d_8 = h_d[:nside]
+    h_d_7 = jnp.flipud(h_d[nside : 2 * nside])
+    h_d_4 = h_d[2 * nside : 4 * nside]
 
     h_int_child = jnp.concatenate(
         [h_b_5, h_d_8, h_b_6, h_d_7, h_a_5, h_c_6, h_c_7, h_a_8]
@@ -123,11 +127,32 @@ def assemble_boundary_data(
 
     g_tilde = -1 * D_inv @ h_int_child
 
+    # g_tilde is ordered like a_5, a_8, c_6, c_7, b_5, b_6, d_7, d_8.
+    # Want to rearrange it so it's ordered like
+    # a_5, b_5, b_6, c_6, c_7, d_7, d_8, a_8
+    r = jnp.concatenate(
+        [
+            jnp.arange(nside),  # a5
+            jnp.arange(4 * nside, 5 * nside),  # b5
+            jnp.arange(5 * nside, 6 * nside),  # b6
+            jnp.arange(2 * nside, 3 * nside),  # c6
+            jnp.arange(3 * nside, 4 * nside),  # c7
+            jnp.arange(6 * nside, 7 * nside),  # d7
+            jnp.arange(7 * nside, 8 * nside),  # d8
+            jnp.arange(nside, 2 * nside),  # a8
+        ]
+    )
+    g_tilde = g_tilde[r]
+
     h = h_ext_child - BD_inv @ h_int_child
+
+    # h is ordered like h_a_1, h_b_2, h_c_3, h_d_4. Need to
+    # roll it so that it's ordered like [bottom, left, right, top].
+    h = jnp.roll(h, -nside, axis=0)
 
     return h, g_tilde
 
 
 vmapped_assemble_boundary_data = jax.vmap(
-    assemble_boundary_data, in_axes=(1, 0, 0), out_axes=(0, 0)
+    assemble_boundary_data, in_axes=(0, 0, 0), out_axes=(0, 0)
 )

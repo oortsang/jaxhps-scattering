@@ -13,7 +13,6 @@ from hahps import (
     PDEProblem,
     Domain,
 )
-from src.hahps._utils import plot_soln_from_cheby_nodes
 
 # Disable all matplorlib logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -303,13 +302,13 @@ def problem_2(l_vals: int, p_vals: int) -> None:
             # Compute the error
             expected_soln = problem_2_soln(domain.interior_points)
 
-            # plot soln
-            plot_soln_from_cheby_nodes(
-                cheby_nodes=domain.interior_points.reshape(-1, 2),
-                corners=None,
-                expected_soln=expected_soln.real.flatten(),
-                computed_soln=computed_soln.real.flatten(),
-            )
+            # plot soln. This function can be found in src/hahps/_utils.py
+            # plot_soln_from_cheby_nodes(
+            #     cheby_nodes=domain.interior_points.reshape(-1, 2),
+            #     corners=None,
+            #     expected_soln=expected_soln.real.flatten(),
+            #     computed_soln=computed_soln.real.flatten(),
+            # )
 
             # Compute the error
             err = jnp.max(jnp.abs(computed_soln - expected_soln))

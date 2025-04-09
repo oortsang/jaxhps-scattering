@@ -1,7 +1,6 @@
 import logging
 from typing import Dict
 import jax.numpy as jnp
-import pytest
 from hahps._discretization_tree import DiscretizationNode2D
 from hahps._domain import Domain
 from hahps._pdeproblem import PDEProblem
@@ -15,7 +14,6 @@ from hahps.merge._nosource_uniform_2D_ItI import (
 )
 from hahps.up_pass._uniform_2D_ItI import up_pass_uniform_2D_ItI
 from hahps.down_pass._uniform_2D_ItI import down_pass_uniform_2D_ItI
-from hahps._utils import plot_soln_from_cheby_nodes
 
 from .cases import (
     XMIN,
@@ -129,13 +127,13 @@ def check_merge_accuracy_nosource_2D_ItI_uniform_Helmholtz_like(
         expected_soln.shape,
     )
 
-    # Plot the solution
-    plot_soln_from_cheby_nodes(
-        cheby_nodes=domain.interior_points.reshape(-1, 2),
-        corners=None,
-        expected_soln=expected_soln.imag.flatten(),
-        computed_soln=computed_soln.imag.flatten(),
-    )
+    # Plot the solution. This function can be found in src/hahps/_utils.py
+    # plot_soln_from_cheby_nodes(
+    #     cheby_nodes=domain.interior_points.reshape(-1, 2),
+    #     corners=None,
+    #     expected_soln=expected_soln.imag.flatten(),
+    #     computed_soln=computed_soln.imag.flatten(),
+    # )
 
     assert jnp.allclose(
         computed_soln,
@@ -235,6 +233,20 @@ def check_against_standard_2D_ItI_uniform(
     logging.debug("g_tilde_lst len: %s", len(g_tilde_lst))
     logging.debug("g_tilde_lst_nosource len: %s", len(g_tilde_lst_nosource))
     for i in range(len(g_tilde_lst)):
+        logging.debug(
+            "g_tilde_list_nosource[i].shape=%s", g_tilde_lst_nosource[i].shape
+        )
+        logging.debug("g_tilde_list[i].shape=%s", g_tilde_lst[i].shape)
+
+        # for j in range(1):
+        #     g_tilde = g_tilde_lst[i][j]
+        #     g_tilde_nosource = g_tilde_lst_nosource[i][j]
+        #     plt.plot(g_tilde.real, ".-", label=f"Expected real, j={j}")
+        #     plt.plot(
+        #         g_tilde_nosource.real, ".-", label=f"Computed real, j={j}"
+        #     )
+        # plt.legend()
+        # plt.show()
         assert jnp.allclose(
             g_tilde_lst_nosource[i],
             g_tilde_lst[i],
@@ -246,7 +258,7 @@ def check_against_standard_2D_ItI_uniform(
 
 
 class Test_accuracy_2D_ItI_uniform:
-    @pytest.mark.skip
+    # @pytest.mark.skip
     def test_0(self, caplog) -> None:
         caplog.set_level(logging.DEBUG)
 
