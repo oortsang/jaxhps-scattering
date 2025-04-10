@@ -1,7 +1,6 @@
 from typing import List, Tuple
 import jax
 import jax.numpy as jnp
-import logging
 from .._device_config import HOST_DEVICE, DEVICE_ARR
 from .._pdeproblem import PDEProblem
 from ..local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
@@ -22,7 +21,7 @@ def up_pass_uniform_2D_ItI(
     Parameters
     ----------
     source : jax.Array
-        _description_
+        Specifies the source term(s). Can have shape (nleaves, p^2) or (nleaves, p^2, nsrc).
 
     pde_probem : PDEProblem
         Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
@@ -42,6 +41,12 @@ def up_pass_uniform_2D_ItI(
         List of pre-computed g_tilde matrices for each level of the quadtree.
     """
 
+    bool_multi_source = source.ndim == 3
+
+    if not bool_multi_source:
+        # Add a source dimension to the source term
+        source = jnp.expand_dims(source, axis=-1)
+
     # Re-do a full local solve.
     pde_problem.source = source
 
@@ -59,17 +64,21 @@ def up_pass_uniform_2D_ItI(
 
     for i in range(len(D_inv_lst)):
         # Get h and g_tilde for this level
-        logging.debug("up_pass_uniform_2D_ItI: i: %s", i)
-        logging.debug("up_pass_uniform_2D_ItI: h_in shape: %s", h_in.shape)
-        nnodes, nbdry = h_in.shape
-        h_in = h_in.reshape(nnodes // 4, 4, nbdry)
+
+        nnodes, nbdry, nsrc = h_in.shape
+        h_in = h_in.reshape(nnodes // 4, 4, nbdry, nsrc)
         D_inv = D_inv_lst[i]
         BD_inv = BD_inv_lst[i]
-        logging.debug("up_pass_uniform_2D_ItI: D_inv shape: %s", D_inv.shape)
-        logging.debug("up_pass_uniform_2D_ItI: BD_inv shape: %s", BD_inv.shape)
-        logging.debug("up_pass_uniform_2D_ItI: h_in shape: %s", h_in.shape)
+
         h_in, g_tilde = vmapped_assemble_boundary_data(h_in, D_inv, BD_inv)
         g_tilde_lst.append(g_tilde)
+
+    # Remove the source dimension if it's not a multi-source problem
+    if not bool_multi_source:
+        v = jnp.squeeze(v, axis=-1)
+        g_tilde_lst = [
+            jnp.squeeze(g_tilde, axis=-1) for g_tilde in g_tilde_lst
+        ]
 
     # Return v and g_tilde_lst
     return v, g_tilde_lst
@@ -96,7 +105,7 @@ def assemble_boundary_data(
             Has shape (8 * nside) and is the incoming impedance data due to the particular solution on the merged node, evaluated along the merge interfaces.
     """
 
-    nside = h_in.shape[-1] // 4
+    nside = h_in.shape[1] // 4
 
     # Remember, the slices along the merge interface go from OUTSIDE to INSIDE
     h_a = h_in[0]
@@ -144,7 +153,7 @@ def assemble_boundary_data(
     )
     g_tilde = g_tilde[r]
 
-    h = h_ext_child - BD_inv @ h_int_child
+    h = h_ext_child - BD_inv @ h_ext_child
 
     # h is ordered like h_a_1, h_b_2, h_c_3, h_d_4. Need to
     # roll it so that it's ordered like [bottom, left, right, top].

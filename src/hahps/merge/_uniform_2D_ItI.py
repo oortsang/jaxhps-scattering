@@ -43,7 +43,7 @@ def merge_stage_uniform_2D_ItI(
         Array of ItI matrices from the local solve stage. Has shape (n_leaves, 4q, 4q)
 
     h_arr : jax.Array
-        Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 4q)
+        Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 4q) or (n_leaves, 4q, nsrc)
 
     l : int
         Number of levels to merge
@@ -81,13 +81,19 @@ def merge_stage_uniform_2D_ItI(
     T_arr = jax.device_put(T_arr, device)
     h_arr = jax.device_put(h_arr, device)
 
+    bool_multi_source = h_arr.ndim == 3
+
     if len(T_arr.shape) < 4:
         logging.debug(
             "merge_stage_uniform_2D_ItI: T_arr.shape = %s", T_arr.shape
         )
         n_leaves, n_ext, _ = T_arr.shape
         T_arr = T_arr.reshape(n_leaves // 4, 4, n_ext, n_ext)
-        h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext)
+        if bool_multi_source:
+            n_src = h_arr.shape[-1]
+            h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext, n_src)
+        else:
+            h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext, 1)
 
     for i in range(l - 1):
         S_arr, T_arr_new, h_arr_new, g_tilde_arr = (
@@ -99,6 +105,10 @@ def merge_stage_uniform_2D_ItI(
 
         # T_arr.delete()
         # h_arr.delete()
+
+        if not bool_multi_source:
+            # Remove source dimension from g_tilde_arr
+            g_tilde_arr = jnp.squeeze(g_tilde_arr, axis=-1)
 
         if host_device != device:
             if not subtree_recomp:
@@ -126,6 +136,10 @@ def merge_stage_uniform_2D_ItI(
         h_arr[0, 2],
         h_arr[0, 3],
     )
+    if not bool_multi_source:
+        # Remove source dimension from g_tilde_last and h_last
+        g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
+        h_last = jnp.squeeze(h_last, axis=-1)
 
     if subtree_recomp:
         # In this branch, we only return T_last and h_last
@@ -379,6 +393,7 @@ def vmapped_uniform_quad_merge_ItI(
     )
 
     n_merges, n_int, n_ext = S.shape
+    n_src = h.shape[-1]
     R = R.reshape((n_merges // 4, 4, n_ext, n_ext))
-    h = h.reshape((n_merges // 4, 4, n_ext))
+    h = h.reshape((n_merges // 4, 4, n_ext, n_src))
     return S, R, h, f

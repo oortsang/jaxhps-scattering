@@ -32,9 +32,9 @@ def local_solve_stage_uniform_2D_ItI(
     T : jax.Array
         Impedance-to-Impedance matrices for each leaf. Has shape (n_leaves, 4q, 4q)
     v : jax.Array
-        Leaf-level particular solutions. Has shape (n_leaves, p^2)
+        Leaf-level particular solutions. Has shape (n_leaves, p^2) if there is a single source term, or (n_leaves, p^2, nsrc) if there are multiple source terms.
     h : jax.Array
-        Outgoing boundary data. This is the outgoing impedance data of the particular solution :math:`v_n - i \\eta v`. Has shape (n_leaves, 4q)
+        Outgoing boundary data. This is the outgoing impedance data of the particular solution :math:`v_n - i \\eta v`. Has shape (n_leaves, 4q) if there is a single source term, or (n_leaves, 4q, nsrc) if there are multiple source terms.
     """
     logging.debug("_local_solve_stage_2D_ItI: started")
 
@@ -52,6 +52,8 @@ def local_solve_stage_uniform_2D_ItI(
         source_term,
         device,
     )
+    bool_multi_source = source_term.ndim == 3
+
     # stack the precomputed differential operators into a single array
     diff_ops = jnp.stack(
         [
@@ -95,14 +97,15 @@ def local_solve_stage_uniform_2D_ItI(
         pde_problem.QH,
         pde_problem.G,
     )
+    if not bool_multi_source:
+        h = h[..., 0]
+        v = v[..., 0]
 
     R_arr_host = jax.device_put(R_arr, host_device)
     Y_arr_host = jax.device_put(Y_arr, host_device)
 
-    # The indexing on the last axis is to take away the multi-source dimension
-    # TODO: Expand the code to work with multiple sources.
-    h_arr_host = jax.device_put(h, host_device)[..., 0]
-    v_arr_host = jax.device_put(v, host_device)[..., 0]
+    h_arr_host = jax.device_put(h, host_device)
+    v_arr_host = jax.device_put(v, host_device)
 
     return (
         Y_arr_host,

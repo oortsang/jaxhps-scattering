@@ -11,6 +11,7 @@ from hahps._subtree_recomp import (
     downward_pass_subtree,
 )
 from hahps._device_config import GPU_AVAILABLE
+import logging
 
 
 class Test_upward_pass_subtree:
@@ -48,6 +49,34 @@ class Test_upward_pass_subtree:
 
         d_xx_coeffs = jnp.array(np.random.normal(size=(num_leaves, p**2)))
         source_term = jnp.array(np.random.normal(size=(num_leaves, p**2)))
+
+        t = PDEProblem(
+            domain=domain,
+            source=source_term,
+            D_xx_coefficients=d_xx_coeffs,
+            use_ItI=True,
+            eta=1.0,
+        )
+
+        T_last = upward_pass_subtree(t, subtree_height=2)
+
+        n_bdry = domain.boundary_points.shape[0]
+        assert T_last.shape == (n_bdry, n_bdry)
+
+    def test_2(self, caplog) -> None:
+        """Multi-Source ItI case"""
+        p = 7
+        q = 5
+        l = 3
+        nsrc = 3
+        num_leaves = 4**l
+        root = DiscretizationNode2D(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
+        domain = Domain(p=p, q=q, root=root, L=l)
+
+        d_xx_coeffs = jnp.array(np.random.normal(size=(num_leaves, p**2)))
+        source_term = jnp.array(
+            np.random.normal(size=(num_leaves, p**2, nsrc))
+        )
 
         t = PDEProblem(
             domain=domain,
@@ -118,6 +147,40 @@ class Test_downward_pass_subtree:
 
         n_bdry = domain.boundary_points.shape[0]
         g = jnp.zeros(n_bdry, dtype=jnp.complex128)
+
+        solns = downward_pass_subtree(t, g, subtree_height=2)
+
+        assert solns.shape == domain.interior_points[..., 0].shape
+
+    @pytest.mark.skipif(
+        not GPU_AVAILABLE, reason="Skipping because GPU is not available"
+    )
+    def test_2(self, caplog) -> None:
+        """Multi-Source ItI case"""
+        caplog.set_level(logging.DEBUG)
+        p = 7
+        q = 5
+        l = 3
+        nsrc = 3
+        num_leaves = 4**l
+        root = DiscretizationNode2D(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
+        domain = Domain(p=p, q=q, root=root, L=l)
+
+        d_xx_coeffs = jnp.array(np.random.normal(size=(num_leaves, p**2)))
+        source_term = jnp.array(
+            np.random.normal(size=(num_leaves, p**2, nsrc))
+        )
+
+        t = PDEProblem(
+            domain=domain,
+            source=source_term,
+            D_xx_coefficients=d_xx_coeffs,
+            use_ItI=True,
+            eta=1.0,
+        )
+
+        n_bdry = domain.boundary_points.shape[0]
+        g = jnp.zeros((n_bdry, nsrc), dtype=jnp.complex128)
 
         solns = downward_pass_subtree(t, g, subtree_height=2)
 
