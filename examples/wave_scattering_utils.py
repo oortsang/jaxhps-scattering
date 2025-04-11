@@ -17,7 +17,6 @@ from hahps import (
     upward_pass_subtree,
     downward_pass_subtree,
     local_solve_chunksize_2D,
-    DEVICE_ARR,
 )
 from hahps.local_solve import local_solve_stage_uniform_2D_ItI
 from hahps.merge import merge_stage_uniform_2D_ItI
@@ -209,10 +208,6 @@ def get_scattering_uscat_impedance(
     k: float,
     eta: float,
 ) -> jnp.array:
-    # h is the outgoing impedance from the particular solution. It needs to be added to the incoming impedace.
-    # print("get_scattering_utot_impedance: S shape: ", S.shape)
-    # print("get_scattering_utot_impedance: D shape: ", D.shape)
-    # print("get_scattering_utot_impedance: R shape: ", R.shape)
     A, b = setup_scattering_lin_system(
         S=S,
         D=D,
@@ -221,10 +216,15 @@ def get_scattering_uscat_impedance(
         k=k,
         source_directions=source_dirs,
     )
-    b = b.flatten()
     uin, uin_dn = get_uin_and_normals(k, bdry_pts, source_dirs)
-    uin = uin[:, 0]
-    uin_dn = uin_dn[:, 0]
+
+    # logging.debug(
+    #     "get_scattering_uscat_impedance: A shape: %s, b shape: %s, uin shape: %s, uin_dn shape: %s",
+    #     A.shape,
+    #     b.shape,
+    #     uin.shape,
+    #     uin_dn.shape,
+    # )
 
     # Solve the lin system to get uscat on the boundary
     uscat = jnp.linalg.solve(A, b)
@@ -236,6 +236,10 @@ def get_scattering_uscat_impedance(
     imp = uscat_dn + 1j * eta * uscat
 
     return imp
+
+
+# Not optimized.
+INTERP_BATCH_SIZE = 20
 
 
 def solve_scattering_problem(
@@ -292,9 +296,11 @@ def solve_scattering_problem(
     i_term = k**2 * (1 + q_fn(domain.interior_points))
     logging.debug("solve_scattering_problem: i_term shape: %s", i_term.shape)
 
-    uin_evals = get_uin(k, domain.interior_points, source_dirs)[:, :, 0]
+    uin_evals = get_uin(k, domain.interior_points, source_dirs)
 
-    source_term = -1 * (k**2) * q_fn(domain.interior_points) * uin_evals
+    source_term = (
+        -1 * (k**2) * q_fn(domain.interior_points)[..., None] * uin_evals
+    )
     logging.debug(
         "solve_scattering_problem: source_term shape: %s", source_term.shape
     )
@@ -313,7 +319,7 @@ def solve_scattering_problem(
     t_0 = default_timer()
 
     # Determine whether we need to use fused functions or can fit everything on the
-    n_leaves = domain.interior_points.shape[0]
+    n_leaves = domain.n_leaves
     chunksize = local_solve_chunksize_2D(p, jnp.complex128)
 
     bool_use_recomp = chunksize < n_leaves
@@ -322,19 +328,21 @@ def solve_scattering_problem(
         T_ItI = upward_pass_subtree(
             pde_problem=t,
             subtree_height=6,
-            compute_device=DEVICE_ARR[0],
-            host_device=DEVICE_ARR[0],
+            compute_device=jax.devices()[0],
+            host_device=jax.devices()[0],
         )
     else:
         Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
-            pde_problem=t, host_device=DEVICE_ARR[0], device=DEVICE_ARR[0]
+            pde_problem=t,
+            host_device=jax.devices()[0],
+            device=jax.devices()[0],
         )
         S_arr_lst, g_tilde_lst, T_ItI = merge_stage_uniform_2D_ItI(
             T_arr=T_arr,
             h_arr=h_arr,
             l=domain.L,
-            device=DEVICE_ARR[0],
-            host_device=DEVICE_ARR[0],
+            device=jax.devices()[0],
+            host_device=jax.devices()[0],
             return_T=True,
         )
 
@@ -344,9 +352,9 @@ def solve_scattering_problem(
         "solve_scattering_problem: Solving boundary integral equation..."
     )
 
-    if DEVICE_ARR[0] not in S.devices():
-        S = jax.device_put(S, DEVICE_ARR[0])
-        D = jax.device_put(D, DEVICE_ARR[0])
+    if jax.devices()[0] not in S.devices():
+        S = jax.device_put(S, jax.devices()[0])
+        D = jax.device_put(D, jax.devices()[0])
         bool_delete_SD = True
     else:
         bool_delete_SD = False
@@ -373,8 +381,8 @@ def solve_scattering_problem(
             pde_problem=t,
             boundary_data=incoming_imp_data,
             subtree_height=6,
-            compute_device=DEVICE_ARR[0],
-            host_device=DEVICE_ARR[0],
+            compute_device=jax.devices()[0],
+            host_device=jax.devices()[0],
         )
     else:
         uscat_soln = down_pass_uniform_2D_ItI(
@@ -383,6 +391,8 @@ def solve_scattering_problem(
             g_tilde_lst=g_tilde_lst,
             Y_arr=Y_arr,
             v_arr=v_arr,
+            device=jax.devices()[0],
+            host_device=jax.devices()[0],
         )
 
     # Interpolate the solution onto a regular grid with n points per dimension
@@ -392,9 +402,37 @@ def solve_scattering_problem(
     )
     xvals_reg = jnp.linspace(xmin, xmax, n)
     yvals_reg = jnp.linspace(ymin, ymax, n)
-    uscat_regular, target_pts = domain.interp_from_interior_points(
-        uscat_soln, xvals_reg, yvals_reg
+
+    n_src = source_dirs.shape[0]
+
+    uscat_regular = jnp.zeros(
+        (n, n, n_src), dtype=jnp.complex128, device=jax.devices("cpu")[0]
     )
+
+    # Do the interpolation from HPS to regular grid in batches of size INTERP_BATCH_SIZE
+    # along the source dimension
+    for i in range(0, n_src, INTERP_BATCH_SIZE):
+        chunk_start = i
+        chunk_end = min((i + INTERP_BATCH_SIZE), n_src)
+        logging.debug(
+            "solve_scattering_problem: Interpolating chunk i=%s, %s:%s",
+            i,
+            chunk_start,
+            chunk_end,
+        )
+        uscat_i = uscat_soln[..., chunk_start:chunk_end]
+        logging.debug(
+            "solve_scattering_problem: uscat_i.devices()=%s", uscat_i.devices()
+        )
+        chunk_i, target_pts = domain.interp_from_interior_points(
+            samples=uscat_i, eval_points_x=xvals_reg, eval_points_y=yvals_reg
+        )
+
+        chunk_i = jax.device_put(chunk_i, jax.devices("cpu")[0])
+        uscat_regular = uscat_regular.at[..., chunk_start:chunk_end].set(
+            chunk_i
+        )
+
     uscat_regular.block_until_ready()
 
     t_1 = default_timer() - t_0

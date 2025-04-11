@@ -31,6 +31,12 @@ from .cases import (
     K_I_COEFF,
 )
 
+
+# Imports necessary for the plotting functions, which are currently disabled.
+# These are useful to sniff out bugs.
+# from hahps._utils import plot_soln_from_cheby_nodes
+# import matplotlib.pyplot as plt
+
 ATOL_NONPOLY = 1e-8
 
 ATOL = 1e-12
@@ -135,12 +141,14 @@ def check_merge_accuracy_nosource_2D_ItI_uniform_Helmholtz_like(
     #     computed_soln=computed_soln.imag.flatten(),
     # )
 
+    max_diff = jnp.max(jnp.abs(computed_soln - expected_soln))
+
     assert jnp.allclose(
         computed_soln,
         expected_soln,
         atol=ATOL_NONPOLY,
         rtol=RTOL,
-    )
+    ), f"Maximum difference = {max_diff}"
 
 
 ATOL_DIFFS = 1e-8
@@ -258,7 +266,6 @@ def check_against_standard_2D_ItI_uniform(
 
 
 class Test_accuracy_2D_ItI_uniform:
-    # @pytest.mark.skip
     def test_0(self, caplog) -> None:
         caplog.set_level(logging.DEBUG)
 

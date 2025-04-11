@@ -12,7 +12,6 @@ from hahps import (
     DiscretizationNode2D,
     Domain,
     PDEProblem,
-    DEVICE_ARR,
 )
 from hahps.local_solve import local_solve_stage_uniform_2D_ItI
 from hahps.merge import merge_stage_uniform_2D_ItI
@@ -38,12 +37,12 @@ SD_MATRIX_FP = (
 )
 S, D = load_SD_matrices(SD_MATRIX_FP)
 
-S = jax.device_put(S, DEVICE_ARR[0])
-D = jax.device_put(D, DEVICE_ARR[0])
+S = jax.device_put(S, jax.devices()[0])
+D = jax.device_put(D, jax.devices()[0])
 SAMPLE_ROOT = DiscretizationNode2D(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
 SAMPLE_DOMAIN = Domain(p=P, q=P - 2, root=SAMPLE_ROOT, L=L)
 SAMPLE_DOMAIN.interior_points = jax.device_put(
-    SAMPLE_DOMAIN.interior_points, DEVICE_ARR[0]
+    SAMPLE_DOMAIN.interior_points, jax.devices()[0]
 )
 AMPLITUDE = 0.5
 MIN_TOL = 1e-15
@@ -139,25 +138,25 @@ def source_locations_to_scattered_field(
     #     D_xx_coeffs=d_xx_coeffs,
     #     D_yy_coeffs=d_yy_coeffs,
     #     I_coeffs=i_term,
-    #     device=DEVICE_ARR[0],
-    #     host_device=DEVICE_ARR[0],
+    #     device=jax.devices()[0],
+    #     host_device=jax.devices()[0],
     # )
     # build_stage(
     #     tree,
-    #     device=DEVICE_ARR[0],
-    #     host_device=DEVICE_ARR[0],
+    #     device=jax.devices()[0],
+    #     host_device=jax.devices()[0],
     # )
     Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
         pde_problem=SAMPLE_PDEPROBLEM,
-        host_device=DEVICE_ARR[0],
-        device=DEVICE_ARR[0],
+        host_device=jax.devices()[0],
+        device=jax.devices()[0],
     )
     S_arr_lst, g_tilde_lst, T_ItI = merge_stage_uniform_2D_ItI(
         T_arr=T_arr,
         h_arr=h_arr,
         l=SAMPLE_DOMAIN.L,
-        device=DEVICE_ARR[0],
-        host_device=DEVICE_ARR[0],
+        device=jax.devices()[0],
+        host_device=jax.devices()[0],
         return_T=True,
     )
 
@@ -172,6 +171,9 @@ def source_locations_to_scattered_field(
         k=K,
         eta=K,
     )
+
+    # Remove the n_src dimension
+    incoming_imp_data = incoming_imp_data.squeeze()
 
     # Propagate the resulting impedance data down to the leaves
     interior_solns = down_pass_uniform_2D_ItI(

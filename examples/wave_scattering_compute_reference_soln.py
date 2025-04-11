@@ -3,6 +3,7 @@ import os
 import logging
 
 import jax.numpy as jnp
+import jax
 from scipy.io import savemat
 
 from wave_scattering_utils import (
@@ -166,6 +167,8 @@ def main(args: argparse.Namespace) -> None:
         S=S,
         D=D,
     )
+    # The returned uscat array has a n_src dimension that we want to remove.
+    uscat = uscat[..., 0]
     logging.info("Computed reference solution in %f seconds", solve_time)
 
     # Step 3: Save the interpolated solution to a file.
@@ -222,6 +225,7 @@ def main(args: argparse.Namespace) -> None:
     if args.plot_utot:
         logging.info("plotting utot...")
         uin = get_uin(args.k, target_pts, source_dirs)
+        uin = jax.device_put(uin, jax.devices("cpu")[0])
         utot = uin[..., 0] + uscat
 
         # plot real part of utot
