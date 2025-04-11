@@ -135,12 +135,14 @@ def check_merge_accuracy_nosource_2D_ItI_uniform_Helmholtz_like(
     #     computed_soln=computed_soln.imag.flatten(),
     # )
 
+    max_diff = jnp.max(jnp.abs(computed_soln - expected_soln))
+
     assert jnp.allclose(
         computed_soln,
         expected_soln,
         atol=ATOL_NONPOLY,
         rtol=RTOL,
-    )
+    ), f"Maximum difference = {max_diff}"
 
 
 ATOL_DIFFS = 1e-8
@@ -183,12 +185,12 @@ def check_against_standard_2D_ItI_uniform(
         pde_problem=pde_problem_source
     )
 
-    assert jnp.allclose(Y_nosource, Y, atol=ATOL_DIFFS, rtol=RTOL_DIFFS), (
-        f"Max difference = {jnp.max(jnp.abs(Y_nosource - Y))}"
-    )
-    assert jnp.allclose(T_nosource, T, atol=ATOL_DIFFS, rtol=RTOL_DIFFS), (
-        f"Max difference = {jnp.max(jnp.abs(T_nosource - T))}"
-    )
+    assert jnp.allclose(
+        Y_nosource, Y, atol=ATOL_DIFFS, rtol=RTOL_DIFFS
+    ), f"Max difference = {jnp.max(jnp.abs(Y_nosource - Y))}"
+    assert jnp.allclose(
+        T_nosource, T, atol=ATOL_DIFFS, rtol=RTOL_DIFFS
+    ), f"Max difference = {jnp.max(jnp.abs(T_nosource - T))}"
 
     ##############################################################
     # Check outputs of merge stage
@@ -209,16 +211,12 @@ def check_against_standard_2D_ItI_uniform(
     for i in range(len(S_lst)):
         assert jnp.allclose(
             S_lst_nosource[i], S_lst[i], atol=ATOL_DIFFS, rtol=RTOL_DIFFS
-        ), (
-            f"Max difference in S_lst[{i}] = {jnp.max(jnp.abs(S_lst_nosource[i] - S_lst[i]))}"
-        )
+        ), f"Max difference in S_lst[{i}] = {jnp.max(jnp.abs(S_lst_nosource[i] - S_lst[i]))}"
 
     # Check top-level ItI matrices
     assert jnp.allclose(
         T_last_nosource, T_last_source, atol=ATOL_DIFFS, rtol=RTOL_DIFFS
-    ), (
-        f"Max difference in T_last_nosource and T_last_source = {jnp.max(jnp.abs(T_last_nosource - T_last_source))}"
-    )
+    ), f"Max difference in T_last_nosource and T_last_source = {jnp.max(jnp.abs(T_last_nosource - T_last_source))}"
 
     ##################################################################
     # Check outputs of upward pass
@@ -227,9 +225,9 @@ def check_against_standard_2D_ItI_uniform(
     )
 
     # Check v
-    assert jnp.allclose(v_nosource, v, atol=ATOL_DIFFS, rtol=RTOL_DIFFS), (
-        f"Max difference in v = {jnp.max(jnp.abs(v_nosource - v))}"
-    )
+    assert jnp.allclose(
+        v_nosource, v, atol=ATOL_DIFFS, rtol=RTOL_DIFFS
+    ), f"Max difference in v = {jnp.max(jnp.abs(v_nosource - v))}"
     logging.debug("g_tilde_lst len: %s", len(g_tilde_lst))
     logging.debug("g_tilde_lst_nosource len: %s", len(g_tilde_lst_nosource))
     for i in range(len(g_tilde_lst)):
@@ -252,9 +250,7 @@ def check_against_standard_2D_ItI_uniform(
             g_tilde_lst[i],
             atol=ATOL_DIFFS,
             rtol=RTOL_DIFFS,
-        ), (
-            f"Max difference in g_tilde_lst_nosource[{i}] = {jnp.max(jnp.abs(g_tilde_lst_nosource[i] - g_tilde_lst[i]))}"
-        )
+        ), f"Max difference in g_tilde_lst_nosource[{i}] = {jnp.max(jnp.abs(g_tilde_lst_nosource[i] - g_tilde_lst[i]))}"
 
 
 class Test_accuracy_2D_ItI_uniform:

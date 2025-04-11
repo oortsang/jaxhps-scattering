@@ -25,7 +25,6 @@ from inverse_scattering_utils import (
 )
 from wave_scattering_utils import get_uin
 from plotting_utils import make_scaled_colorbar, TICKSIZE, FONTSIZE, FIGSIZE
-from hahps import HOST_DEVICE, DEVICE_ARR
 
 # Disable all matplorlib logging
 # logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -80,7 +79,7 @@ def plot_uscat(
     plt.savefig(uscat_real_fp, bbox_inches="tight")
     plt.clf()
 
-    # uscat_abs_fp = os.path.join(plots_dir, "utot_ground_truth_abs.svg")
+    # uscat_abs_fp = os.path.join(plots_dir, "utot_ground_truth_abs.png")
     # logging.info("plot_uscat: Saving uscat plot to %s", uscat_abs_fp)
     # ax = plt.gca()
     # im = ax.imshow(
@@ -132,7 +131,7 @@ def plot_iterates(
     iterate_0 = iterates[0, :]
     logging.info("plot_iterates: iterate_0 shape: %s", iterate_0.shape)
 
-    # Draw a white ring around each of the first iterates
+    # Draw the first iterate with a white dot
     for j in range(iterate_0.shape[0] // 2):
         plt.plot(
             iterate_0[2 * j],
@@ -143,7 +142,7 @@ def plot_iterates(
             zorder=4,
         )
 
-    # Draw a black ring around each of the last iterates
+    # Draw the last iterate with a black dot
     iterate_20 = iterates[-1, :]
     for j in range(iterate_20.shape[0] // 2):
         plt.plot(
@@ -212,99 +211,6 @@ def obj_fn(u_star: jnp.array, u_obs: jnp.array) -> jnp.array:
     return jnp.sum(diffs * diffs_conj).real
 
 
-# def plot_objective_function(plots_dir: str, u_star: str, n_per_side: int) -> None:
-#     xmin = -0.2
-#     xmax = 0.2
-#     ymin = -0.4
-#     ymax = -0.2
-#     # Set up grid
-#     x = jnp.linspace(xmin, xmax, n_per_side)
-#     y = jnp.linspace(ymin, ymax, n_per_side)
-#     y = jnp.flip(y)
-#     xx, yy = jnp.meshgrid(x, y)
-#     grid = jnp.stack([xx, yy], axis=-1)
-
-#     # Evaluate the objective function on the grid
-#     obj_fn_vals = jnp.zeros((n_per_side, n_per_side), dtype=jnp.float64)
-#     for i in range(n_per_side):
-#         for j in range(n_per_side):
-#             x_t = grid[i, j]
-#             logging.debug("plot_objective_function: x_t shape: %s", x_t.shape)
-#             u_t = forward_model(x_t)
-#             resid_norm = obj_fn(u_star, u_t)
-#             obj_fn_vals = obj_fn_vals.at[i, j].set(resid_norm)
-#         logging.info("plot_objective_function: Finished row %i / %i", i + 1, n_per_side)
-
-#     # Save the values of the objective function
-#     out_dd = {
-#         "obj_fn_vals": obj_fn_vals,
-#         "grid": grid,
-#     }
-#     save_fp = os.path.join(plots_dir, "obj_fn_data.mat")
-#     savemat(save_fp, out_dd)
-
-#     # Plot the objective function
-#     plt.imshow(obj_fn_vals, cmap="plasma", extent=(xmin, xmax, ymin, ymax))
-#     plt.colorbar()
-#     fp = os.path.join(plots_dir, "objective_function.svg")
-#     plt.savefig(fp, bbox_inches="tight")
-#     plt.clf()
-
-#     # Plot the x values of the grid to make sure the plotting code is correct
-#     plt.imshow(grid[:, :, 0], cmap="plasma", extent=(xmin, xmax, ymin, ymax))
-#     plt.colorbar()
-#     fp = os.path.join(plots_dir, "grid_x.svg")
-#     plt.savefig(fp, bbox_inches="tight")
-#     plt.clf()
-
-#     # Plot the y values of the grid to make sure the plotting code is correct
-#     plt.imshow(grid[:, :, 1], cmap="plasma", extent=(xmin, xmax, ymin, ymax))
-#     plt.colorbar()
-#     fp = os.path.join(plots_dir, "grid_y.svg")
-#     plt.savefig(fp, bbox_inches="tight")
-#     plt.clf()
-
-
-# def landweber_iterations(
-#     u_star: jnp.array, x_t: jnp.array, niter: int, step_size: float
-# ) -> None:
-#     iterates = jnp.zeros((niter, 2), dtype=jnp.float64)
-#     resid_norms = jnp.zeros((niter,), dtype=jnp.float64)
-
-#     for t in range(niter):
-#         u_t, vjp_fn = jax.vjp(forward_model, x_t)
-#         r_t = u_t - u_star
-#         resid_norm = jnp.linalg.norm(r_t) ** 2
-
-#         # Iteration is x_{t+1} = x_t - step_size * grad f(x_t)
-#         grad_f = vjp_fn(r_t)[0]
-#         x_t = x_t - step_size * grad_f
-
-#         iterates = iterates.at[t].set(x_t.flatten())
-#         resid_norms = resid_norms.at[t].set(resid_norm)
-
-#         # Logging
-#         logging.info("t = %i", t)
-#         logging.info("x_t = %s", x_t)
-#         logging.info("resid norm squared = %s", resid_norm)
-
-#     return iterates, resid_norms
-
-
-# def get_singular_vals(x_t: jnp.array) -> None:
-#     vv = jax.device_put(jnp.eye(2, dtype=jnp.float64), DEVICE_ARR[0])
-#     x_t = jax.device_put(x_t, DEVICE_ARR[0])
-#     a, b_0 = jax.jvp(forward_model, (x_t,), (vv[0],))
-#     a, b_1 = jax.jvp(forward_model, (x_t,), (vv[1],))
-#     logging.debug("get_singular_vals: b_0.devices() %s", b_0.devices())
-#     b = jnp.column_stack((b_0, b_1))
-#     logging.debug("get_singular_vals: b.shape = %s", b.shape)
-#     logging.debug("get_singular_vals: b.devices() %s", b.devices())
-#     s = jnp.linalg.svd(b, compute_uv=False)
-#     logging.debug("get_singular_vals: s = %s", s)
-#     return s
-
-
 def gauss_newton_iterations(
     u_star: jnp.array, x_t: jnp.array, niter: int, reg_lambda: float
 ) -> None:
@@ -334,20 +240,20 @@ def gauss_newton_iterations(
         def rmatvec_fn(x: jnp.array) -> jnp.array:
             # x has shape (nobs,)
             logging.debug("rmatvec_fn: called")
-            x = jax.device_put(x, DEVICE_ARR[0])
+            x = jax.device_put(x, jax.devices()[0])
             x = jnp.conj(x)
             out = vjp_fn(x)[0]
 
-            out = jax.device_put(out, HOST_DEVICE)
+            out = jax.device_put(out, jax.devices("cpu")[0])
             return out
 
         def matvec_fn(delta: jnp.array) -> jnp.array:
             # Delta has shape (2,)
             # Check if input contains NaNs
             logging.debug("matvec_fn: called")
-            delta = jax.device_put(delta, DEVICE_ARR[0])
+            delta = jax.device_put(delta, jax.devices()[0])
             a, b = jax.jvp(forward_model, (x_t,), (delta,))
-            b = jax.device_put(b, HOST_DEVICE)
+            b = jax.device_put(b, jax.devices("cpu")[0])
             return b
 
         linop = LinearOperator(
@@ -396,7 +302,7 @@ def main(args: argparse.Namespace) -> None:
 
     logging.info("Ground-truth locations: %s", ground_truth_locations)
     ground_truth_locations = jax.device_put(
-        ground_truth_locations, DEVICE_ARR[0]
+        ground_truth_locations, jax.devices()[0]
     )
     q_evals_hps = q_point_sources(
         SAMPLE_DOMAIN.interior_points, ground_truth_locations
@@ -413,7 +319,7 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # plot the scattering potential
-    q_fp = os.path.join(args.plots_dir, "q_ground_truth.svg")
+    q_fp = os.path.join(args.plots_dir, "q_ground_truth.png")
     logging.info("Saving q plot to %s", q_fp)
     plt.imshow(q_evals_regular, cmap="plasma", extent=(XMIN, XMAX, YMIN, YMAX))
     # plt.plot(observation_pts[:, 0], observation_pts[:, 1], "x", color="black")
@@ -430,7 +336,7 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # plot the total field
-    uscat_real_fp = os.path.join(args.plots_dir, "uscat_ground_truth_real.svg")
+    uscat_real_fp = os.path.join(args.plots_dir, "uscat_ground_truth_real.png")
     utot = uscat_regular + get_uin(K, regular_grid, SOURCE_DIRS)[..., 0]
     plot_uscat(utot.real, observation_pts, uscat_real_fp)
 
@@ -451,11 +357,11 @@ def main(args: argparse.Namespace) -> None:
     )
 
     # plot the iterates
-    iterates_fp = os.path.join(args.plots_dir, "iterates.svg")
+    iterates_fp = os.path.join(args.plots_dir, "iterates.png")
     plot_iterates(iterates, iterates_fp, q_evals_regular)
 
     # plot the residuals
-    residuals_fp = os.path.join(args.plots_dir, "residuals.svg")
+    residuals_fp = os.path.join(args.plots_dir, "residuals.png")
     plot_residuals(resid_norms, residuals_fp)
 
     # Get final estimate
@@ -468,12 +374,12 @@ def main(args: argparse.Namespace) -> None:
             eval_points_y=yvals,
         )
     )
-    fp = os.path.join(args.plots_dir, "uscat_est.svg")
+    fp = os.path.join(args.plots_dir, "uscat_est.png")
     plot_uscat(u_scat_est_regular.real, observation_pts, fp)
 
     # Plot the diffs
     diff = uscat_regular.real - u_scat_est_regular.real
-    fp = os.path.join(args.plots_dir, "uscat_diff.svg")
+    fp = os.path.join(args.plots_dir, "uscat_diff.png")
     plot_uscat(diff, observation_pts, fp)
 
     # Save the data
@@ -482,7 +388,7 @@ def main(args: argparse.Namespace) -> None:
         "resid_norms": resid_norms,
         "u_star": u_star,
         "ground_truth_locations": jax.device_put(
-            ground_truth_locations, HOST_DEVICE
+            ground_truth_locations, jax.devices("cpu")[0]
         ),
         "cond_vals": cond_vals,
     }

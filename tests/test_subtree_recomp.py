@@ -1,17 +1,21 @@
 import jax.numpy as jnp
+import jax
 import numpy as np
 from hahps._domain import Domain
 from hahps._discretization_tree import (
     DiscretizationNode2D,
 )
-import pytest
 from hahps._pdeproblem import PDEProblem
 from hahps._subtree_recomp import (
     upward_pass_subtree,
     downward_pass_subtree,
 )
-from hahps._device_config import GPU_AVAILABLE
+
 import logging
+
+bool_gpu_available = any(
+    "NVIDIA" in device.device_kind for device in jax.devices()
+)
 
 
 class Test_upward_pass_subtree:
@@ -93,11 +97,12 @@ class Test_upward_pass_subtree:
 
 
 class Test_downward_pass_subtree:
-    @pytest.mark.skipif(
-        not GPU_AVAILABLE, reason="Skipping because GPU is not available"
-    )
+    # @pytest.mark.skipif(
+    #     not bool_gpu_available, reason=f"Skipping because GPU is not available. Here's the bool: {bool_gpu_available}"
+    # )
     def test_0(self, caplog) -> None:
         """DtN case"""
+        caplog.set_level(logging.DEBUG)
         p = 7
         q = 5
         l = 3
@@ -114,7 +119,16 @@ class Test_downward_pass_subtree:
             D_xx_coefficients=d_xx_coeffs,
         )
 
+        T_top = upward_pass_subtree(
+            pde_problem=t,
+            subtree_height=2,
+            compute_device=jax.devices()[0],
+            host_device=jax.devices()[0],
+        )
+
         n_bdry = domain.boundary_points.shape[0]
+
+        assert T_top.shape == (n_bdry, n_bdry)
 
         g = jnp.zeros(n_bdry, dtype=jnp.float64)
 
@@ -122,11 +136,13 @@ class Test_downward_pass_subtree:
 
         assert solns.shape == domain.interior_points[..., 0].shape
 
-    @pytest.mark.skipif(
-        not GPU_AVAILABLE, reason="Skipping because GPU is not available"
-    )
+    # @pytest.mark.skipif(
+    #     not bool_gpu_available, reason=f"Skipping because GPU is not available. Here's the bool: {bool_gpu_available}"
+    # )
     def test_1(self, caplog) -> None:
         """ItI case"""
+        caplog.set_level(logging.DEBUG)
+
         p = 7
         q = 5
         l = 3
@@ -145,16 +161,26 @@ class Test_downward_pass_subtree:
             eta=1.0,
         )
 
+        T_top = upward_pass_subtree(
+            pde_problem=t,
+            subtree_height=2,
+            compute_device=jax.devices()[0],
+            host_device=jax.devices()[0],
+        )
+
         n_bdry = domain.boundary_points.shape[0]
+
+        assert T_top.shape == (n_bdry, n_bdry)
+
         g = jnp.zeros(n_bdry, dtype=jnp.complex128)
 
         solns = downward_pass_subtree(t, g, subtree_height=2)
 
         assert solns.shape == domain.interior_points[..., 0].shape
 
-    @pytest.mark.skipif(
-        not GPU_AVAILABLE, reason="Skipping because GPU is not available"
-    )
+    # @pytest.mark.skipif(
+    #     not bool_gpu_available, reason=f"Skipping because GPU is not available. Here's the bool: {bool_gpu_available}"
+    # )
     def test_2(self, caplog) -> None:
         """Multi-Source ItI case"""
         caplog.set_level(logging.DEBUG)
@@ -179,9 +205,18 @@ class Test_downward_pass_subtree:
             eta=1.0,
         )
 
+        T_top = upward_pass_subtree(
+            pde_problem=t,
+            subtree_height=2,
+            compute_device=jax.devices()[0],
+            host_device=jax.devices()[0],
+        )
+
         n_bdry = domain.boundary_points.shape[0]
+        assert T_top.shape == (n_bdry, n_bdry)
+
         g = jnp.zeros((n_bdry, nsrc), dtype=jnp.complex128)
 
         solns = downward_pass_subtree(t, g, subtree_height=2)
 
-        assert solns.shape == domain.interior_points[..., 0].shape
+        assert solns.shape == (domain.n_leaves, p**2, nsrc)
