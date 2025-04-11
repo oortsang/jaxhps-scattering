@@ -4,6 +4,7 @@ import jax.numpy as jnp
 from .._device_config import HOST_DEVICE, DEVICE_ARR
 from .._pdeproblem import PDEProblem
 from ..local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
+import logging
 
 
 def up_pass_uniform_2D_ItI(
@@ -46,6 +47,9 @@ def up_pass_uniform_2D_ItI(
     if not bool_multi_source:
         # Add a source dimension to the source term
         source = jnp.expand_dims(source, axis=-1)
+        logging.debug(
+            "up_pass_uniform_2D_ItI: new source shape = %s", source.shape
+        )
 
     # Re-do a full local solve.
     pde_problem.source = source
@@ -94,15 +98,15 @@ def assemble_boundary_data(
 
 
     Args:
-        h_in (jax.Array): Has shape (4, 4 * nside) where nside is the number of discretization points along each side of the nodes being merged.
+        h_in (jax.Array): Has shape (4, 4 * nside, n_src) where nside is the number of discretization points along each side of the nodes being merged.
         D_inv (jax.Array): Has shape (8 * nside, 8 * nside)
         BD_inv (jax.Array): Has shape (8 * nside, 8 * nside)
 
     Returns:
         h : jax.Array
-            Has shape (8 * nside) and is the outgoing impedance data due to the particular solution on the merged node.
+            Has shape (8 * nside, n_src) and is the outgoing impedance data due to the particular solution on the merged node.
         g_tilde : jax.Array
-            Has shape (8 * nside) and is the incoming impedance data due to the particular solution on the merged node, evaluated along the merge interfaces.
+            Has shape (8 * nside, n_src) and is the incoming impedance data due to the particular solution on the merged node, evaluated along the merge interfaces.
     """
 
     nside = h_in.shape[1] // 4
@@ -153,7 +157,7 @@ def assemble_boundary_data(
     )
     g_tilde = g_tilde[r]
 
-    h = h_ext_child - BD_inv @ h_ext_child
+    h = h_ext_child - BD_inv @ h_int_child
 
     # h is ordered like h_a_1, h_b_2, h_c_3, h_d_4. Need to
     # roll it so that it's ordered like [bottom, left, right, top].

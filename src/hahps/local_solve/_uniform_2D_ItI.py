@@ -75,9 +75,7 @@ def local_solve_stage_uniform_2D_ItI(
         coeffs_gathered, which_coeffs, diff_ops
     )
 
-    # TODO: Expand the code to work with multiple sources.
-    # Make sure source term has shape (n_leaves, p**2, n_src)
-    if len(source_term.shape) == 2:
+    if not bool_multi_source:
         source_term = jnp.expand_dims(source_term, axis=-1)
 
     # R_arr, Y_arr, outgoing_part_impedance_arr, part_soln_arr = (
