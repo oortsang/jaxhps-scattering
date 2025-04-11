@@ -17,7 +17,6 @@ from hahps import (
     upward_pass_subtree,
     downward_pass_subtree,
     local_solve_chunksize_2D,
-    DEVICE_ARR,
 )
 from hahps.local_solve import local_solve_stage_uniform_2D_ItI
 from hahps.merge import merge_stage_uniform_2D_ItI
@@ -322,19 +321,21 @@ def solve_scattering_problem(
         T_ItI = upward_pass_subtree(
             pde_problem=t,
             subtree_height=6,
-            compute_device=DEVICE_ARR[0],
-            host_device=DEVICE_ARR[0],
+            compute_device=jax.devices()[0],
+            host_device=jax.devices()[0],
         )
     else:
         Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
-            pde_problem=t, host_device=DEVICE_ARR[0], device=DEVICE_ARR[0]
+            pde_problem=t,
+            host_device=jax.devices()[0],
+            device=jax.devices()[0],
         )
         S_arr_lst, g_tilde_lst, T_ItI = merge_stage_uniform_2D_ItI(
             T_arr=T_arr,
             h_arr=h_arr,
             l=domain.L,
-            device=DEVICE_ARR[0],
-            host_device=DEVICE_ARR[0],
+            device=jax.devices()[0],
+            host_device=jax.devices()[0],
             return_T=True,
         )
 
@@ -344,9 +345,9 @@ def solve_scattering_problem(
         "solve_scattering_problem: Solving boundary integral equation..."
     )
 
-    if DEVICE_ARR[0] not in S.devices():
-        S = jax.device_put(S, DEVICE_ARR[0])
-        D = jax.device_put(D, DEVICE_ARR[0])
+    if jax.devices()[0] not in S.devices():
+        S = jax.device_put(S, jax.devices()[0])
+        D = jax.device_put(D, jax.devices()[0])
         bool_delete_SD = True
     else:
         bool_delete_SD = False
@@ -373,8 +374,8 @@ def solve_scattering_problem(
             pde_problem=t,
             boundary_data=incoming_imp_data,
             subtree_height=6,
-            compute_device=DEVICE_ARR[0],
-            host_device=DEVICE_ARR[0],
+            compute_device=jax.devices()[0],
+            host_device=jax.devices()[0],
         )
     else:
         uscat_soln = down_pass_uniform_2D_ItI(

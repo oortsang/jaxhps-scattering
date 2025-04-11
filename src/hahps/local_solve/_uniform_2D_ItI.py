@@ -36,7 +36,9 @@ def local_solve_stage_uniform_2D_ItI(
     h : jax.Array
         Outgoing boundary data. This is the outgoing impedance data of the particular solution :math:`v_n - i \\eta v`. Has shape (n_leaves, 4q)
     """
-    logging.debug("_local_solve_stage_2D_ItI: started")
+    logging.debug(
+        "local_solve_stage_uniform_2D_ItI: started. device=%s", device
+    )
 
     # Gather the coefficients into a single array.
     coeffs_gathered, which_coeffs = _gather_coeffs_2D(

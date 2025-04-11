@@ -25,7 +25,7 @@ from inverse_scattering_utils import (
 )
 from wave_scattering_utils import get_uin
 from plotting_utils import make_scaled_colorbar, TICKSIZE, FONTSIZE, FIGSIZE
-from hahps import HOST_DEVICE, DEVICE_ARR
+
 
 # Disable all matplorlib logging
 # logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -292,8 +292,8 @@ def obj_fn(u_star: jnp.array, u_obs: jnp.array) -> jnp.array:
 
 
 # def get_singular_vals(x_t: jnp.array) -> None:
-#     vv = jax.device_put(jnp.eye(2, dtype=jnp.float64), DEVICE_ARR[0])
-#     x_t = jax.device_put(x_t, DEVICE_ARR[0])
+#     vv = jax.device_put(jnp.eye(2, dtype=jnp.float64), jax.devices()[0])
+#     x_t = jax.device_put(x_t, jax.devices()[0])
 #     a, b_0 = jax.jvp(forward_model, (x_t,), (vv[0],))
 #     a, b_1 = jax.jvp(forward_model, (x_t,), (vv[1],))
 #     logging.debug("get_singular_vals: b_0.devices() %s", b_0.devices())
@@ -334,20 +334,20 @@ def gauss_newton_iterations(
         def rmatvec_fn(x: jnp.array) -> jnp.array:
             # x has shape (nobs,)
             logging.debug("rmatvec_fn: called")
-            x = jax.device_put(x, DEVICE_ARR[0])
+            x = jax.device_put(x, jax.devices()[0])
             x = jnp.conj(x)
             out = vjp_fn(x)[0]
 
-            out = jax.device_put(out, HOST_DEVICE)
+            out = jax.device_put(out, jax.devices("cpu")[0])
             return out
 
         def matvec_fn(delta: jnp.array) -> jnp.array:
             # Delta has shape (2,)
             # Check if input contains NaNs
             logging.debug("matvec_fn: called")
-            delta = jax.device_put(delta, DEVICE_ARR[0])
+            delta = jax.device_put(delta, jax.devices()[0])
             a, b = jax.jvp(forward_model, (x_t,), (delta,))
-            b = jax.device_put(b, HOST_DEVICE)
+            b = jax.device_put(b, jax.devices("cpu")[0])
             return b
 
         linop = LinearOperator(
@@ -396,7 +396,7 @@ def main(args: argparse.Namespace) -> None:
 
     logging.info("Ground-truth locations: %s", ground_truth_locations)
     ground_truth_locations = jax.device_put(
-        ground_truth_locations, DEVICE_ARR[0]
+        ground_truth_locations, jax.devices()[0]
     )
     q_evals_hps = q_point_sources(
         SAMPLE_DOMAIN.interior_points, ground_truth_locations
@@ -482,7 +482,7 @@ def main(args: argparse.Namespace) -> None:
         "resid_norms": resid_norms,
         "u_star": u_star,
         "ground_truth_locations": jax.device_put(
-            ground_truth_locations, HOST_DEVICE
+            ground_truth_locations, jax.devices("cpu")[0]
         ),
         "cond_vals": cond_vals,
     }

@@ -25,6 +25,7 @@ def merge_stage_uniform_2D_ItI(
     host_device: jax.Device = HOST_DEVICE,
     subtree_recomp: bool = False,
     return_T: bool = False,
+    return_h: bool = False,
 ) -> Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]:
     """
     Implements uniform 2D merges of ItI matrices. Merges the nodes in the quadtree four at a time.
@@ -72,6 +73,7 @@ def merge_stage_uniform_2D_ItI(
         The top-level DtN matrix, which is only returned if ``return_T=True``. Has shape (4q, 4q).
 
     """
+    logging.debug("merge_stage_uniform_2D_ItI: started. device=%s", device)
 
     if not subtree_recomp:
         # Start lists to output data
@@ -151,12 +153,17 @@ def merge_stage_uniform_2D_ItI(
         g_tilde_lst.append(
             jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device)
         )
+        out = (S_lst, g_tilde_lst)
 
         if return_T:
             T_last_out = jax.device_put(T_last, host_device)
-            return S_lst, g_tilde_lst, T_last_out
-        else:
-            return S_lst, g_tilde_lst
+            out = out + (T_last_out,)
+
+        if return_h:
+            h_last_out = jax.device_put(h_last, host_device)
+            out = out + (h_last_out,)
+
+        return out
 
 
 @jax.jit

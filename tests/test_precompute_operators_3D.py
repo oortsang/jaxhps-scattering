@@ -594,9 +594,9 @@ class Test_precompute_refining_coarsening_op:
         print("test_2: root_0_evals: ", root_0_evals)
         print("test_2: diffs: ", root_0_interp - root_0_evals)
 
-        assert jnp.allclose(root_0_interp, root_0_evals), (
-            "Coarsening op failed"
-        )
+        assert jnp.allclose(
+            root_0_interp, root_0_evals
+        ), "Coarsening op failed"
 
     def test_4(self) -> None:
         """Make sure things are accurate with low-degree polynomial interpolation in the face 2"""
@@ -663,9 +663,9 @@ class Test_precompute_refining_coarsening_op:
         print("test_2: root_0_evals: ", root_0_evals)
         print("test_2: diffs: ", root_0_interp - root_0_evals)
 
-        assert jnp.allclose(root_0_interp, root_0_evals), (
-            "Coarsening op failed"
-        )
+        assert jnp.allclose(
+            root_0_interp, root_0_evals
+        ), "Coarsening op failed"
 
     def test_5(self) -> None:
         """Make sure things are accurate with low-degree polynomial interpolation in face 1"""
@@ -728,9 +728,9 @@ class Test_precompute_refining_coarsening_op:
         print("test_2: root_0_evals: ", root_0_evals)
         print("test_2: diffs: ", root_0_interp - root_0_evals)
 
-        assert jnp.allclose(root_0_interp, root_0_evals), (
-            "Coarsening op failed"
-        )
+        assert jnp.allclose(
+            root_0_interp, root_0_evals
+        ), "Coarsening op failed"
 
     def test_6(self) -> None:
         """Make sure things are accurate with low-degree polynomial interpolation in face 0"""
@@ -793,9 +793,9 @@ class Test_precompute_refining_coarsening_op:
         print("test_2: root_0_evals: ", root_0_evals)
         print("test_2: diffs: ", root_0_interp - root_0_evals)
 
-        assert jnp.allclose(root_0_interp, root_0_evals), (
-            "Coarsening op failed"
-        )
+        assert jnp.allclose(
+            root_0_interp, root_0_evals
+        ), "Coarsening op failed"
 
 
 class Test_L_8f1:

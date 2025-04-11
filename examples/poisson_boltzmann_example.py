@@ -111,7 +111,7 @@ def main(args: argparse.Namespace) -> None:
     # Set up output directory
     vdw_str = "_vdw" if args.vdW else ""
     args.plot_dir = os.path.join(
-        "data", f"poisson_boltzmann_3D{vdw_str}", f"p_{args.p}"
+        "data", "examples", f"poisson_boltzmann_3D{vdw_str}", f"p_{args.p}"
     )
     os.makedirs(args.plot_dir, exist_ok=True)
     logging.info("Saving to directory: %s", args.plot_dir)
@@ -146,7 +146,7 @@ def main(args: argparse.Namespace) -> None:
         D_x_coefficients=D_x_coeffs,
         D_y_coefficients=D_y_coeffs,
         D_z_coefficients=D_z_coeffs,
-        source_term=source_evals,
+        source=source_evals,
     )
 
     # Solve the problem
@@ -178,7 +178,7 @@ def main(args: argparse.Namespace) -> None:
             "Generated adaptive mesh with L_inf error tolerance %s", tol
         )
 
-        ll = get_all_leaves(domain)
+        ll = get_all_leaves(domain.root)
         depths = [l.depth for l in ll]
 
         logging.info(
@@ -191,6 +191,30 @@ def main(args: argparse.Namespace) -> None:
         # Save number of leaves and max depth
         n_leaves = n_leaves.at[i].set(len(ll))
         max_depths = max_depths.at[i].set(max(depths))
+
+        #############################################################
+        # Want to plot the permittivity along the z=0 plane
+        x = jnp.linspace(XMIN, XMAX, args.n)
+        y = jnp.flipud(jnp.linspace(YMIN, YMAX, args.n))
+        z = jnp.array([0.0])
+
+        perm_evals_hps = perm_fn(domain.interior_points)
+        perm_evals_regular, pts = domain.interp_from_interior_points(
+            perm_evals_hps, x, y, z
+        )
+        logging.debug("perm_evals_regular shape: %s", perm_evals_regular.shape)
+        logging.debug("pts shape: %s", pts.shape)
+
+        perm_evals_regular = perm_evals_regular.squeeze()
+        pts = pts.squeeze()
+
+        leaves = get_all_leaves(domain.root)
+        leaves_intersect_zero = [
+            l for l in leaves if l.zmin <= 0 and l.zmax >= 0
+        ]
+
+        fp = os.path.join(args.plot_dir, f"perm_with_grid_tol_{tol}.svg")
+        plot_func_with_grid(pts, perm_evals_regular, leaves_intersect_zero, fp)
 
         #############################################################
         # Do a PDE Solve
@@ -209,7 +233,7 @@ def main(args: argparse.Namespace) -> None:
                 D_x_coefficients=D_x_coeffs,
                 D_y_coefficients=D_y_coeffs,
                 D_z_coefficients=D_z_coeffs,
-                source_term=source_evals,
+                source=source_evals,
             )
 
             t0 = default_timer()
@@ -231,27 +255,6 @@ def main(args: argparse.Namespace) -> None:
 
         except Exception as e:
             logging.error("Error solving PDE: %s", e)
-
-        #############################################################
-        # Want to plot the permittivity along the z=0 plane
-        x = jnp.linspace(XMIN, XMAX, args.n)
-        y = jnp.flipud(jnp.linspace(YMIN, YMAX, args.n))
-        z = jnp.array([0.0])
-
-        perm_evals_hps = perm_fn(domain.interior_points)
-        perm_evals_regular, pts = domain.interp_from_interior_points(
-            perm_evals_hps, x, y, z
-        )
-
-        perm_evals_regular = perm_evals_regular.squeeze()
-        pts = pts[:, :, 0]
-
-        leaves = get_all_leaves(domain.root)
-        leaves_intersect_zero = [
-            l for l in leaves if l.zmin <= 0 and l.zmax >= 0
-        ]
-
-        plot_func_with_grid(perm_evals_regular, pts, leaves_intersect_zero)
 
     #############################################################
     # Save data

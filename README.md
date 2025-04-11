@@ -72,3 +72,7 @@ This is an inverse scattering problem where we try to recover the locations of f
 
 ![Showing the convergence of the objective function in our inverse scattering example.](.github/assets/inverse_scattering_residuals.svg)
 ![Showing the convergence of the iterates to the centers of the Gaussian bumps.](.github/assets/inverse_scattering_iterates.svg)
+
+## Linearized Poisson--Boltzmann equation
+
+Our method can be used to solve the a linearized Poisson-Boltzmann equation, which models the electrostatic properties of a molecule in solution. 
