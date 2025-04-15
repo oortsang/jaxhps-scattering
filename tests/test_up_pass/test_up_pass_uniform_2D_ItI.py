@@ -151,3 +151,122 @@ class Test_up_pass_uniform_2D_ItI:
 
         assert v.shape == (n_leaves, p**2, nsrc)
         assert len(g_tilde_lst) == l
+
+    def test_2(self, caplog) -> None:
+        """Tests to make sure things run without error. nsrc=3 and return_h_last = True"""
+        caplog.set_level(logging.DEBUG)
+        p = 6
+        q = 4
+        l = 3
+        eta = 4.0
+        nsrc = 3
+
+        root = DiscretizationNode2D(
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+        )
+        domain = Domain(p=p, q=q, root=root, L=l)
+        n_leaves = 4**l
+
+        d_xx_coeffs = np.random.normal(size=(n_leaves, p**2))
+        print("test_0: d_xx_coeffs = ", d_xx_coeffs.shape)
+
+        t = PDEProblem(
+            domain=domain,
+            D_xx_coefficients=d_xx_coeffs,
+            use_ItI=True,
+            eta=eta,
+        )
+
+        Y_arr, T_arr = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=t)
+
+        assert Y_arr.shape == (n_leaves, p**2, 4 * q)
+        # n_leaves, n_bdry, _ = DtN_arr.shape
+        # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
+        # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
+
+        S_arr_lst, D_inv_lst, BD_inv_lst = nosource_merge_stage_uniform_2D_ItI(
+            T_arr=T_arr, l=l
+        )
+
+        t.D_inv_lst = D_inv_lst
+        t.BD_inv_lst = BD_inv_lst
+
+        logging.debug(
+            "test_0: D_inv_lst shapes = %s", [s.shape for s in D_inv_lst]
+        )
+        logging.debug(
+            "test_0: BD_inv_lst shapes = %s", [s.shape for s in BD_inv_lst]
+        )
+
+        source = jnp.ones((domain.n_leaves, p**2, nsrc))
+
+        # Do the upward pass
+        v, g_tilde_lst, h_last = up_pass_uniform_2D_ItI(
+            source=source, pde_problem=t, return_h_last=True
+        )
+
+        assert v.shape == (n_leaves, p**2, nsrc)
+        assert len(g_tilde_lst) == l
+        assert h_last.shape == (domain.boundary_points.shape[0], nsrc)
+
+    def test_3(self, caplog) -> None:
+        """Tests to make sure things run without error. nsrc=1 and return_h_last = True"""
+        caplog.set_level(logging.DEBUG)
+        p = 6
+        q = 4
+        l = 3
+        eta = 4.0
+
+        root = DiscretizationNode2D(
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+        )
+        domain = Domain(p=p, q=q, root=root, L=l)
+        n_leaves = 4**l
+
+        d_xx_coeffs = np.random.normal(size=(n_leaves, p**2))
+        print("test_0: d_xx_coeffs = ", d_xx_coeffs.shape)
+
+        t = PDEProblem(
+            domain=domain,
+            D_xx_coefficients=d_xx_coeffs,
+            use_ItI=True,
+            eta=eta,
+        )
+
+        Y_arr, T_arr = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=t)
+
+        assert Y_arr.shape == (n_leaves, p**2, 4 * q)
+        # n_leaves, n_bdry, _ = DtN_arr.shape
+        # DtN_arr = DtN_arr.reshape((int(n_leaves / 2), 2, n_bdry, n_bdry))
+        # v_prime_arr = v_prime_arr.reshape((int(n_leaves / 2), 2, 4 * t.q))
+
+        S_arr_lst, D_inv_lst, BD_inv_lst = nosource_merge_stage_uniform_2D_ItI(
+            T_arr=T_arr, l=l
+        )
+
+        t.D_inv_lst = D_inv_lst
+        t.BD_inv_lst = BD_inv_lst
+
+        logging.debug(
+            "test_0: D_inv_lst shapes = %s", [s.shape for s in D_inv_lst]
+        )
+        logging.debug(
+            "test_0: BD_inv_lst shapes = %s", [s.shape for s in BD_inv_lst]
+        )
+
+        source = jnp.ones((domain.n_leaves, p**2))
+
+        # Do the upward pass
+        v, g_tilde_lst, h_last = up_pass_uniform_2D_ItI(
+            source=source, pde_problem=t, return_h_last=True
+        )
+
+        assert v.shape == (n_leaves, p**2)
+        assert len(g_tilde_lst) == l
+        assert h_last.shape == (domain.boundary_points.shape[0],)

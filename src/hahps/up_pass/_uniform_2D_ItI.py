@@ -12,7 +12,8 @@ def up_pass_uniform_2D_ItI(
     pde_problem: PDEProblem,
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
-) -> Tuple[jax.Array, List[jax.Array]]:
+    return_h_last: bool = False,
+) -> Tuple[jax.Array, List[jax.Array], jax.Array]:
     """
     This function performs the upward pass for 2D ItI problems. It recomputes the local solve stage to get
     outgoing impedance data from the particular solution, which is now known because the source is specified.
@@ -33,6 +34,9 @@ def up_pass_uniform_2D_ItI(
     host_device : jax.Device, optional
         Where to place the output. Defaults to ``jax.devices("cpu")[0]``.
 
+    return_h_last : bool, optional
+        If True, return the last h vector, which gives the outgoing impedance data for the particular solution evaluated at the domain boundary.
+
     Returns
     -------
     v : jax.Array
@@ -40,6 +44,9 @@ def up_pass_uniform_2D_ItI(
 
     g_tilde_lst : List[jax.Array]
         List of pre-computed g_tilde matrices for each level of the quadtree.
+
+    h_last : jax.Array
+        Outgoing impedance data for the particular solution evaluated at the domain boundary. Has shape (nbdry, nsrc). Is only returned if ``return_h_last=True``.
     """
 
     bool_multi_source = source.ndim == 3
@@ -63,6 +70,10 @@ def up_pass_uniform_2D_ItI(
         device=device,
         host_device=host_device,
     )
+    logging.debug(
+        "up_pass_uniform_2D_ItI: after local solve, h_in shape = %s",
+        h_in.shape,
+    )
 
     g_tilde_lst = []
 
@@ -77,15 +88,30 @@ def up_pass_uniform_2D_ItI(
         h_in, g_tilde = vmapped_assemble_boundary_data(h_in, D_inv, BD_inv)
         g_tilde_lst.append(g_tilde)
 
+    logging.debug(
+        "up_pass_uniform_2D_ItI: g_tilde_lst shapes = %s",
+        [g.shape for g in g_tilde_lst],
+    )
+    logging.debug("up_pass_uniform_2D_ItI: h_in shape = %s", h_in.shape)
+
     # Remove the source dimension if it's not a multi-source problem
     if not bool_multi_source:
         v = jnp.squeeze(v, axis=-1)
         g_tilde_lst = [
             jnp.squeeze(g_tilde, axis=-1) for g_tilde in g_tilde_lst
         ]
+        h_in = jnp.squeeze(h_in, axis=-1)
+        logging.debug(
+            "up_pass_uniform_2D_ItI: it's not multi source so squeezing h_in to shape %s",
+            h_in.shape,
+        )
 
-    # Return v and g_tilde_lst
-    return v, g_tilde_lst
+    out = (v, g_tilde_lst)
+
+    if return_h_last:
+        out = (v, g_tilde_lst, jnp.squeeze(h_in, axis=0))
+
+    return out
 
 
 @jax.jit
