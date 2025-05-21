@@ -189,7 +189,7 @@ def main(args: argparse.Namespace) -> None:
     plot_field_for_wave_scattering_experiment(
         q_vals,
         target_pts,
-        title="q",
+        # title="q",
         save_fp=os.path.join(output_dir, "q.pdf"),
     )
 
@@ -198,7 +198,7 @@ def main(args: argparse.Namespace) -> None:
         jnp.real(uscat),
         target_pts,
         use_bwr_cmap=True,
-        title="uscat real",
+        # title="uscat real",
         save_fp=os.path.join(output_dir, "uscat_real.pdf"),
     )
 
@@ -207,7 +207,7 @@ def main(args: argparse.Namespace) -> None:
         jnp.imag(uscat),
         target_pts,
         use_bwr_cmap=True,
-        title="uscat imag",
+        # title="uscat imag",
         save_fp=os.path.join(output_dir, "uscat_imag.pdf"),
     )
 
@@ -217,7 +217,7 @@ def main(args: argparse.Namespace) -> None:
         target_pts,
         use_bwr_cmap=False,
         cmap_str="hot",
-        title="uscat abs",
+        # title="uscat abs",
         save_fp=os.path.join(output_dir, "uscat_abs.pdf"),
     )
 
@@ -233,7 +233,7 @@ def main(args: argparse.Namespace) -> None:
             jnp.real(utot),
             target_pts,
             use_bwr_cmap=True,
-            title="utot real",
+            # title="utot real",
             save_fp=os.path.join(output_dir, "utot_real.pdf"),
         )
         # plot abs of utot
@@ -242,7 +242,7 @@ def main(args: argparse.Namespace) -> None:
             target_pts,
             use_bwr_cmap=False,
             cmap_str="hot",
-            title="utot abs",
+            # title="utot abs",
             save_fp=os.path.join(output_dir, "utot_abs.pdf"),
         )
 
