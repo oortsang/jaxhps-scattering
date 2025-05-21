@@ -22,6 +22,7 @@ from .cases import (
     TEST_CASE_POLY_PART_HOMOG,
     TEST_CASE_POLY_ZERO_SOURCE,
     TEST_CASE_HELMHOLTZ_ITI,
+    TEST_CASE_HELMHOLTZ_ITI_COMPLEX_COEFFS,
     K_DIRICHLET,
     K_XX_COEFF,
     K_YY_COEFF,
@@ -519,6 +520,14 @@ class Test_accuracy_local_solve_stage_uniform_2D_ItI:
         """
         caplog.set_level(logging.DEBUG)
         test_case = TEST_CASE_HELMHOLTZ_ITI
+        domain = DOMAIN_ITI
+        check_leaf_accuracy_ItI_Helmholtz_like(domain, test_case)
+        jax.clear_caches()
+
+    def test_2(self, caplog) -> None:
+        """Uses TEST_CASE_HELMHOLTZ_ITI_COMPLEX_COEFFS. Tests the accuracy when the coefficients are complex-valued."""
+        caplog.set_level(logging.DEBUG)
+        test_case = TEST_CASE_HELMHOLTZ_ITI_COMPLEX_COEFFS
         domain = DOMAIN_ITI
         check_leaf_accuracy_ItI_Helmholtz_like(domain, test_case)
         jax.clear_caches()
