@@ -8,7 +8,7 @@ from .._device_config import HOST_DEVICE, DEVICE_ARR
 
 
 def down_pass_uniform_2D_ItI(
-    boundary_imp_data: jax.Array,
+    boundary_data: jax.Array,
     S_lst: List[jax.Array],
     g_tilde_lst: List[jax.Array],
     Y_arr: jax.Array,
@@ -32,7 +32,7 @@ def down_pass_uniform_2D_ItI(
     ----------
 
     boundary_data : jax.Array
-        An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,)
+        An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,) or (n_bdry, nsrc).
 
     S_lst : List[jax.Array]
         A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
@@ -44,7 +44,7 @@ def down_pass_uniform_2D_ItI(
         Matrices mapping the solution to the interior of the leaf nodes. Has shape (n_leaf, p^2, 4q).
 
     v_arr : jax.Array
-        Particular solution data at the interior of the leaves. Has shape (n_leaf, p^2).
+        Particular solution data at the interior of the leaves. Has shape (n_leaf, p^2) or (n_leaf, p^2, nsrc).
 
     device : jax.Device
         Where to perform the computation. Defaults to jax.devices()[0].
@@ -61,11 +61,13 @@ def down_pass_uniform_2D_ItI(
 
     """
     logging.debug(
-        "_down_pass: started. boundary_imp_data shape: %s",
-        boundary_imp_data.shape,
+        "down_pass_uniform_2D_ItI: started. boundary_imp_data shape: %s, len(g_tilde_lst): %s, len(S_lst): %s",
+        boundary_data.shape,
+        len(g_tilde_lst),
+        len(S_lst),
     )
 
-    bdry_data = jax.device_put(boundary_imp_data, device)
+    bdry_data = jax.device_put(boundary_data, device)
     Y_arr = jax.device_put(Y_arr, device)
     v_arr = jax.device_put(v_arr, device)
     S_lst = [jax.device_put(S_arr, device) for S_arr in S_lst]
@@ -73,8 +75,16 @@ def down_pass_uniform_2D_ItI(
 
     n_levels = len(S_lst)
 
-    # Reshape to (1, n_bdry)
-    if len(bdry_data.shape) == 1:
+    bool_multi_source = len(g_tilde_lst) and g_tilde_lst[0].ndim == 3
+    if bool_multi_source and bdry_data.ndim == 1:
+        raise ValueError(
+            "For multi-source downward pass, need to specify boundary data for each source."
+        )
+
+    # Reshape to (1, n_bdry) or (1, n_bdry, nsrc)
+    if (bool_multi_source and bdry_data.ndim == 2) or (
+        not bool_multi_source and bdry_data.ndim == 1
+    ):
         bdry_data = jnp.expand_dims(bdry_data, axis=0)
     # Propogate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
@@ -82,8 +92,13 @@ def down_pass_uniform_2D_ItI(
         g_tilde = g_tilde_lst[level]
 
         bdry_data = vmapped_propogate_down_2D_ItI(S_arr, bdry_data, g_tilde)
-        _, _, n_bdry = bdry_data.shape
-        bdry_data = bdry_data.reshape((-1, n_bdry))
+
+        n_bdry = bdry_data.shape[2]
+        if bool_multi_source:
+            nsrc = bdry_data.shape[-1]
+            bdry_data = bdry_data.reshape((-1, n_bdry, nsrc))
+        else:
+            bdry_data = bdry_data.reshape((-1, n_bdry))
 
     # Once we have the leaf node incoming impedance data, compute solution on the interior
     # of each leaf node using the Y maps.
@@ -92,7 +107,14 @@ def down_pass_uniform_2D_ItI(
     if Y_arr is None:
         return root_incoming_imp_data
 
-    leaf_homog_solns = jnp.einsum("ijk,ik->ij", Y_arr, root_incoming_imp_data)
+    if bool_multi_source:
+        leaf_homog_solns = jnp.einsum(
+            "ijk,ikl->ijl", Y_arr, root_incoming_imp_data
+        )
+    else:
+        leaf_homog_solns = jnp.einsum(
+            "ijk,ik->ij", Y_arr, root_incoming_imp_data
+        )
     leaf_solns = leaf_homog_solns + v_arr
     leaf_solns = jax.device_put(leaf_solns, host_device)
     return leaf_solns

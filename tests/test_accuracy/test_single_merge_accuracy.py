@@ -12,6 +12,8 @@ from hahps.merge._uniform_2D_DtN import merge_stage_uniform_2D_DtN
 from hahps.merge._uniform_2D_ItI import merge_stage_uniform_2D_ItI
 from hahps.down_pass._uniform_2D_DtN import down_pass_uniform_2D_DtN
 from hahps.down_pass._uniform_2D_ItI import down_pass_uniform_2D_ItI
+# from hahps._utils import plot_soln_from_cheby_nodes
+
 from .cases import (
     XMIN,
     XMAX,
@@ -20,6 +22,8 @@ from .cases import (
     ETA,
     TEST_CASE_POLY_PART_HOMOG,
     TEST_CASE_POLY_ZERO_SOURCE,
+    TEST_CASE_HELMHOLTZ_ITI,
+    TEST_CASE_HELMHOLTZ_ITI_COMPLEX_COEFFS,
     K_DIRICHLET,
     K_XX_COEFF,
     K_YY_COEFF,
@@ -28,17 +32,27 @@ from .cases import (
     K_DIRICHLET_DUDY,
     K_PART_SOLN,
     K_HOMOG_SOLN,
+    K_SOLN,
+    K_DUDX,
+    K_DUDY,
+    K_I_COEFF,
 )
+
+ATOL_NONPOLY = 1e-8
 
 ATOL = 1e-12
 RTOL = 0.0
 
 P = 6
 Q = 4
+
+P_NONPOLY = 16
+Q_NONPOLY = 14
 ROOT_DTN = DiscretizationNode2D(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
 ROOT_ITI = DiscretizationNode2D(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
 DOMAIN_DTN = Domain(p=P, q=Q, root=ROOT_DTN, L=1)
 DOMAIN_ITI = Domain(p=P, q=Q, root=ROOT_ITI, L=1)
+DOMAIN_ITI_NONPOLY = Domain(p=P_NONPOLY, q=Q_NONPOLY, root=ROOT_ITI, L=1)
 
 
 def check_merge_accuracy_2D_DtN_uniform(
@@ -268,6 +282,88 @@ def check_merge_accuracy_2D_ItI_uniform(
     assert jnp.allclose(computed_soln, expected_soln, atol=ATOL, rtol=RTOL)
 
 
+def check_merge_accuracy_2D_ItI_uniform_Helmholtz_like(
+    domain: Domain, test_case: Dict
+) -> None:
+    """This is for ItI problems solving an inhomogeneous Helmholtz equation where the
+    solution is specified as one solution, rathern than the sum of homogeneous and particular parts
+    """
+    d_xx_coeffs = test_case[K_XX_COEFF](domain.interior_points)
+    d_yy_coeffs = test_case[K_YY_COEFF](domain.interior_points)
+    i_coeffs = test_case[K_I_COEFF](domain.interior_points)
+    source = test_case[K_SOURCE](domain.interior_points)
+
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: source shape: %s",
+        source.shape,
+    )
+
+    pde_problem = PDEProblem(
+        domain=domain,
+        source=source,
+        D_xx_coefficients=d_xx_coeffs,
+        D_yy_coefficients=d_yy_coeffs,
+        I_coefficients=i_coeffs,
+        use_ItI=True,
+        eta=ETA,
+    )
+
+    ##############################################################
+    # Solve the local problem
+    Y, T, v, h = local_solve_stage_uniform_2D_ItI(pde_problem=pde_problem)
+    S_lst, g_tilde_lst, T_last = merge_stage_uniform_2D_ItI(
+        T, h, domain.L - 1, return_T=True
+    )
+
+    ##############################################################
+    # Compute the incoming impedance data
+
+    # Assemble incoming impedance data
+    q = domain.boundary_points.shape[0] // 4
+    boundary_u = test_case[K_SOLN](domain.boundary_points)
+    boundary_u_normals = jnp.concatenate(
+        [
+            -1 * test_case[K_DUDY](domain.boundary_points[:q]),
+            test_case[K_DUDX](domain.boundary_points[q : 2 * q]),
+            test_case[K_DUDY](domain.boundary_points[2 * q : 3 * q]),
+            -1 * test_case[K_DUDX](domain.boundary_points[3 * q :]),
+        ]
+    )
+    incoming_imp_data = boundary_u_normals + 1j * pde_problem.eta * boundary_u
+
+    ##############################################################
+    # Check the accuracy of the homogeneous solution
+    # Construct computed homogeneous solution
+
+    computed_soln = down_pass_uniform_2D_ItI(
+        incoming_imp_data, S_lst, g_tilde_lst, Y, v
+    )
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: computed_soln shape: %s",
+        computed_soln.shape,
+    )
+    expected_soln = test_case[K_SOLN](domain.interior_points)
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: expected_soln shape: %s",
+        expected_soln.shape,
+    )
+
+    # Plot the solution
+    # plot_soln_from_cheby_nodes(
+    #     cheby_nodes=domain.interior_points.reshape(-1, 2),
+    #     corners=None,
+    #     expected_soln=expected_soln.imag.flatten(),
+    #     computed_soln=computed_soln.imag.flatten(),
+    # )
+
+    assert jnp.allclose(
+        computed_soln,
+        expected_soln,
+        atol=ATOL_NONPOLY,
+        rtol=RTOL,
+    )
+
+
 class Test_accuracy_single_merge_2D_DtN_uniform:
     def test_0(self, caplog) -> None:
         """Polynomial data with zero source term."""
@@ -292,6 +388,24 @@ class Test_accuracy_single_merge_2D_ItI_uniform:
 
         check_merge_accuracy_2D_ItI_uniform(
             DOMAIN_ITI, TEST_CASE_POLY_ZERO_SOURCE
+        )
+        jax.clear_caches()
+
+    def test_1(self, caplog) -> None:
+        """Polynomial data with non-zero source term."""
+        caplog.set_level(logging.DEBUG)
+
+        check_merge_accuracy_2D_ItI_uniform_Helmholtz_like(
+            DOMAIN_ITI_NONPOLY, TEST_CASE_HELMHOLTZ_ITI
+        )
+        jax.clear_caches()
+
+    def test_2(self, caplog) -> None:
+        """Complex coefficients."""
+        caplog.set_level(logging.DEBUG)
+
+        check_merge_accuracy_2D_ItI_uniform_Helmholtz_like(
+            DOMAIN_ITI_NONPOLY, TEST_CASE_HELMHOLTZ_ITI_COMPLEX_COEFFS
         )
         jax.clear_caches()
 

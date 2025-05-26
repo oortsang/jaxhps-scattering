@@ -52,6 +52,47 @@ class Test__local_solve_stage_2D_ItI:
         assert g_arr.shape == (n_leaves, 4 * q)
         jax.clear_caches()
 
+    def test_1(self) -> None:
+        """Tests the solve_stage function returns without error and returns the correct shape nsrc = 3."""
+
+        p = 16
+        q = 14
+        l = 3
+        nsrc = 3
+        eta = 4.0
+
+        root = DiscretizationNode2D(
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+        )
+        domain = Domain(p=p, q=q, root=root, L=l)
+        n_leaves = 4**l
+
+        d_xx_coeffs = np.random.normal(size=(n_leaves, p**2))
+        source_term = np.random.normal(size=(n_leaves, p**2, nsrc))
+        print("test_0: d_xx_coeffs = ", d_xx_coeffs.shape)
+        print("test_0: source_term = ", source_term.shape)
+
+        t = PDEProblem(
+            domain=domain,
+            source=source_term,
+            D_xx_coefficients=d_xx_coeffs,
+            use_ItI=True,
+            eta=eta,
+        )
+
+        Y_arr, R_arr, v_arr, g_arr = local_solve_stage_uniform_2D_ItI(
+            pde_problem=t
+        )
+
+        assert Y_arr.shape == (n_leaves, p**2, 4 * q)
+        assert R_arr.shape == (n_leaves, 4 * q, 4 * q)
+        assert v_arr.shape == (n_leaves, p**2, nsrc)
+        assert g_arr.shape == (n_leaves, 4 * q, nsrc)
+        jax.clear_caches()
+
 
 class Test_get_ItI:
     def test_0(self) -> None:

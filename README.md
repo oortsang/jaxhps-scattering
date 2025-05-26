@@ -22,7 +22,6 @@ scipy
 
 [https://ha-hps.readthedocs.io/en/latest/](https://ha-hps.readthedocs.io/en/latest/)
 
-
 ## Examples
 
 

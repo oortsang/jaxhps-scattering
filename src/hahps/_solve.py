@@ -8,16 +8,21 @@ from ._device_config import (
     DEVICE_ARR,
 )
 
-from .down_pass._adaptive_2D_DtN import down_pass_adaptive_2D_DtN
-from .down_pass._adaptive_3D_DtN import down_pass_adaptive_3D_DtN
-from .down_pass._uniform_2D_DtN import down_pass_uniform_2D_DtN
-from .down_pass._uniform_2D_ItI import down_pass_uniform_2D_ItI
-from .down_pass._uniform_3D_DtN import down_pass_uniform_3D_DtN
+from .down_pass import (
+    down_pass_uniform_2D_ItI,
+    down_pass_uniform_2D_DtN,
+    down_pass_uniform_3D_DtN,
+    down_pass_adaptive_2D_DtN,
+    down_pass_adaptive_3D_DtN,
+)
+
+from .up_pass import up_pass_uniform_2D_ItI, up_pass_uniform_2D_DtN
 
 
 def solve(
     pde_problem: PDEProblem,
     boundary_data: jax.Array | List[jax.Array],
+    source: jax.Array = None,
     compute_device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
 ) -> jax.Array:
@@ -25,11 +30,16 @@ def solve(
     This function performs the downward pass of the HPS algorithm, after the solution operators have
     been formed by a call to :func:`hahps.build_solver`.
 
+    If the problem is a 2D uniform problem, the source term can be specified here. For other problems, the source term must be specified at the time the solver is built.
+
 
     Args:
-        pde_problem (PDEProblem): Specifies the differential operator, source, domain, and precomputed interpolation and differentiation matrices. Also contains all of the solution operators computed by hahps.build_solver().
+        pde_problem (PDEProblem): Specifies the differential operator, source, domain, and precomputed interpolation and differentiation matrices. Also contains all of the solution operators computed by :func:`hahps.build_solver`.
 
-        boundary_data (jax.Array | List[jax.Array]): This specifies the data on the boundary of the domain that will be propagated down to the interior of the leaves. If using an adaptive discretization, this must be specified as a list of arrays, one for each side or face of the root boundary. This list can be specified using the :func:`hahps.Domain.get_adaptive_boundary_data_lst` utility. For uniform discretizations, this argument can be a jax.Array of shape (n_bdry,) or a list.
+
+        boundary_data (jax.Array | List[jax.Array]): This specifies the data on the boundary of the domain that will be propagated down to the interior of the leaves. If using an adaptive discretization, this must be specified as a list of arrays, one for each side or face of the root boundary. This list can be specified using the :func:`Domain.get_adaptive_boundary_data_lst` utility. For uniform discretizations, this argument can be a jax.Array of shape (n_bdry,) or a list.
+
+        source (jax.Array): The source term for the PDE. Currently, this can only be specified for 2D uniform ItI problems. For other versions, the source must be specified at the time the solver is built.
 
         compute_device (jax.Device, optional): Where the computation should happen. Defaults to jax.devices()[0].
 
@@ -38,6 +48,23 @@ def solve(
     Returns:
         jax.Array: The solution on the HPS grid. This has shape (n_leaves, p^d).
     """
+    if source is not None:
+        # Check that we're dealing with a 2D uniform ItI problem
+        if (
+            not pde_problem.domain.bool_2D
+            or not pde_problem.domain.bool_uniform
+        ):
+            raise ValueError(
+                "Source can only be specified for 2D uniform ItI problems. For other problems, the source must be specified at the time the solver is built."
+            )
+        return _up_then_down_pass(
+            pde_problem=pde_problem,
+            boundary_data=boundary_data,
+            source=source,
+            compute_device=compute_device,
+            host_device=host_device,
+        )
+
     if not pde_problem.domain.bool_uniform:
         # interface is different for the adaptive down pass so we'll
         # pass to a different function.
@@ -87,3 +114,42 @@ def _adaptive_solve(
     return down_pass_fn(
         pde_problem=pde_problem, boundary_data=boundary_data_lst
     )
+
+
+def _up_then_down_pass(
+    pde_problem: PDEProblem,
+    boundary_data: jax.Array,
+    source: jax.Array,
+    compute_device: jax.Device,
+    host_device: jax.Device,
+) -> jax.Array:
+    # Figure out if ItI or DtN is being used
+    if pde_problem.use_ItI:
+        # If using ItI, we need to compute the g_tilde_lst
+        # and v_arr in the upward pass.
+        up_pass_fn = up_pass_uniform_2D_ItI
+        down_pass_fn = down_pass_uniform_2D_ItI
+    else:
+        # If using DtN, we can just use the precomputed g_tilde_lst and v_arr.
+        up_pass_fn = up_pass_uniform_2D_DtN
+        down_pass_fn = down_pass_uniform_2D_DtN
+
+    # First, do the upward pass
+    v, g_tilde_lst = up_pass_fn(
+        pde_problem=pde_problem,
+        source=source,
+        device=compute_device,
+        host_device=host_device,
+    )
+
+    # Now, do the downward pass
+    solns = down_pass_fn(
+        boundary_data=boundary_data,
+        S_lst=pde_problem.S_lst,
+        g_tilde_lst=g_tilde_lst,
+        Y_arr=pde_problem.Y,
+        v_arr=v,
+        device=compute_device,
+        host_device=host_device,
+    )
+    return solns

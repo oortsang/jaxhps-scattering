@@ -37,6 +37,8 @@ def interp_from_hps_2D(
     # x = jnp.linspace(xmin, xmax, n_pts, endpoint=False, dtype=jnp.float64)
     # y = jnp.linspace(ymin, ymax, n_pts, endpoint=False, dtype=jnp.float64)
     # y = jnp.flip(y)
+
+    bool_multi_source = f_evals.ndim == 3
     n_x = x_vals.shape[0]
     n_y = y_vals.shape[0]
     X, Y = jnp.meshgrid(x_vals, y_vals)
@@ -84,7 +86,11 @@ def interp_from_hps_2D(
     vals = vmapped_interp_to_point_2D(
         xvals_for_vmap, yvals_for_vmap, corners_for_vmap, f_for_vmap, p
     )
-    return vals.reshape(n_x, n_y), target_pts
+    if bool_multi_source:
+        vals = vals.reshape(n_x, n_y, f_evals.shape[-1])
+    else:
+        vals = vals.reshape(n_x, n_y)
+    return vals, target_pts
 
 
 @partial(jax.jit, static_argnums=(4,))

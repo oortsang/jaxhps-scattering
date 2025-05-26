@@ -259,7 +259,9 @@ class Domain:
             assert eval_points_z is not None
 
         n_leaves, n_per_leaf, _ = self.interior_points.shape
-        assert samples.shape == (n_leaves, n_per_leaf)
+
+        # It's possible that we have samples shaped like (n_leaves, n_per_leaf, n_sources)
+        assert samples.shape[:2] == (n_leaves, n_per_leaf)
 
         if bool_2D:
             if self.bool_uniform:

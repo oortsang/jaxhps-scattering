@@ -5,14 +5,14 @@ import jax.numpy as jnp
 
 @jax.jit
 def assemble_merge_outputs_ItI(
-    A_lst: List[jnp.array],
-    B: jnp.array,
-    C: jnp.array,
-    D_12: jnp.array,
+    A_lst: List[jax.Array],
+    B: jax.Array,
+    C: jax.Array,
+    D_12: jax.Array,
     D_21: jax.Array,
-    h_ext: jnp.array,
-    h_int: jnp.array,
-) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
+    h_ext: jax.Array,
+    h_int: jax.Array,
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     Performs a merge for ItI matrices. In the ItI case, the D matrix is structured like:
             ------------
@@ -21,24 +21,58 @@ def assemble_merge_outputs_ItI(
             -------------
     So we invert it with a Schur complement method and then pass the data to _assemble_merge_outputs()
     Args:
-        A_lst (List[jnp.array]): _description_
-        B (jnp.array): _description_
-        C (jnp.array): _description_
-        D (jnp.array): _description_
-        h_ext (jnp.array): _description_
-        h_int (jnp.array): _description_
+        A_lst (List[jax.Array]): _description_
+        B (jax.Array): _description_
+        C (jax.Array): _description_
+        D (jax.Array): _description_
+        h_ext (jax.Array): _description_
+        h_int (jax.Array): _description_
 
     Returns:
-        Tuple[jnp.array, jnp.array, jnp.array, jnp.array]
+        Tuple[jax.Array, jax.Array, jax.Array, jax.Array]
 
-        T (jnp.array): DtN matrix
-        S (jnp.array): ext_to_int matrix
-        h_ext_out (jnp.array): particular soln outgoing data on the boundary of the merged patches.
-        g_tilde_int (jnp.array): particular soln incoming data on the merge interfaces.
+        T (jax.Array): DtN matrix
+        S (jax.Array): ext_to_int matrix
+        h_ext_out (jax.Array): particular soln outgoing data on the boundary of the merged patches.
+        g_tilde_int (jax.Array): particular soln incoming data on the merge interfaces.
     """
 
     D_inv = _invert_D_ItI(D_12, D_21)
     return _assemble_merge_outputs(A_lst, B, C, D_inv, h_ext, h_int)
+
+
+@jax.jit
+def nosource_assemble_merge_outputs_ItI(
+    A_lst: List[jax.Array],
+    B: jax.Array,
+    C: jax.Array,
+    D_12: jax.Array,
+    D_21: jax.Array,
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    """
+    Performs a merge for ItI matrices. In the ItI case, the D matrix is structured like:
+            ------------
+    D = I + | 0    D_12 |
+            | D_21 0    |
+            -------------
+    So we invert it with a Schur complement method and then pass the data to _assemble_merge_outputs()
+    Args:
+        A_lst (List[jax.Array]): _description_
+        B (jax.Array): _description_
+        C (jax.Array): _description_
+        D (jax.Array): _description_
+
+    Returns:
+        Tuple[jax.Array, jax.Array, jax.Array, jax.Array]
+
+        T (jax.Array): DtN matrix
+        S (jax.Array): ext_to_int matrix
+        D^{-1} (jax.Array):
+        BD^{-1} (jax.Array):
+    """
+
+    D_inv = _invert_D_ItI(D_12, D_21)
+    return _nosource_assemble_merge_outputs(A_lst, B, C, D_inv)
 
 
 @jax.jit
@@ -79,31 +113,31 @@ def _invert_D_ItI(D_12: jax.Array, D_21: jax.Array) -> jax.Array:
 
 @jax.jit
 def assemble_merge_outputs_DtN(
-    A_lst: List[jnp.array],
-    B: jnp.array,
-    C: jnp.array,
-    D: jnp.array,
-    h_ext: jnp.array,
-    h_int: jnp.array,
-) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
+    A_lst: List[jax.Array],
+    B: jax.Array,
+    C: jax.Array,
+    D: jax.Array,
+    h_ext: jax.Array,
+    h_int: jax.Array,
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     Inverts D, which is dense in the DtN case, and then passes the data to _assemble_merge_outputs()
 
     Args:
-        A_lst (List[jnp.array]): _description_
-        B (jnp.array): _description_
-        C (jnp.array): _description_
-        D (jnp.array): _description_
-        h_ext (jnp.array): _description_
-        h_int (jnp.array): _description_
+        A_lst (List[jax.Array]): _description_
+        B (jax.Array): _description_
+        C (jax.Array): _description_
+        D (jax.Array): _description_
+        h_ext (jax.Array): _description_
+        h_int (jax.Array): _description_
 
     Returns:
-        Tuple[jnp.array, jnp.array, jnp.array, jnp.array]
+        Tuple[jax.Array, jax.Array, jax.Array, jax.Array]
 
-        T (jnp.array): DtN matrix
-        S (jnp.array): ext_to_int matrix
-        h_ext_out (jnp.array): particular soln outgoing data on the boundary of the merged patches.
-        g_tilde_int (jnp.array): particular soln incoming data on the merge interfaces.
+        T (jax.Array): DtN matrix
+        S (jax.Array): ext_to_int matrix
+        h_ext_out (jax.Array): particular soln outgoing data on the boundary of the merged patches.
+        g_tilde_int (jax.Array): particular soln incoming data on the merge interfaces.
     """
 
     D_inv = jnp.linalg.inv(D)
@@ -111,14 +145,46 @@ def assemble_merge_outputs_DtN(
 
 
 @jax.jit
+def nosource_assemble_merge_outputs_DtN(
+    A_lst: List[jax.Array],
+    B: jax.Array,
+    C: jax.Array,
+    D: jax.Array,
+) -> Tuple[
+    jax.Array,
+    jax.Array,
+]:
+    """
+    Inverts D, which is dense in the DtN case, and then passes the data to _assemble_merge_outputs()
+
+    Args:
+        A_lst (List[jax.Array]): _description_
+        B (jax.Array): _description_
+        C (jax.Array): _description_
+        D (jax.Array): _description_
+        h_ext (jax.Array): _description_
+        h_int (jax.Array): _description_
+
+    Returns:
+        Tuple[jax.Array, jax.Array, jax.Array, jax.Array]
+
+        T (jax.Array): DtN matrix
+        S (jax.Array): ext_to_int matrix
+    """
+
+    D_inv = jnp.linalg.inv(D)
+    return _nosource_assemble_merge_outputs(A_lst, B, C, D_inv)
+
+
+@jax.jit
 def _assemble_merge_outputs(
-    A_lst: List[jnp.array],
-    B: jnp.array,
-    C: jnp.array,
-    D_inv: jnp.array,
-    h_ext: jnp.array,
-    h_int: jnp.array,
-) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
+    A_lst: List[jax.Array],
+    B: jax.Array,
+    C: jax.Array,
+    D_inv: jax.Array,
+    h_ext: jax.Array,
+    h_int: jax.Array,
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     Computes a Schur complement that shows up in merging
     four patches together. Assumes D is already inverted.
@@ -134,20 +200,20 @@ def _assemble_merge_outputs(
     [D^{-1}C       I][g_int]   [-D^{-1} h_int]
 
     Args:
-        A_lst (List[jnp.array]): List of square diagonal blocks which make up A
-        B (jnp.array):
-        C (jnp.array): _description_
-        D_inv (jnp.array): _description_
-        h_ext (jnp.array): _description_
-        h_int (jnp.array): _description_
+        A_lst (List[jax.Array]): List of square diagonal blocks which make up A
+        B (jax.Array):
+        C (jax.Array): _description_
+        D_inv (jax.Array): _description_
+        h_ext (jax.Array): _description_
+        h_int (jax.Array): _description_
 
     Returns:
-        Tuple[jnp.array, jnp.array, jnp.array, jnp.array]
+        Tuple[jax.Array, jax.Array, jax.Array, jax.Array]
 
-        T (jnp.array): DtN matrix
-        S (jnp.array): Propagation matrix
-        h_ext_out (jnp.array): particular soln outgoing data on the boundary of the merged patches.
-        g_tilde_int (jnp.array): particular soln incoming data on the merge interfaces.
+        T (jax.Array): DtN matrix
+        S (jax.Array): Propagation matrix
+        h_ext_out (jax.Array): particular soln outgoing data on the boundary of the merged patches.
+        g_tilde_int (jax.Array): particular soln incoming data on the merge interfaces.
     """
 
     S = -1 * D_inv @ C
@@ -169,16 +235,69 @@ def _assemble_merge_outputs(
 
 
 @jax.jit
+def _nosource_assemble_merge_outputs(
+    A_lst: List[jax.Array],
+    B: jax.Array,
+    C: jax.Array,
+    D_inv: jax.Array,
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    """
+    Computes a Schur complement that shows up in merging
+    four patches together. Assumes D is already inverted.
+
+    Given the system
+
+    [ A B ][g_ext] = [u_ext - h_ext]
+    [ C D ][g_int]   [-h_int]
+
+    After two steps of block Gaussian elimination, we get
+
+    [A-BD^{-1}C    0][g_ext] = [u_ext - h_ext + BD^{-1} h_int]
+    [D^{-1}C       I][g_int]   [-D^{-1} h_int]
+
+    This returns the matrices T, S, D^{-1}, BD^{-1}
+
+    Args:
+        A_lst (List[jax.Array]): List of square diagonal blocks which make up A
+        B (jax.Array):
+        C (jax.Array): _description_
+        D_inv (jax.Array): _description_
+
+    Returns:
+        Tuple[jax.Array, jax.Array, jax.Array, jax.Array]
+
+        T (jax.Array): DtN matrix
+        S (jax.Array): Propagation matrix
+        D^{-1} (jax.Array):
+        BD^{-1} (jax.Array):
+    """
+
+    S = -1 * D_inv @ C
+    T = B @ S
+    # Need to add A to T block-wise
+    counter = 0
+    for A in A_lst:
+        block_start = counter
+        block_end = counter + A.shape[0]
+        T = T.at[block_start:block_end, block_start:block_end].set(
+            A + T[block_start:block_end, block_start:block_end]
+        )
+        counter = block_end
+    BD_inv = B @ D_inv
+    return (T, S, D_inv, BD_inv)
+
+
+@jax.jit
 def _oct_merge_from_submatrices(
-    a_submatrices_subvecs: Tuple[jnp.array],
-    b_submatrices_subvecs: Tuple[jnp.array],
-    c_submatrices_subvecs: Tuple[jnp.array],
-    d_submatrices_subvecs: Tuple[jnp.array],
-    e_submatrices_subvecs: Tuple[jnp.array],
-    f_submatrices_subvecs: Tuple[jnp.array],
-    g_submatrices_subvecs: Tuple[jnp.array],
-    h_submatrices_subvecs: Tuple[jnp.array],
-) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
+    a_submatrices_subvecs: Tuple[jax.Array],
+    b_submatrices_subvecs: Tuple[jax.Array],
+    c_submatrices_subvecs: Tuple[jax.Array],
+    d_submatrices_subvecs: Tuple[jax.Array],
+    e_submatrices_subvecs: Tuple[jax.Array],
+    f_submatrices_subvecs: Tuple[jax.Array],
+    g_submatrices_subvecs: Tuple[jax.Array],
+    h_submatrices_subvecs: Tuple[jax.Array],
+) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     (
         T_a_1_1,
         T_a_1_9,

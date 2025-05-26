@@ -172,6 +172,9 @@ def source_locations_to_scattered_field(
         eta=K,
     )
 
+    # Remove the n_src dimension
+    incoming_imp_data = incoming_imp_data.squeeze()
+
     # Propagate the resulting impedance data down to the leaves
     interior_solns = down_pass_uniform_2D_ItI(
         boundary_imp_data=incoming_imp_data,

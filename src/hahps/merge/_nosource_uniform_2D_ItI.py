@@ -5,7 +5,7 @@ import jax.numpy as jnp
 
 
 from ._schur_complement import (
-    assemble_merge_outputs_ItI,
+    nosource_assemble_merge_outputs_ItI,
 )
 from .._device_config import DEVICE_ARR, HOST_DEVICE
 from ._uniform_2D_DtN import (
@@ -17,15 +17,12 @@ from ._uniform_2D_DtN import (
 import logging
 
 
-def merge_stage_uniform_2D_ItI(
+def nosource_merge_stage_uniform_2D_ItI(
     T_arr: jnp.array,
-    h_arr: jnp.array,
     l: int,
     device: jax.Device = DEVICE_ARR[0],
     host_device: jax.Device = HOST_DEVICE,
-    subtree_recomp: bool = False,
     return_T: bool = False,
-    return_h: bool = False,
 ) -> Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]:
     """
     Implements uniform 2D merges of ItI matrices. Merges the nodes in the quadtree four at a time.
@@ -37,14 +34,9 @@ def merge_stage_uniform_2D_ItI(
 
     Parameters
     ----------
-    pde_problem : PDEProblem
-        Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
     T_arr : jax.Array
         Array of ItI matrices from the local solve stage. Has shape (n_leaves, 4q, 4q)
-
-    h_arr : jax.Array
-        Array of outgoing boundary data from the local solve stage. Has shape (n_leaves, 4q) or (n_leaves, 4q, nsrc)
 
     l : int
         Number of levels to merge
@@ -55,9 +47,6 @@ def merge_stage_uniform_2D_ItI(
     host_device : jax.Device
         Where to place the output. Defaults to jax.devices("cpu")[0].
 
-    subtree_recomp : bool
-        A flag for used by the subtree recomputation methods, which triggers an early return with just the top-level T and h.
-
     return_T : bool
         A flag to return the top-level T matrix. Defaults to False.
 
@@ -66,24 +55,23 @@ def merge_stage_uniform_2D_ItI(
     S_lst : List[jax.Array]
         A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
 
-    g_tilde_lst: List[jax.Array]
-        A list of incoming particular solution data along the merge interfaces. The first element of the list corresponds to the nodes just above the leaves, and the last element of the list corresponds to the root of the quadtree.
+    D_inv_lst : List[jax.Array]
+        List of pre-computed D^{-1} matrices for each level of the quadtree.
+
+    BD_inverse_lst : List[jax.Array]
+        List of pre-computed BD^{-1} matrices for each level of the quadtree.
 
     T_last : jax.Array
         The top-level DtN matrix, which is only returned if ``return_T=True``. Has shape (4q, 4q).
 
     """
-    logging.debug("merge_stage_uniform_2D_ItI: started. device=%s", device)
 
-    if not subtree_recomp:
-        # Start lists to output data
-        S_lst = []
-        g_tilde_lst = []
+    # Start lists to output data
+    S_lst = []
+    D_inv_lst = []
+    BD_inverse_lst = []
 
     T_arr = jax.device_put(T_arr, device)
-    h_arr = jax.device_put(h_arr, device)
-
-    bool_multi_source = h_arr.ndim == 3
 
     if len(T_arr.shape) < 4:
         logging.debug(
@@ -91,15 +79,10 @@ def merge_stage_uniform_2D_ItI(
         )
         n_leaves, n_ext, _ = T_arr.shape
         T_arr = T_arr.reshape(n_leaves // 4, 4, n_ext, n_ext)
-        if bool_multi_source:
-            n_src = h_arr.shape[-1]
-            h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext, n_src)
-        else:
-            h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext, 1)
 
     for i in range(l - 1):
-        S_arr, T_arr_new, h_arr_new, g_tilde_arr = (
-            vmapped_uniform_quad_merge_ItI(T_arr, h_arr)
+        S_arr, T_arr_new, D_inv_arr, BD_inv_arr = (
+            vmapped_nosource_uniform_quad_merge_ItI(T_arr)
         )
 
         # TODO: Figure out how to safely delete these arrays
@@ -108,95 +91,61 @@ def merge_stage_uniform_2D_ItI(
         # T_arr.delete()
         # h_arr.delete()
 
-        if not bool_multi_source:
-            # Remove source dimension from g_tilde_arr
-            g_tilde_arr = jnp.squeeze(g_tilde_arr, axis=-1)
-
         if host_device != device:
-            if not subtree_recomp:
-                S_host = jax.device_put(S_arr, host_device)
-                S_lst.append(S_host)
-                g_tilde_host = jax.device_put(g_tilde_arr, host_device)
-                g_tilde_lst.append(g_tilde_host)
-
+            S_host = jax.device_put(S_arr, host_device)
+            S_lst.append(S_host)
             S_arr.delete()
-            g_tilde_arr.delete()
-        elif not subtree_recomp:
+
+            D_inv_host = jax.device_put(D_inv_arr, host_device)
+            D_inv_lst.append(D_inv_host)
+            D_inv_arr.delete()
+
+            BD_inv_host = jax.device_put(BD_inv_arr, host_device)
+            BD_inverse_lst.append(BD_inv_host)
+            BD_inv_arr.delete()
+        else:
             S_lst.append(S_arr)
-            g_tilde_lst.append(g_tilde_arr)
+            D_inv_lst.append(D_inv_arr)
+            BD_inverse_lst.append(BD_inv_arr)
 
         T_arr = T_arr_new
-        h_arr = h_arr_new
 
-    S_last, T_last, h_last, g_tilde_last = _uniform_quad_merge_ItI(
+    S_last, T_last, D_inv_last, BD_inv_last = _nosource_uniform_quad_merge_ItI(
         T_arr[0, 0],
         T_arr[0, 1],
         T_arr[0, 2],
         T_arr[0, 3],
-        h_arr[0, 0],
-        h_arr[0, 1],
-        h_arr[0, 2],
-        h_arr[0, 3],
     )
-    if not bool_multi_source:
-        # Remove source dimension from g_tilde_last and h_last
-        g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
-        h_last = jnp.squeeze(h_last, axis=-1)
 
-    if subtree_recomp:
-        # In this branch, we only return T_last and h_last
-        S_last.delete()
-        g_tilde_last.delete()
+    S_lst.append(jax.device_put(jnp.expand_dims(S_last, axis=0), host_device))
+    D_inv_lst.append(
+        jax.device_put(jnp.expand_dims(D_inv_last, axis=0), host_device)
+    )
+    BD_inverse_lst.append(
+        jax.device_put(jnp.expand_dims(BD_inv_last, axis=0), host_device)
+    )
 
-        # Expand the dimensions of T_last and h_last so they stack nicely
-        T_last = jnp.expand_dims(T_last, 0)
-        h_last = jnp.expand_dims(h_last, 0)
-
-        # Move the data to the requested device
+    if return_T:
         T_last_out = jax.device_put(T_last, host_device)
-        h_last_out = jax.device_put(h_last, host_device)
-
-        return (T_last_out, h_last_out)
-
+        return (S_lst, D_inv_lst, BD_inverse_lst, T_last_out)
     else:
-        # In this branch, we are returning S_lst, g_tilde_lst, and optionally
-        # T_last
-        S_lst.append(
-            jax.device_put(jnp.expand_dims(S_last, axis=0), host_device)
-        )
-        g_tilde_lst.append(
-            jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device)
-        )
-        out = (S_lst, g_tilde_lst)
-
-        if return_T:
-            T_last_out = jax.device_put(T_last, host_device)
-            out = out + (T_last_out,)
-
-        if return_h:
-            h_last_out = jax.device_put(h_last, host_device)
-            out = out + (h_last_out,)
-
-        return out
+        return (S_lst, D_inv_lst, BD_inverse_lst)
 
 
 @jax.jit
-def _uniform_quad_merge_ItI(
+def _nosource_uniform_quad_merge_ItI(
     R_a: jnp.array,
     R_b: jnp.array,
     R_c: jnp.array,
     R_d: jnp.array,
-    h_a: jnp.array,
-    h_b: jnp.array,
-    h_c: jnp.array,
-    h_d: jnp.array,
 ) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
-    # print("_quad_merge_ItI: h_a", h_a.shape)
+    n_a = R_a.shape[0]
+    dummy_h = jnp.zeros((n_a,), dtype=R_a.dtype)
     # First, find all of the necessary submatrices and sub-vectors
     (
-        h_a_1,
-        h_a_5,
-        h_a_8,
+        _,
+        _,
+        _,
         R_a_11,
         R_a_15,
         R_a_18,
@@ -206,12 +155,12 @@ def _uniform_quad_merge_ItI(
         R_a_81,
         R_a_85,
         R_a_88,
-    ) = get_quadmerge_blocks_a(R_a, h_a)
+    ) = get_quadmerge_blocks_a(R_a, dummy_h)
 
     (
-        h_b_2,
-        h_b_6,
-        h_b_5,
+        _,
+        _,
+        _,
         R_b_22,
         R_b_26,
         R_b_25,
@@ -221,12 +170,12 @@ def _uniform_quad_merge_ItI(
         R_b_52,
         R_b_56,
         R_b_55,
-    ) = get_quadmerge_blocks_b(R_b, h_b)
+    ) = get_quadmerge_blocks_b(R_b, dummy_h)
 
     (
-        h_c_6,
-        h_c_3,
-        h_c_7,
+        _,
+        _,
+        _,
         R_c_66,
         R_c_63,
         R_c_67,
@@ -236,12 +185,12 @@ def _uniform_quad_merge_ItI(
         R_c_76,
         R_c_73,
         R_c_77,
-    ) = get_quadmerge_blocks_c(R_c, h_c)
+    ) = get_quadmerge_blocks_c(R_c, dummy_h)
 
     (
-        h_d_8,
-        h_d_7,
-        h_d_4,
+        _,
+        _,
+        _,
         R_d_88,
         R_d_87,
         R_d_84,
@@ -251,7 +200,7 @@ def _uniform_quad_merge_ItI(
         R_d_48,
         R_d_47,
         R_d_44,
-    ) = get_quadmerge_blocks_d(R_d, h_d)
+    ) = get_quadmerge_blocks_d(R_d, dummy_h)
 
     n_int, n_ext = R_a_51.shape
 
@@ -339,23 +288,21 @@ def _uniform_quad_merge_ItI(
         ]
     )
 
-    h_int = jnp.concatenate(
-        [h_b_5, h_d_8, h_b_6, h_d_7, h_a_5, h_c_6, h_c_7, h_a_8]
-    )
-    h_ext = jnp.concatenate([h_a_1, h_b_2, h_c_3, h_d_4])
     A_lst = [R_a_11, R_b_22, R_c_33, R_d_44]
 
-    T, S, h_ext_out, g_tilde_int = assemble_merge_outputs_ItI(
-        A_lst, B, C, D_12, D_21, h_ext, h_int
+    T, S, D_inv, BD_inv = nosource_assemble_merge_outputs_ItI(
+        A_lst, B, C, D_12, D_21
     )
 
     # Roll the exterior by n_int to get the correct ordering
-    h_ext_out = jnp.roll(h_ext_out, -n_int, axis=0)
+    # of the exterior discretization points. Right now, the exterior points are ordered like [a_1, b_2, c_3, d_4]
+    # but we want [bottom, left, top, right]. This requires
+    # rolling the exterior points by n_int.
     T = jnp.roll(T, -n_int, axis=0)
     T = jnp.roll(T, -n_int, axis=1)
     S = jnp.roll(S, -n_int, axis=1)
 
-    # rows of S are ordered like a_5, a_8, c_6, c_7, b_5, b_6, d_7, d_8.
+    # rows of S and D_inv are ordered like a_5, a_8, c_6, c_7, b_5, b_6, d_7, d_8.
     # Want to rearrange them so they are ordered like
     # a_5, b_5, b_6, c_6, c_7, d_7, d_8, a_8
     r = jnp.concatenate(
@@ -371,36 +318,28 @@ def _uniform_quad_merge_ItI(
         ]
     )
     S = S[r]
-    g_tilde_int = g_tilde_int[r]
 
-    return S, T, h_ext_out, g_tilde_int
+    return S, T, D_inv, BD_inv
 
 
-_vmapped_uniform_quad_merge_ItI = jax.vmap(
-    _uniform_quad_merge_ItI,
-    in_axes=(0, 0, 0, 0, 0, 0, 0, 0),
+_vmapped_nosource_uniform_quad_merge_ItI = jax.vmap(
+    _nosource_uniform_quad_merge_ItI,
+    in_axes=(0, 0, 0, 0),
     out_axes=(0, 0, 0, 0),
 )
 
 
 @jax.jit
-def vmapped_uniform_quad_merge_ItI(
+def vmapped_nosource_uniform_quad_merge_ItI(
     R_in: jnp.array,
-    h_in: jnp.array,
 ) -> Tuple[jnp.array, jnp.array, jnp.array, jnp.array]:
-    S, R, h, f = _vmapped_uniform_quad_merge_ItI(
+    S, R, D_inv, BD_inv = _vmapped_nosource_uniform_quad_merge_ItI(
         R_in[:, 0],
         R_in[:, 1],
         R_in[:, 2],
         R_in[:, 3],
-        h_in[:, 0],
-        h_in[:, 1],
-        h_in[:, 2],
-        h_in[:, 3],
     )
 
     n_merges, n_int, n_ext = S.shape
-    n_src = h.shape[-1]
     R = R.reshape((n_merges // 4, 4, n_ext, n_ext))
-    h = h.reshape((n_merges // 4, 4, n_ext, n_src))
-    return S, R, h, f
+    return S, R, D_inv, BD_inv
