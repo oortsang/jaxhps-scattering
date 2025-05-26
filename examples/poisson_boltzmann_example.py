@@ -2,6 +2,7 @@ import os
 import argparse
 import logging
 import jax.numpy as jnp
+import jax
 from timeit import default_timer
 from scipy.io import savemat
 
@@ -25,6 +26,9 @@ from poisson_boltzmann_utils import (
     d_vdw_permittivity_d_z,
 )
 from plotting_utils import plot_func_with_grid
+
+jax.config.update("jax_default_device", jax.devices("cpu")[0])
+
 
 # Suppress matplotlib debug messages
 logging.getLogger("matplotlib").setLevel(logging.WARNING)

@@ -1,8 +1,7 @@
 import jax.numpy as jnp
 import jax
-
+import logging
 from .._pdeproblem import PDEProblem
-from .._domain import get_all_leaves
 
 from .._device_config import DEVICE_ARR, HOST_DEVICE
 from typing import Tuple
@@ -44,6 +43,7 @@ def local_solve_stage_adaptive_3D_DtN(
     h : jax.Array
         Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 6q^2)
     """
+    logging.debug("local_solve_stage_adaptive_3D_DtN called")
 
     coeffs_gathered, which_coeffs = _gather_coeffs_3D(
         D_xx_coeffs=pde_problem.D_xx_coefficients,
@@ -78,11 +78,17 @@ def local_solve_stage_adaptive_3D_DtN(
     # Now that arrays are in contiguous blocks of memory, we can move them to the GPU.
     diff_ops = jax.device_put(diff_ops, device)
     coeffs_gathered = jax.device_put(coeffs_gathered, device)
+
+    logging.debug(
+        "local_solve_stage_adaptive_3D_DtN: coeffs_gathered shape: %s",
+        coeffs_gathered.shape,
+    )
+    logging.debug(
+        "local_solve_stage_adaptive_3D_DtN: diff_ops shape: %s", diff_ops.shape
+    )
     # Have to generate Q matrices for each leaf by re-scaling the differential
     # operators
-    sidelens = jnp.array(
-        [l.xmax - l.xmin for l in get_all_leaves(pde_problem.domain.root)]
-    )
+    sidelens = pde_problem.sidelens
     sidelens = jax.device_put(sidelens, device)
 
     all_diff_operators, Q_Ds = (

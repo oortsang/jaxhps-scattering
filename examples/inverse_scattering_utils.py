@@ -13,18 +13,16 @@ from hahps import (
     Domain,
     PDEProblem,
 )
-from hahps.local_solve import local_solve_stage_uniform_2D_ItI
-from hahps.merge import merge_stage_uniform_2D_ItI
-from hahps.down_pass import down_pass_uniform_2D_ItI
+
+# from hahps.local_solve import local_solve_stage_uniform_2D_ItI
+# from hahps.merge import merge_stage_uniform_2D_ItI
+# from hahps.down_pass import down_pass_uniform_2D_ItI
+from hahps import build_solver, solve
 
 
 L = 3
 K = 20
 P = 16
-# XMIN = -jnp.pi
-# XMAX = jnp.pi
-# YMIN = -jnp.pi
-# YMAX = jnp.pi
 XMIN = -1
 XMAX = 1
 YMIN = -1
@@ -45,7 +43,6 @@ SAMPLE_DOMAIN.interior_points = jax.device_put(
     SAMPLE_DOMAIN.interior_points, jax.devices()[0]
 )
 AMPLITUDE = 0.5
-MIN_TOL = 1e-15
 
 # find the nearest x-coordinate in SAMPLE_DOMAIN.interior_points to 0.875
 nearest_x_coord_idx = jnp.argmin(
@@ -82,18 +79,18 @@ SAMPLE_PDEPROBLEM = PDEProblem(
 
 
 @jax.jit
-def q_point_sources(x: jnp.array, source_locations: jnp.array) -> jnp.array:
+def q_point_sources(x: jax.Array, source_locations: jax.Array) -> jax.Array:
     """
     Source locations gives a list of point source locations z_i
 
     This function returns the function q(x) = sum_i exp{ -|| x - z_i ||^2 / sigma^2}
 
     Args:
-        x (jnp.array): Evaluation points. Has shape (..., 2)
-        source_locations (jnp.array): Has shape (N_s,2). Will be reshaped to (N, 2)
+        x (jax.Array): Evaluation points. Has shape (..., 2)
+        source_locations (jax.Array): Has shape (N_s,2). Will be reshaped to (N, 2)
 
     Returns:
-        jnp.array: Has shape (...)
+        jax.Array: Has shape (...)
     """
     *batch_dims, coord_dim = x.shape
     source_locations = jnp.reshape(source_locations, (-1, 2))
@@ -111,53 +108,25 @@ def q_point_sources(x: jnp.array, source_locations: jnp.array) -> jnp.array:
 
 
 def source_locations_to_scattered_field(
-    source_locations: jnp.array,
-) -> jnp.array:
-    # corners = jnp.array([[XMIN, YMIN], [XMAX, YMIN], [XMAX, YMAX], [XMIN, YMAX]])
-    # root = Node(xmin=XMIN, xmax=XMAX, ymin=YMIN, ymax=YMAX)
-    # tree = create_solver_obj_2D(
-    #     p=P, q=P - 2, root=root, uniform_levels=L, use_ItI=True, eta=K
-    # )
-    # Put the leaf Chebyshev points on the GPU so that
-    # q evals and d_xx_coeffs are initialized on the same device
+    source_locations: jax.Array,
+) -> jax.Array:
     source_locations = source_locations.reshape(-1, 2)
     q_evals = q_point_sources(SAMPLE_DOMAIN.interior_points, source_locations)
 
     i_term = K**2 * (jnp.ones_like(q_evals) + q_evals)
 
-    source_term = source_term = -1 * (K**2) * q_evals * uin_evals
+    source_term = -1 * (K**2) * q_evals * uin_evals
 
     SAMPLE_PDEPROBLEM.update_coefficients(
         source=source_term, I_coefficients=i_term
     )
 
     # Compute the local solve and build stages
-    # local_solve_stage(
-    #     tree,
-    #     source_term=source_term,
-    #     D_xx_coeffs=d_xx_coeffs,
-    #     D_yy_coeffs=d_yy_coeffs,
-    #     I_coeffs=i_term,
-    #     device=jax.devices()[0],
-    #     host_device=jax.devices()[0],
-    # )
-    # build_stage(
-    #     tree,
-    #     device=jax.devices()[0],
-    #     host_device=jax.devices()[0],
-    # )
-    Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
+    T_ItI = build_solver(
         pde_problem=SAMPLE_PDEPROBLEM,
         host_device=jax.devices()[0],
-        device=jax.devices()[0],
-    )
-    S_arr_lst, g_tilde_lst, T_ItI = merge_stage_uniform_2D_ItI(
-        T_arr=T_arr,
-        h_arr=h_arr,
-        l=SAMPLE_DOMAIN.L,
-        device=jax.devices()[0],
-        host_device=jax.devices()[0],
-        return_T=True,
+        compute_device=jax.devices()[0],
+        return_top_T=True,
     )
 
     T_DtN = get_DtN_from_ItI(T_ItI, SAMPLE_PDEPROBLEM.eta)
@@ -176,12 +145,11 @@ def source_locations_to_scattered_field(
     incoming_imp_data = incoming_imp_data.squeeze()
 
     # Propagate the resulting impedance data down to the leaves
-    interior_solns = down_pass_uniform_2D_ItI(
-        boundary_imp_data=incoming_imp_data,
-        S_lst=S_arr_lst,
-        g_tilde_lst=g_tilde_lst,
-        Y_arr=Y_arr,
-        v_arr=v_arr,
+    interior_solns = solve(
+        pde_problem=SAMPLE_PDEPROBLEM,
+        boundary_data=incoming_imp_data,
+        compute_device=jax.devices()[0],
+        host_device=jax.devices()[0],
     )
 
     uscat_evals = interior_solns
@@ -189,14 +157,11 @@ def source_locations_to_scattered_field(
     return uscat_evals, SAMPLE_DOMAIN.interior_points
 
 
-def forward_model(source_locations: jnp.array) -> jnp.array:
+def forward_model(source_locations: jax.Array) -> jax.Array:
     """
     Args:
-        source_locations (jnp.array): Has shape (N_s,) which we should interpret as a list of point source locations z_i
+        source_locations (jax.Array): Has shape (N_s,) which we should interpret as a list of point source locations z_i
     """
-    # cheby_pts = chebyshev_points(P - 2)[0]
-    # x_pts = jnp.linspace(-1.0, 1.0, 10)
-    # interp = barycentric_lagrange_interpolation_matrix(cheby_pts, x_pts)
 
     uscat, _ = source_locations_to_scattered_field(source_locations)
 

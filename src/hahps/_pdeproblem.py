@@ -1,7 +1,7 @@
 import jax
-
+import jax.numpy as jnp
 from ._domain import Domain
-from ._discretization_tree import DiscretizationNode3D
+from ._discretization_tree import DiscretizationNode3D, get_all_leaves
 from ._precompute_operators_2D import (
     precompute_diff_operators_2D,
     precompute_P_2D_DtN,
@@ -20,7 +20,6 @@ from ._precompute_operators_3D import (
     precompute_projection_ops_3D,
 )
 from typing import List, Tuple
-import logging
 
 
 class PDEProblem:
@@ -141,9 +140,9 @@ class PDEProblem:
             # In this version of the code, the diff operators are scaled separately by the sidelen of each leaf.
             half_side_len = 1.0
 
-        logging.debug(
-            "PDEProblem.__init__: using half_side_len = %s", half_side_len
-        )
+            self.sidelens: jax.Array = jnp.array(
+                [l.xmax - l.xmin for l in get_all_leaves(domain.root)]
+            )
 
         # Pre-compute spectral differentiation and interpolation matrices
         if bool_2D:
@@ -399,6 +398,9 @@ def _get_PDEProblem_chunk(
             if not pde_problem.domain.bool_uniform:
                 new_pde_problem.L_4f1 = pde_problem.L_4f1
                 new_pde_problem.L_1f4 = pde_problem.L_1f4
+                new_pde_problem.sidelens = pde_problem.sidelens[
+                    start_idx:end_idx
+                ]
 
     # Copy slices of the coefficients and source terms
     new_pde_problem.D_xx_coefficients = (

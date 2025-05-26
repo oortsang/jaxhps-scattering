@@ -13,7 +13,7 @@ Shows convergence using uniform quadtrees with both DtN matrices and ItI matrice
    python examples/hp_convergence_2D_problems.py --DtN --ItI
 
 
-The example problems being solved are a Dirichlet problem with variable coefficients (DtN case) and a variable-coefficient Helmholtz problem with a Robin boundary condition (ItI case). Plotting the results should show convergence of the :math:`\ell_\infty` error at rate :math:`O(h^{p-2})`.
+The example problems being solved are a Dirichlet problem with variable coefficients (DtN case) and a variable-coefficient Helmholtz problem with a Robin boundary condition (ItI case). Plotting the results should show convergence of the :math:`\ell_\infty` error at rate :math:`O(h^{p-2})`, where :math:`h` is the side length of the leaves of the discretization tree.
 
 High-wavenumber scattering problem
 ------------------------------------
@@ -49,23 +49,6 @@ This will generate plots which looks like this, showing the scattering potential
    :alt: Showing the absolute value of the total wave field of a scattering problem where k=100 and the scattering potential is a sum of randomly-placed Gaussian bumps.
 
 
-Adaptive discretization on a 3D problem with known solution
-------------------------------------------------------------
-
-We have a script for generating adaptive discretizations on the wavefront problem presented in our paper:
-
-.. code:: bash
-
-   python examples/wavefront_adaptive_discretization_3D.py -p 10 --tol 1e-02 1e-05
-
-
-This should produce an image showing the computed solution, generated grid, and error map for each specified tolerance level. Herer is the result for the tolerance level :math:`10^{-5}`:
-
-.. image:: images/wavefront_soln_tol_1e-05.svg
-   :align: center
-   :height: 300
-   :alt: Showing the computed solution, the adaptive grid, and the errors on a 2D slice of our 3D wavefont probelm.
-
 
 Inverse wave scattering using automatic differentiation
 ------------------------------------------------------------
@@ -81,7 +64,7 @@ where :math:`J[\theta_t]` is the Jacobian of the forward model evaluated at :mat
 
 .. math::
 
-   v^\top J[\theta_t].
+   v^H J[\theta_t].
 
 Computing both of these objects is easy:
 
@@ -95,9 +78,8 @@ Computing both of these objects is easy:
    # u_t = forward_model(theta_t)
    u_t, vjp_fn = jax.vjp(forward_model, theta_t)
 
-   # Need to conjugate the input to vjp_fn because we're using complex numbers
-   vjp_fn = lambda v: vjp_fn(v.conjugate())
-
+   # Need to conjugate because we're using complex numbers
+   vjp_fn = lambda v: vjp_fn(v.conjugate()).conjugate()
 
    # Jv is the evaluation of J[\theta_t] v, not a function.
    _, Jv = jax.vjp(forward_model, (theta_t,), (v,))
@@ -120,6 +102,43 @@ Running the code should produce plots showing the optimization variables converg
    :align: center
    :width: 300
    :alt: Showing the convergence of the objective function in our inverse scattering example.
+
+
+Adaptive discretization on a 3D problem with known solution
+------------------------------------------------------------
+
+We have a script for generating adaptive discretizations on the wavefront problem presented in our paper:
+
+.. code:: bash
+
+   python examples/wavefront_adaptive_discretization_3D.py -p 10 --tol 1e-02 1e-05
+
+
+This should produce an image showing the computed solution, generated grid, and error map for each specified tolerance level. Here is the result for the tolerance level :math:`10^{-5}`:
+
+.. image:: images/wavefront_soln_tol_1e-05.svg
+   :align: center
+   :height: 300
+   :alt: Showing the computed solution, the adaptive grid, and the errors on a 2D slice of our 3D wavefont probelm.
+
+
+
+Adaptive discretization on the linearized Poisson--Boltzmann equation
+------------------------------------------------------------------------
+
+We have a script for generating adaptive discretizations of the linearized Poisson--Boltzmann equation applied to a simulated molecular configuration with 50 atoms:
+
+.. code:: bash
+
+   python examples/poisson_boltzmann_example.py --tol 1e-01 1e-02 -p 10
+
+
+This should produce output giving information about the generated grid and solution time for each specified tolerance level. In addition, it plots the generated grid with the permittivity. Here is the result for the tolerance level :math:`10^{-4}` and polynomial degree :math:`p=10`:
+
+.. image:: images/poisson_boltzmann_perm_and_grid_1e-04.svg
+   :align: center
+   :height: 300
+   :alt: Showing the permittivity and the adaptive grid for the linearized Poisson--Boltzmann equation applied to a simulated molecular configuration with 50 atoms.
 
 
 .. [1] Gillman, A., Barnett, A.H. & Martinsson, PG. A spectrally accurate direct solution technique for frequency-domain scattering problems with variable media. `Bit Numer Math` 55, 141–170 (2015). `<https://doi.org/10.1007/s10543-014-0499-8>`_
