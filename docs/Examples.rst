@@ -88,7 +88,7 @@ To run the example, use the command line:
 
 .. code:: bash
 
-   python examples/inverse_wave_scattering.py --n_iter 20
+   python examples/inverse_wave_scattering.py --n_iter 25
 
 
 In this example, we try to recover the locations of four Gaussian bumps which make up the scattering potential. 
