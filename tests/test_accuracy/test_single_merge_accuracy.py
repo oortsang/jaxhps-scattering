@@ -3,16 +3,16 @@ from typing import Dict
 import jax.numpy as jnp
 import jax
 import pytest
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._domain import Domain
-from hahps._pdeproblem import PDEProblem
-from hahps.local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
-from hahps.local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
-from hahps.merge._uniform_2D_DtN import merge_stage_uniform_2D_DtN
-from hahps.merge._uniform_2D_ItI import merge_stage_uniform_2D_ItI
-from hahps.down_pass._uniform_2D_DtN import down_pass_uniform_2D_DtN
-from hahps.down_pass._uniform_2D_ItI import down_pass_uniform_2D_ItI
-# from hahps._utils import plot_soln_from_cheby_nodes
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._domain import Domain
+from jaxhps._pdeproblem import PDEProblem
+from jaxhps.local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
+from jaxhps.local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
+from jaxhps.merge._uniform_2D_DtN import merge_stage_uniform_2D_DtN
+from jaxhps.merge._uniform_2D_ItI import merge_stage_uniform_2D_ItI
+from jaxhps.down_pass._uniform_2D_DtN import down_pass_uniform_2D_DtN
+from jaxhps.down_pass._uniform_2D_ItI import down_pass_uniform_2D_ItI
+# from jaxhps._utils import plot_soln_from_cheby_nodes
 
 from .cases import (
     XMIN,

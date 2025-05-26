@@ -1,14 +1,14 @@
-from hahps._discretization_tree import (
+from jaxhps._discretization_tree import (
     DiscretizationNode2D,
     DiscretizationNode3D,
 )
-from hahps._discretization_tree_operations_2D import (
+from jaxhps._discretization_tree_operations_2D import (
     add_four_children,
 )
-from hahps._discretization_tree_operations_3D import (
+from jaxhps._discretization_tree_operations_3D import (
     add_eight_children,
 )
-from hahps._domain import Domain
+from jaxhps._domain import Domain
 import jax
 import jax.numpy as jnp
 import logging

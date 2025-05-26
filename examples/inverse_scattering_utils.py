@@ -8,16 +8,16 @@ from wave_scattering_utils import (
     get_DtN_from_ItI,
 )
 
-from hahps import (
+from jaxhps import (
     DiscretizationNode2D,
     Domain,
     PDEProblem,
 )
 
-# from hahps.local_solve import local_solve_stage_uniform_2D_ItI
-# from hahps.merge import merge_stage_uniform_2D_ItI
-# from hahps.down_pass import down_pass_uniform_2D_ItI
-from hahps import build_solver, solve
+# from jaxhps.local_solve import local_solve_stage_uniform_2D_ItI
+# from jaxhps.merge import merge_stage_uniform_2D_ItI
+# from jaxhps.down_pass import down_pass_uniform_2D_ItI
+from jaxhps import build_solver, solve
 
 
 L = 3

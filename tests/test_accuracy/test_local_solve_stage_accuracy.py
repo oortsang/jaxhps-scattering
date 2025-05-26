@@ -3,16 +3,16 @@ from typing import Dict
 import jax.numpy as jnp
 import jax
 import pytest
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._domain import Domain
-from hahps._pdeproblem import PDEProblem
-from hahps.local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
-from hahps.local_solve._nosource_uniform_2D_ItI import (
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._domain import Domain
+from jaxhps._pdeproblem import PDEProblem
+from jaxhps.local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
+from jaxhps.local_solve._nosource_uniform_2D_ItI import (
     nosource_local_solve_stage_uniform_2D_ItI,
 )
-from hahps.local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
+from jaxhps.local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
 
-# from hahps._utils import plot_soln_from_cheby_nodes
+# from jaxhps._utils import plot_soln_from_cheby_nodes
 from .cases import (
     XMIN,
     XMAX,

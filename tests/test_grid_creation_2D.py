@@ -1,18 +1,18 @@
-from hahps._grid_creation_2D import (
+from jaxhps._grid_creation_2D import (
     compute_boundary_Gauss_points_uniform_2D,
     compute_boundary_Gauss_points_adaptive_2D,
     compute_interior_Chebyshev_points_adaptive_2D,
     vmapped_bounds_2D,
     bounds_to_cheby_points_2D,
 )
-from hahps._discretization_tree import (
+from jaxhps._discretization_tree import (
     DiscretizationNode2D,
     get_all_leaves,
 )
-from hahps._discretization_tree_operations_2D import (
+from jaxhps._discretization_tree_operations_2D import (
     add_four_children,
 )
-from hahps.quadrature import chebyshev_points
+from jaxhps.quadrature import chebyshev_points
 import jax.numpy as jnp
 
 

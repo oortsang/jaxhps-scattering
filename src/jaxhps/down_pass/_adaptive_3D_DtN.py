@@ -27,7 +27,7 @@ def down_pass_adaptive_3D_DtN(
         Specifies the discretization, differential operator, source function, and keeps track of the pre-computed differentiation and interpolation matrices.
 
     boundary_data : List[jax.Array]
-        A length-6 list of arrays, specifying samples of the boundary data. :func:`hahps.Domain.get_adaptive_boundary_data_lst` is a utility for constructing this list.
+        A length-6 list of arrays, specifying samples of the boundary data. :func:`jaxhps.Domain.get_adaptive_boundary_data_lst` is a utility for constructing this list.
 
     Returns
     -------

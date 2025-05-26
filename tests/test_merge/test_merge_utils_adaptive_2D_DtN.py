@@ -1,11 +1,11 @@
 import pytest
 import jax.numpy as jnp
 import jax
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._discretization_tree_operations_2D import add_four_children
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._discretization_tree_operations_2D import add_four_children
 
 
-from hahps.merge._utils_adaptive_2D_DtN import (
+from jaxhps.merge._utils_adaptive_2D_DtN import (
     _find_compression_list_5,
     _find_compression_list_6,
     find_compression_lists_2D,

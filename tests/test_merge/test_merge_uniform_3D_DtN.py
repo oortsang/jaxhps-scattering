@@ -1,17 +1,17 @@
 import numpy as np
 import logging
-from hahps.merge._uniform_3D_DtN import (
+from jaxhps.merge._uniform_3D_DtN import (
     merge_stage_uniform_3D_DtN,
     _uniform_oct_merge_DtN,
 )
 import jax
 
-from hahps.local_solve._uniform_3D_DtN import (
+from jaxhps.local_solve._uniform_3D_DtN import (
     local_solve_stage_uniform_3D_DtN,
 )
-from hahps._discretization_tree import DiscretizationNode3D
-from hahps._domain import Domain
-from hahps._pdeproblem import PDEProblem
+from jaxhps._discretization_tree import DiscretizationNode3D
+from jaxhps._domain import Domain
+from jaxhps._pdeproblem import PDEProblem
 
 
 class Test_merge_stage_uniform_3D_DtN:

@@ -1,15 +1,15 @@
 import jax.numpy as jnp
 import jax
-from hahps._adaptive_discretization_2D import (
+from jaxhps._adaptive_discretization_2D import (
     node_to_bounds,
     generate_adaptive_mesh_level_restriction_2D,
     get_squared_l2_norm_single_panel,
 )
-from hahps._grid_creation_2D import (
+from jaxhps._grid_creation_2D import (
     compute_interior_Chebyshev_points_adaptive_2D,
 )
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._discretization_tree_operations_2D import add_four_children
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._discretization_tree_operations_2D import add_four_children
 import numpy as np
 import logging
 

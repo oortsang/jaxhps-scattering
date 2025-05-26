@@ -57,7 +57,7 @@ def build_solver(
     useful for problems, such as wave scattering, where one wants to couple the solver in
     the computational domain with a boundary integral equation defined on the domain's boundary.
 
-    To compute solutions of the PDE, one must call the :func:`hahps.solve` after this one.
+    To compute solutions of the PDE, one must call the :func:`jaxhps.solve` after this one.
 
     Args:
         pde_problem (PDEProblem): Specifies the differential operator, source, domain, and precomputed interpolation and differentiation matrices.

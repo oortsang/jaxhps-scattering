@@ -1,12 +1,12 @@
 Examples
 =============
 
-In the source repository, we include code for a few example uses of the HPS routines. The code for these examples is not distributed in the ``hahps`` package, but it is available `in the examples directory of the source repository <https://github.com/meliao/ha-hps/tree/main/examples>`_.
+In the source repository, we include code for a few example uses of the HPS routines. The code for these examples is not distributed in the ``jaxhps`` package, but it is available `in the examples directory of the source repository <https://github.com/meliao/ha-hps/tree/main/examples>`_.
 
 hp convergence on 2D problems with known solutions
 -----------------------------------------------------
 
-Shows convergence using uniform quadtrees with both DtN matrices and ItI matrices. This example uses solution methods :func:`hahps.build_solver` and :func:`hahps.solve` to solve the PDE problem.
+Shows convergence using uniform quadtrees with both DtN matrices and ItI matrices. This example uses solution methods :func:`jaxhps.build_solver` and :func:`jaxhps.solve` to solve the PDE problem.
 
 .. code:: bash
 
@@ -18,7 +18,7 @@ The example problems being solved are a Dirichlet problem with variable coeffici
 High-wavenumber scattering problem
 ------------------------------------
 
-The high-wavenumber scattering example is a GPU implementation of the solver presented in [1]_. The solver is constructed using our :func:`hahps.upward_pass_subtree` routine to generate a top-level ItI matrix, sets up and solves boundary integral equation to enforce the radiation condition, and then propagates impedance data to the interior points using the :func:`hahps.downward_pass_subtree` routine.
+The high-wavenumber scattering example is a GPU implementation of the solver presented in [1]_. The solver is constructed using our :func:`jaxhps.upward_pass_subtree` routine to generate a top-level ItI matrix, sets up and solves boundary integral equation to enforce the radiation condition, and then propagates impedance data to the interior points using the :func:`jaxhps.downward_pass_subtree` routine.
 
 First, run the MATLAB script ``examples/driver_gen_SD_matrices.m``. This will generate and save exterior single and double-layer kernel matrices. These matrices are necessary to define a boundary integral equation for the scattering problem.
 Once the matrices are in place in place, we can run the script:

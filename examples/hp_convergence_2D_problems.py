@@ -7,7 +7,7 @@ import jax.numpy as jnp
 from scipy.io import savemat
 
 
-from hahps import (
+from jaxhps import (
     DiscretizationNode2D,
     build_solver,
     solve,
@@ -305,7 +305,7 @@ def problem_2(l_vals: int, p_vals: int) -> None:
             # Compute the error
             expected_soln = problem_2_soln(domain.interior_points)
 
-            # plot soln. This function can be found in src/hahps/_utils.py
+            # plot soln. This function can be found in src/jaxhps/_utils.py
             # plot_soln_from_cheby_nodes(
             #     cheby_nodes=domain.interior_points.reshape(-1, 2),
             #     corners=None,
@@ -369,7 +369,7 @@ if __name__ == "__main__":
     else:
         level = logging.INFO
     logging.basicConfig(
-        format="%(asctime)s:ha-hps: %(levelname)s - %(message)s",
+        format="%(asctime)s:jaxhps: %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         level=level,
     )

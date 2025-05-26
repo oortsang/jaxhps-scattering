@@ -1,4 +1,4 @@
-from hahps.quadrature import differentiation_matrix_1D, chebyshev_points
+from jaxhps.quadrature import differentiation_matrix_1D, chebyshev_points
 import jax.numpy as jnp
 
 

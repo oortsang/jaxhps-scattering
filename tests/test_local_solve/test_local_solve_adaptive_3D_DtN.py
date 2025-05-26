@@ -1,12 +1,12 @@
 import numpy as np
 import jax
-from hahps.local_solve._adaptive_3D_DtN import (
+from jaxhps.local_solve._adaptive_3D_DtN import (
     local_solve_stage_adaptive_3D_DtN,
 )
-from hahps._discretization_tree import DiscretizationNode3D
-from hahps._domain import Domain
-from hahps._discretization_tree_operations_3D import add_eight_children
-from hahps._pdeproblem import PDEProblem
+from jaxhps._discretization_tree import DiscretizationNode3D
+from jaxhps._domain import Domain
+from jaxhps._discretization_tree_operations_3D import add_eight_children
+from jaxhps._pdeproblem import PDEProblem
 
 
 class Test__local_solve_stage_adaptive_3D_DtN:

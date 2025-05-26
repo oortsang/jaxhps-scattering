@@ -12,7 +12,7 @@ ignore = ["E741"]
 [tool.coverage.run]
 disable_warnings = ["no-data-collected"]
 source = ["src"]
-omit = ["src/hahps/_utils.py"]
+omit = ["src/jaxhps/_utils.py"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

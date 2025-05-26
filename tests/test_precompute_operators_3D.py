@@ -1,15 +1,15 @@
 import numpy as np
 import jax.numpy as jnp
 
-from hahps.quadrature import chebyshev_points, affine_transform
-from hahps._grid_creation_3D import (
+from jaxhps.quadrature import chebyshev_points, affine_transform
+from jaxhps._grid_creation_3D import (
     bounds_to_cheby_points_3D,
     compute_boundary_Gauss_points_adaptive_3D,
     compute_interior_Chebyshev_points_adaptive_3D,
 )
-from hahps._discretization_tree import DiscretizationNode3D
-from hahps._discretization_tree_operations_3D import add_eight_children
-from hahps._precompute_operators_3D import (
+from jaxhps._discretization_tree import DiscretizationNode3D
+from jaxhps._discretization_tree_operations_3D import add_eight_children
+from jaxhps._precompute_operators_3D import (
     precompute_diff_operators_3D,
     precompute_P_3D_DtN,
     precompute_Q_3D_DtN,

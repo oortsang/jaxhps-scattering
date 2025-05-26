@@ -1,15 +1,15 @@
 import numpy as np
 import jax.numpy as jnp
 import jax
-from hahps.local_solve._adaptive_2D_DtN import (
+from jaxhps.local_solve._adaptive_2D_DtN import (
     _prep_nonuniform_refinement_diff_operators_2D,
     vmapped_prep_nonuniform_refinement_diff_operators_2D,
 )
-from hahps._precompute_operators_2D import precompute_diff_operators_2D
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._discretization_tree_operations_2D import add_four_children
-from hahps._domain import Domain
-from hahps._pdeproblem import PDEProblem
+from jaxhps._precompute_operators_2D import precompute_diff_operators_2D
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._discretization_tree_operations_2D import add_four_children
+from jaxhps._domain import Domain
+from jaxhps._pdeproblem import PDEProblem
 
 
 class Test__prep_nonuniform_refinement_diff_operators_2D:
