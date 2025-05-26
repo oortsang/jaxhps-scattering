@@ -192,7 +192,9 @@ def assemble_diff_operator(
 
     n_loops = which_coeffs.shape[0]
 
-    out = jnp.zeros_like(diff_ops[0])
+    # Initialize with the shape of diff_ops but the data type of coeffs_arr.
+    # This is important because we may want to use complex coefficients.
+    out = jnp.zeros_like(diff_ops[0], dtype=coeffs_arr.dtype)
 
     # Commenting this out because it is very memory intensive
     counter = 0

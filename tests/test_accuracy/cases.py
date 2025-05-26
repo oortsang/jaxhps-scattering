@@ -133,7 +133,7 @@ TEST_CASE_POLY_ZERO_SOURCE = {
 
 
 # ######################################################################
-# # Test Case 2: Polynomial Source Function for ItI Problems
+# # Test Case 2: Non-polynomial Source Function for ItI Problems
 # # \Delta u + q(x) u(x) = f     in \Omega
 # # u_n + i u = 0                in \partial \Omega
 # #
@@ -206,4 +206,60 @@ TEST_CASE_HELMHOLTZ_ITI = {
     K_SOLN: u,
     K_DUDX: dudx,
     K_DUDY: dudy,
+}
+
+
+# ######################################################################
+# # Test Case 3: Polynomial Source Function for ItI Problems
+# # \Delta u + (k^2 + i \gamma) u(x) = f     in \Omega
+# # u_n + i u = g               in \partial \Omega
+# #
+# #
+# # u(x,y) = x^3 + 3 y^2
+# # f(x,y) = 6x + 6 + (k^2 + i \gamma) u(x,y)
+# # g(x,y) = defined piecewise
+# # Can't separate the solution into homogeneous and particular parts, but here
+# # is the solution:
+# # u(x,y) = e^{i  \pi x} + e^{i  \pi y}
+
+
+# This is (k^2 + i \gamma)
+# k = 1.0; gamma = 0.1
+COMPLEX_COEFF = 1j * 0.1 + 1.0
+
+
+def u_complex_coeffs(x: jax.Array) -> jax.Array:
+    # u(x,y) = x^3 + 3 y^2
+    return jnp.power(x[..., 0], 3) + 3 * jnp.square(x[..., 1])
+
+
+def i_complex_coeffs(x: jax.Array) -> jax.Array:
+    # q(x,y) = k^2 + i \gamma
+    return COMPLEX_COEFF * jnp.ones_like(x[..., 0])
+
+
+def source_complex_coeffs(x: jax.Array) -> jax.Array:
+    # f(x,y) = 6x + 6 + (k^2 + i \gamma) u(x,y)
+    return 6 * x[..., 0] + 6 + COMPLEX_COEFF * u_complex_coeffs(x)
+
+
+def dudx_complex_coeffs(x: jax.Array) -> jax.Array:
+    # du/dx = 3x^2
+    return 3 * jnp.square(x[..., 0])
+
+
+def dudy_complex_coeffs(x: jax.Array) -> jax.Array:
+    # du/dy = 6y
+    return 6 * x[..., 1]
+
+
+TEST_CASE_HELMHOLTZ_ITI_COMPLEX_COEFFS = {
+    K_DIRICHLET: u_complex_coeffs,
+    K_XX_COEFF: default_lap_coeffs,
+    K_YY_COEFF: default_lap_coeffs,
+    K_I_COEFF: i_complex_coeffs,
+    K_SOURCE: source_complex_coeffs,
+    K_SOLN: u_complex_coeffs,
+    K_DUDX: dudx_complex_coeffs,
+    K_DUDY: dudy_complex_coeffs,
 }

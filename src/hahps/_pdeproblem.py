@@ -44,9 +44,6 @@ class PDEProblem:
         self.domain: Domain = domain  #: The domain, which contains information about the discretization.
 
         # Input validation
-        # If it's not an ItI problem, we need to check the source term exists
-        if not use_ItI and source is None:
-            raise ValueError("Source must be specified for non-ItI problems.")
 
         # 2D problems shouldn't specify D_z_coefficients
         if isinstance(domain.root, DiscretizationNode3D):
@@ -77,6 +74,13 @@ class PDEProblem:
             raise ValueError(
                 "ItI merges are only supported for uniform 2D problems."
             )
+
+        # If it's not a uniform 2D problem, the source must be specified
+        if source is None:
+            if not bool_2D or not domain.bool_uniform:
+                raise ValueError(
+                    "Source must be specified for non-uniform or 3D problems."
+                )
 
         # Check input shapes are OK
         check_input_shapes(

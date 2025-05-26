@@ -8,7 +8,7 @@ from .._device_config import HOST_DEVICE, DEVICE_ARR
 
 
 def down_pass_uniform_2D_ItI(
-    boundary_imp_data: jax.Array,
+    boundary_data: jax.Array,
     S_lst: List[jax.Array],
     g_tilde_lst: List[jax.Array],
     Y_arr: jax.Array,
@@ -62,12 +62,12 @@ def down_pass_uniform_2D_ItI(
     """
     logging.debug(
         "down_pass_uniform_2D_ItI: started. boundary_imp_data shape: %s, len(g_tilde_lst): %s, len(S_lst): %s",
-        boundary_imp_data.shape,
+        boundary_data.shape,
         len(g_tilde_lst),
         len(S_lst),
     )
 
-    bdry_data = jax.device_put(boundary_imp_data, device)
+    bdry_data = jax.device_put(boundary_data, device)
     Y_arr = jax.device_put(Y_arr, device)
     v_arr = jax.device_put(v_arr, device)
     S_lst = [jax.device_put(S_arr, device) for S_arr in S_lst]

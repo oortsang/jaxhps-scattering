@@ -13,22 +13,26 @@ from ._device_config import (
 from ._discretization_tree import DiscretizationNode2D
 
 
-from .local_solve._adaptive_2D_DtN import local_solve_stage_adaptive_2D_DtN
-from .local_solve._adaptive_3D_DtN import local_solve_stage_adaptive_3D_DtN
-from .local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
-from .local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
-from .local_solve._uniform_3D_DtN import local_solve_stage_uniform_3D_DtN
-from .local_solve._nosource_uniform_2D_ItI import (
+from .local_solve import (
+    local_solve_stage_adaptive_2D_DtN,
+    local_solve_stage_adaptive_3D_DtN,
+    local_solve_stage_uniform_2D_DtN,
+    local_solve_stage_uniform_2D_ItI,
+    local_solve_stage_uniform_3D_DtN,
     nosource_local_solve_stage_uniform_2D_ItI,
+    nosource_local_solve_stage_uniform_2D_DtN,
 )
 
+from .merge import (
+    merge_stage_adaptive_2D_DtN,
+    merge_stage_adaptive_3D_DtN,
+    merge_stage_uniform_2D_DtN,
+    merge_stage_uniform_2D_ItI,
+    merge_stage_uniform_3D_DtN,
+    nosource_merge_stage_uniform_2D_ItI,
+    nosource_merge_stage_uniform_2D_DtN,
+)
 
-from .merge._adaptive_2D_DtN import merge_stage_adaptive_2D_DtN
-from .merge._adaptive_3D_DtN import merge_stage_adaptive_3D_DtN
-from .merge._uniform_2D_DtN import merge_stage_uniform_2D_DtN
-from .merge._uniform_2D_ItI import merge_stage_uniform_2D_ItI
-from .merge._uniform_3D_DtN import merge_stage_uniform_3D_DtN
-from .merge._nosource_uniform_2D_ItI import nosource_merge_stage_uniform_2D_ItI
 
 from ._discretization_tree import get_all_leaves
 
@@ -42,7 +46,7 @@ def build_solver(
     """
     This function builds all of the matrices for the fast direct solver. This comprises of
     performing a local solve stage on each leaf, and merging information from the leaves to
-    the root of the domain. If the ``PDEProblem`` specifies a uniform 2D ItI problem, and
+    the root of the domain. If the ``PDEProblem`` specifies a uniform 2D problem, and
     the source term is not specified, this method will build a solver for arbitrary source terms.
     This requires storing a few more matrices.
 
@@ -73,10 +77,8 @@ def build_solver(
     # Special code path for 2D ItI problems, for which we are implementing
     # Upward and Downward passes.
     if pde_problem.source is None:
-        if (
-            not pde_problem.domain.bool_uniform
-            or not isinstance(pde_problem.domain.root, DiscretizationNode2D)
-            or not pde_problem.use_ItI
+        if not pde_problem.domain.bool_uniform or not isinstance(
+            pde_problem.domain.root, DiscretizationNode2D
         ):
             raise ValueError(
                 "Build stage for problems without source terms is only implemented for 2D uniform ItI problems."
@@ -242,6 +244,14 @@ def _nosource_build_solver(
 ) -> None | jax.Array:
     # Determine if batching is necessary.
     chunksize = local_solve_chunksize_2D(pde_problem.domain.p, jnp.complex128)
+
+    # Determine if it's DtN or ItI
+    if pde_problem.use_ItI:
+        local_solve_fn = nosource_local_solve_stage_uniform_2D_ItI
+        merge_fn = nosource_merge_stage_uniform_2D_ItI
+    else:
+        local_solve_fn = nosource_local_solve_stage_uniform_2D_DtN
+        merge_fn = nosource_merge_stage_uniform_2D_DtN
     if chunksize < pde_problem.domain.n_leaves:
         # Do the local solve stage in batches.
         Y_arr_lst = []
@@ -258,12 +268,10 @@ def _nosource_build_solver(
                 "build_solver: chunk_i.source.shape = %s", chunk_i.source.shape
             )
             # Perform the local solve stage on the chunk
-            Y_arr_chunk, T_arr_chunk = (
-                nosource_local_solve_stage_uniform_2D_ItI(
-                    pde_problem=chunk_i,
-                    device=compute_device,
-                    host_device=host_device,
-                )
+            Y_arr_chunk, T_arr_chunk = local_solve_fn(
+                pde_problem=chunk_i,
+                device=compute_device,
+                host_device=host_device,
             )
             Y_arr_lst.append(Y_arr_chunk)
             T_arr_lst.append(T_arr_chunk)
@@ -275,7 +283,7 @@ def _nosource_build_solver(
         # h_host = jnp.concatenate(h_lst, axis=0)
     else:
         # Perform the local solve stage all at once for smaller problem sizes
-        Y_arr_host, T_arr_host = nosource_local_solve_stage_uniform_2D_ItI(
+        Y_arr_host, T_arr_host = local_solve_fn(
             pde_problem=pde_problem,
             device=compute_device,
             host_device=host_device,
@@ -284,7 +292,7 @@ def _nosource_build_solver(
     # pde_problem.v = v_host
 
     # Perform the merge stage
-    merge_out = nosource_merge_stage_uniform_2D_ItI(
+    merge_out = merge_fn(
         T_arr_host,
         l=pde_problem.domain.L,
         device=compute_device,

@@ -360,8 +360,44 @@ class Test_build_solver:
         assert T.shape == (n_bdry, n_bdry)
 
         assert len(pde_problem.S_lst) == L
-        assert len(pde_problem.g_tilde_lst) == L
 
         # g_tilde has shape n_bdry in the ItI case.
         assert pde_problem.S_lst[-1].shape == (1, n_bdry, n_bdry)
-        assert pde_problem.g_tilde_lst[-1].shape == (1, n_bdry)
+
+    def test_8(self, caplog) -> None:
+        """Uniform 2D DtN with no source"""
+        caplog.set_level(logging.DEBUG)
+        p = 6
+        q = 4
+        L = 2
+
+        # Create a uniform 2D domain
+        root = DiscretizationNode2D(xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
+
+        domain = Domain(p=p, q=q, root=root, L=L)
+
+        d_xx_coeffs = jnp.array(
+            np.random.normal(size=domain.interior_points[..., 0].shape)
+        )
+
+        d_yy_coeffs = jnp.array(
+            np.random.normal(size=domain.interior_points[..., 0].shape)
+        )
+
+        # Create a PDEProblem instance
+        pde_problem = PDEProblem(
+            domain=domain,
+            D_xx_coefficients=d_xx_coeffs,
+            D_yy_coefficients=d_yy_coeffs,
+        )
+
+        # Build the solver
+        T = build_solver(pde_problem, return_top_T=True)
+
+        n_bdry = domain.boundary_points.shape[0]
+        assert T.shape == (n_bdry, n_bdry)
+
+        assert len(pde_problem.S_lst) == L
+
+        # g_tilde has shape n_bdry in the ItI case.
+        assert pde_problem.S_lst[-1].shape == (1, n_bdry // 2, n_bdry)

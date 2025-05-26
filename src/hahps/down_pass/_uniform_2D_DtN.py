@@ -1,7 +1,6 @@
 import jax
 import jax.numpy as jnp
 from typing import List
-
 from .._device_config import HOST_DEVICE, DEVICE_ARR
 
 

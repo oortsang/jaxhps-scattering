@@ -4,16 +4,18 @@ import jax.numpy as jnp
 from hahps._discretization_tree import DiscretizationNode2D
 from hahps._domain import Domain
 from hahps._pdeproblem import PDEProblem
-from hahps.local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
-from hahps.local_solve._nosource_uniform_2D_ItI import (
+from hahps.local_solve import (
+    local_solve_stage_uniform_2D_ItI,
     nosource_local_solve_stage_uniform_2D_ItI,
+    nosource_local_solve_stage_uniform_2D_DtN,
 )
-from hahps.merge._uniform_2D_ItI import merge_stage_uniform_2D_ItI
-from hahps.merge._nosource_uniform_2D_ItI import (
+from hahps.merge import (
+    merge_stage_uniform_2D_ItI,
+    nosource_merge_stage_uniform_2D_DtN,
     nosource_merge_stage_uniform_2D_ItI,
 )
-from hahps.up_pass._uniform_2D_ItI import up_pass_uniform_2D_ItI
-from hahps.down_pass._uniform_2D_ItI import down_pass_uniform_2D_ItI
+from hahps.up_pass import up_pass_uniform_2D_DtN, up_pass_uniform_2D_ItI
+from hahps.down_pass import down_pass_uniform_2D_DtN, down_pass_uniform_2D_ItI
 
 from .cases import (
     XMIN,
@@ -22,6 +24,10 @@ from .cases import (
     YMAX,
     ETA,
     TEST_CASE_HELMHOLTZ_ITI,
+    TEST_CASE_POLY_PART_HOMOG,
+    K_HOMOG_SOLN,
+    K_DIRICHLET,
+    K_PART_SOLN,
     K_XX_COEFF,
     K_YY_COEFF,
     K_SOURCE,
@@ -38,6 +44,7 @@ from .cases import (
 # import matplotlib.pyplot as plt
 
 ATOL_NONPOLY = 1e-8
+ATOL_POLY = 1e-12
 
 ATOL = 1e-12
 RTOL = 0.0
@@ -265,6 +272,109 @@ def check_against_standard_2D_ItI_uniform(
         )
 
 
+def check_merge_accuracy_nosource_2D_DtN_uniform(
+    domain: Domain, test_case: Dict
+) -> None:
+    """This is for ItI problems solving an inhomogeneous Helmholtz equation where the
+    solution is specified as one solution, rathern than the sum of homogeneous and particular parts
+    """
+    d_xx_coeffs = test_case[K_XX_COEFF](domain.interior_points)
+    d_yy_coeffs = test_case[K_YY_COEFF](domain.interior_points)
+    source = test_case[K_SOURCE](domain.interior_points)[..., 0]
+
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: source shape: %s",
+        source.shape,
+    )
+
+    pde_problem = PDEProblem(
+        domain=domain,
+        D_xx_coefficients=d_xx_coeffs,
+        D_yy_coefficients=d_yy_coeffs,
+    )
+
+    ##############################################################
+    # Build the precomputed solution operators
+    Y, T = nosource_local_solve_stage_uniform_2D_DtN(pde_problem=pde_problem)
+    S_lst, D_inv_lst, BD_inv_lst, T = nosource_merge_stage_uniform_2D_DtN(
+        T, domain.L, return_T=True
+    )
+
+    pde_problem.D_inv_lst = D_inv_lst
+    pde_problem.BD_inv_lst = BD_inv_lst
+
+    logging.debug("D_inv_lst shapes: %s", [d_inv.shape for d_inv in D_inv_lst])
+    logging.debug(
+        "BD_inv_lst shapes: %s", [bd_inv.shape for bd_inv in BD_inv_lst]
+    )
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: S_lst shapes: %s",
+        [s.shape for s in S_lst],
+    )
+
+    #############################################################
+    # Upward pass
+    v, g_tilde_lst = up_pass_uniform_2D_DtN(
+        source=source, pde_problem=pde_problem
+    )
+
+    ##############################################################
+    # Compute the incoming impedance data
+
+    # Assemble incoming impedance data
+    boundary_u = test_case[K_DIRICHLET](domain.boundary_points)
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: boundary_u shape: %s",
+        boundary_u.shape,
+    )
+
+    ##############################################################
+    # Check the accuracy of the homogeneous solution
+    # Construct computed homogeneous solution
+
+    computed_soln = down_pass_uniform_2D_DtN(
+        boundary_u, S_lst, g_tilde_lst, Y, v
+    ).flatten()
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: computed_soln shape: %s",
+        computed_soln.shape,
+    )
+
+    expected_soln_homog = test_case[K_HOMOG_SOLN](
+        domain.interior_points
+    ).flatten()
+    expected_soln_part = test_case[K_PART_SOLN](
+        domain.interior_points
+    ).flatten()
+
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: expected_soln_homog shape: %s",
+        expected_soln_homog.shape,
+    )
+    logging.debug(
+        "check_leaf_accuracy_ItI_Helmholtz_like: expected_soln_part shape: %s",
+        expected_soln_part.shape,
+    )
+    expected_soln = expected_soln_homog + expected_soln_part
+
+    # Plot the solution. This function can be found in src/hahps/_utils.py
+    # plot_soln_from_cheby_nodes(
+    #     cheby_nodes=domain.interior_points.reshape(-1, 2),
+    #     corners=None,
+    #     expected_soln=expected_soln.imag.flatten(),
+    #     computed_soln=computed_soln.imag.flatten(),
+    # )
+
+    max_diff = jnp.max(jnp.abs(computed_soln - expected_soln))
+
+    assert jnp.allclose(
+        computed_soln,
+        expected_soln,
+        atol=ATOL_POLY,
+        rtol=RTOL,
+    ), f"Maximum difference = {max_diff}"
+
+
 class Test_accuracy_2D_ItI_uniform:
     def test_0(self, caplog) -> None:
         caplog.set_level(logging.DEBUG)
@@ -274,9 +384,17 @@ class Test_accuracy_2D_ItI_uniform:
         )
 
 
-class Test_against_standard_version:
+class Test_against_standard_version_ItI:
     def test_0(self, caplog) -> None:
         caplog.set_level(logging.DEBUG)
         check_against_standard_2D_ItI_uniform(
             DOMAIN_ITI_NONPOLY, TEST_CASE_HELMHOLTZ_ITI
+        )
+
+
+class Test_accuracy_2D_DtN_uniform:
+    def test_0(self, caplog) -> None:
+        caplog.set_level(logging.DEBUG)
+        check_merge_accuracy_nosource_2D_DtN_uniform(
+            DOMAIN_DTN, TEST_CASE_POLY_PART_HOMOG
         )

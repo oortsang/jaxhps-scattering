@@ -23,6 +23,7 @@ from .cases import (
     TEST_CASE_POLY_PART_HOMOG,
     TEST_CASE_POLY_ZERO_SOURCE,
     TEST_CASE_HELMHOLTZ_ITI,
+    TEST_CASE_HELMHOLTZ_ITI_COMPLEX_COEFFS,
     K_DIRICHLET,
     K_XX_COEFF,
     K_YY_COEFF,
@@ -396,6 +397,15 @@ class Test_accuracy_single_merge_2D_ItI_uniform:
 
         check_merge_accuracy_2D_ItI_uniform_Helmholtz_like(
             DOMAIN_ITI_NONPOLY, TEST_CASE_HELMHOLTZ_ITI
+        )
+        jax.clear_caches()
+
+    def test_2(self, caplog) -> None:
+        """Complex coefficients."""
+        caplog.set_level(logging.DEBUG)
+
+        check_merge_accuracy_2D_ItI_uniform_Helmholtz_like(
+            DOMAIN_ITI_NONPOLY, TEST_CASE_HELMHOLTZ_ITI_COMPLEX_COEFFS
         )
         jax.clear_caches()
 

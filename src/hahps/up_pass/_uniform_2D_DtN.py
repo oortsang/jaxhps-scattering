@@ -3,11 +3,11 @@ import jax
 import jax.numpy as jnp
 from .._device_config import HOST_DEVICE, DEVICE_ARR
 from .._pdeproblem import PDEProblem
-from ..local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
+from ..local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
 import logging
 
 
-def up_pass_uniform_2D_ItI(
+def up_pass_uniform_2D_DtN(
     source: jax.Array,
     pde_problem: PDEProblem,
     device: jax.Device = DEVICE_ARR[0],
@@ -15,7 +15,7 @@ def up_pass_uniform_2D_ItI(
     return_h_last: bool = False,
 ) -> Tuple[jax.Array, List[jax.Array], jax.Array]:
     """
-    This function performs the upward pass for 2D ItI problems. It recomputes the local solve stage to get
+    This function performs the upward pass for 2D DtN problems. It recomputes the local solve stage to get
     outgoing impedance data from the particular solution, which is now known because the source is specified.
 
 
@@ -35,7 +35,7 @@ def up_pass_uniform_2D_ItI(
         Where to place the output. Defaults to ``jax.devices("cpu")[0]``.
 
     return_h_last : bool, optional
-        If True, return the last h vector, which gives the outgoing impedance data for the particular solution evaluated at the domain boundary.
+        If True, return the last h vector, which gives the outward pointing normal derivative data for the particular solution evaluated at the domain boundary.
 
     Returns
     -------
@@ -46,17 +46,8 @@ def up_pass_uniform_2D_ItI(
         List of pre-computed g_tilde matrices for each level of the quadtree.
 
     h_last : jax.Array
-        Outgoing impedance data for the particular solution evaluated at the domain boundary. Has shape (nbdry, nsrc). Is only returned if ``return_h_last=True``.
+        Outward pointing normal derivative data for the particular solution evaluated at the domain boundary. Has shape (nbdry, nsrc). Is only returned if ``return_h_last=True``.
     """
-
-    bool_multi_source = source.ndim == 3
-
-    if not bool_multi_source:
-        # Add a source dimension to the source term
-        source = jnp.expand_dims(source, axis=-1)
-        logging.debug(
-            "up_pass_uniform_2D_ItI: new source shape = %s", source.shape
-        )
 
     # Re-do a full local solve.
     pde_problem.source = source
@@ -65,13 +56,13 @@ def up_pass_uniform_2D_ItI(
     D_inv_lst = pde_problem.D_inv_lst
     BD_inv_lst = pde_problem.BD_inv_lst
 
-    Y, T, v, h_in = local_solve_stage_uniform_2D_ItI(
+    Y, T, v, h_in = local_solve_stage_uniform_2D_DtN(
         pde_problem=pde_problem,
         device=device,
         host_device=host_device,
     )
     logging.debug(
-        "up_pass_uniform_2D_ItI: after local solve, h_in shape = %s",
+        "up_pass_uniform_2D_DtN: after local solve, h_in shape = %s",
         h_in.shape,
     )
 
@@ -80,31 +71,13 @@ def up_pass_uniform_2D_ItI(
     for i in range(len(D_inv_lst)):
         # Get h and g_tilde for this level
 
-        nnodes, nbdry, nsrc = h_in.shape
-        h_in = h_in.reshape(nnodes // 4, 4, nbdry, nsrc)
+        nnodes, nbdry = h_in.shape
+        h_in = h_in.reshape(nnodes // 4, 4, nbdry)
         D_inv = D_inv_lst[i]
         BD_inv = BD_inv_lst[i]
 
-        h_in, g_tilde = vmapped_assemble_boundary_data(h_in, D_inv, BD_inv)
+        h_in, g_tilde = vmapped_assemble_boundary_data_DtN(h_in, D_inv, BD_inv)
         g_tilde_lst.append(g_tilde)
-
-    logging.debug(
-        "up_pass_uniform_2D_ItI: g_tilde_lst shapes = %s",
-        [g.shape for g in g_tilde_lst],
-    )
-    logging.debug("up_pass_uniform_2D_ItI: h_in shape = %s", h_in.shape)
-
-    # Remove the source dimension if it's not a multi-source problem
-    if not bool_multi_source:
-        v = jnp.squeeze(v, axis=-1)
-        g_tilde_lst = [
-            jnp.squeeze(g_tilde, axis=-1) for g_tilde in g_tilde_lst
-        ]
-        h_in = jnp.squeeze(h_in, axis=-1)
-        logging.debug(
-            "up_pass_uniform_2D_ItI: it's not multi source so squeezing h_in to shape %s",
-            h_in.shape,
-        )
 
     out = (v, g_tilde_lst)
 
@@ -115,7 +88,7 @@ def up_pass_uniform_2D_ItI(
 
 
 @jax.jit
-def assemble_boundary_data(
+def assemble_boundary_data_DtN(
     h_in: jax.Array,
     D_inv: jax.Array,
     BD_inv: jax.Array,
@@ -159,29 +132,12 @@ def assemble_boundary_data(
     h_d_4 = h_d[2 * nside : 4 * nside]
 
     h_int_child = jnp.concatenate(
-        [h_b_5, h_d_8, h_b_6, h_d_7, h_a_5, h_c_6, h_c_7, h_a_8]
+        [h_a_5 + h_b_5, h_b_6 + h_c_6, h_c_7 + h_d_7, h_d_8 + h_a_8]
     )
 
     h_ext_child = jnp.concatenate([h_a_1, h_b_2, h_c_3, h_d_4])
 
     g_tilde = -1 * D_inv @ h_int_child
-
-    # g_tilde is ordered like a_5, a_8, c_6, c_7, b_5, b_6, d_7, d_8.
-    # Want to rearrange it so it's ordered like
-    # a_5, b_5, b_6, c_6, c_7, d_7, d_8, a_8
-    r = jnp.concatenate(
-        [
-            jnp.arange(nside),  # a5
-            jnp.arange(4 * nside, 5 * nside),  # b5
-            jnp.arange(5 * nside, 6 * nside),  # b6
-            jnp.arange(2 * nside, 3 * nside),  # c6
-            jnp.arange(3 * nside, 4 * nside),  # c7
-            jnp.arange(6 * nside, 7 * nside),  # d7
-            jnp.arange(7 * nside, 8 * nside),  # d8
-            jnp.arange(nside, 2 * nside),  # a8
-        ]
-    )
-    g_tilde = g_tilde[r]
 
     h = h_ext_child - BD_inv @ h_int_child
 
@@ -192,6 +148,6 @@ def assemble_boundary_data(
     return h, g_tilde
 
 
-vmapped_assemble_boundary_data = jax.vmap(
-    assemble_boundary_data, in_axes=(0, 0, 0), out_axes=(0, 0)
+vmapped_assemble_boundary_data_DtN = jax.vmap(
+    assemble_boundary_data_DtN, in_axes=(0, 0, 0), out_axes=(0, 0)
 )

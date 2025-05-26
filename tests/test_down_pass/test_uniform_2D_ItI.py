@@ -108,7 +108,7 @@ class Test_down_pass_uniform_2D_ItI:
 
         bdry_data = jnp.ones((n_bdry))
         out = down_pass_uniform_2D_ItI(
-            boundary_imp_data=bdry_data,
+            boundary_data=bdry_data,
             S_lst=S_lst,
             g_tilde_lst=g_tilde_lst,
             Y_arr=None,
