@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from typing import List
 
-from hahps import DiscretizationNode2D, DiscretizationNode3D
+from jaxhps import DiscretizationNode2D, DiscretizationNode3D
 
 FIGSIZE = 5
 

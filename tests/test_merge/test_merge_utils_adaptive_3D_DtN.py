@@ -2,7 +2,7 @@ import numpy as np
 import jax.numpy as jnp
 import jax
 import logging
-from hahps.merge._utils_adaptive_3D_DtN import (
+from jaxhps.merge._utils_adaptive_3D_DtN import (
     get_a_submatrices,
     get_b_submatrices,
     get_c_submatrices,
@@ -13,15 +13,15 @@ from hahps.merge._utils_adaptive_3D_DtN import (
     get_h_submatrices,
     get_rearrange_indices,
 )
-from hahps._grid_creation_3D import (
+from jaxhps._grid_creation_3D import (
     compute_boundary_Gauss_points_adaptive_3D,
     bounds_for_oct_subdivision,
 )
-from hahps._precompute_operators_3D import precompute_projection_ops_3D
-from hahps._discretization_tree import (
+from jaxhps._precompute_operators_3D import precompute_projection_ops_3D
+from jaxhps._discretization_tree import (
     DiscretizationNode3D,
 )
-from hahps._discretization_tree_operations_3D import add_eight_children
+from jaxhps._discretization_tree_operations_3D import add_eight_children
 
 
 class Test_get_a_submatrices:

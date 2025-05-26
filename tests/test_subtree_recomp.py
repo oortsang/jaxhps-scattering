@@ -1,12 +1,12 @@
 import jax.numpy as jnp
 import jax
 import numpy as np
-from hahps._domain import Domain
-from hahps._discretization_tree import (
+from jaxhps._domain import Domain
+from jaxhps._discretization_tree import (
     DiscretizationNode2D,
 )
-from hahps._pdeproblem import PDEProblem
-from hahps._subtree_recomp import (
+from jaxhps._pdeproblem import PDEProblem
+from jaxhps._subtree_recomp import (
     upward_pass_subtree,
     downward_pass_subtree,
 )

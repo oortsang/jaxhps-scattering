@@ -1,25 +1,25 @@
 import jax.numpy as jnp
 import jax
 import pytest
-from hahps._interpolation_methods import (
+from jaxhps._interpolation_methods import (
     interp_from_hps_2D,
     interp_from_hps_3D,
     interp_to_single_Chebyshev_panel_2D,
     interp_to_single_Chebyshev_panel_3D,
 )
-from hahps._discretization_tree import (
+from jaxhps._discretization_tree import (
     DiscretizationNode2D,
     DiscretizationNode3D,
     get_all_leaves,
 )
-from hahps._discretization_tree_operations_2D import add_four_children
-from hahps._discretization_tree_operations_3D import add_eight_children
-from hahps._grid_creation_2D import (
+from jaxhps._discretization_tree_operations_2D import add_four_children
+from jaxhps._discretization_tree_operations_3D import add_eight_children
+from jaxhps._grid_creation_2D import (
     compute_interior_Chebyshev_points_adaptive_2D,
     compute_interior_Chebyshev_points_uniform_2D,
     get_all_uniform_leaves_2D,
 )
-from hahps._grid_creation_3D import (
+from jaxhps._grid_creation_3D import (
     compute_interior_Chebyshev_points_adaptive_3D,
     compute_interior_Chebyshev_points_uniform_3D,
     get_all_uniform_leaves_3D,

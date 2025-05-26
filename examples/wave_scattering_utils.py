@@ -10,7 +10,7 @@ import jax
 import h5py
 
 
-from hahps import (
+from jaxhps import (
     DiscretizationNode2D,
     Domain,
     PDEProblem,
@@ -18,9 +18,9 @@ from hahps import (
     downward_pass_subtree,
     local_solve_chunksize_2D,
 )
-from hahps.local_solve import local_solve_stage_uniform_2D_ItI
-from hahps.merge import merge_stage_uniform_2D_ItI
-from hahps.down_pass import down_pass_uniform_2D_ItI
+from jaxhps.local_solve import local_solve_stage_uniform_2D_ItI
+from jaxhps.merge import merge_stage_uniform_2D_ItI
+from jaxhps.down_pass import down_pass_uniform_2D_ItI
 
 
 # Disable logging

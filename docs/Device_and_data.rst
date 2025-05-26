@@ -3,7 +3,7 @@ Data placement across accelerator devices
 
 By default, JAX will place all new ``jax.Array`` objects on an accelerator device, if available. 
 For our use-case, we do not want this behavior, because we would like to initialize large arrays of data, and then move them to the accelerator devices when needed for a computational step. 
-If you plan to use ``hahps`` to compute solutions of PDEs with large numbers of discretization points, the default JAX behavior may become problematic.
+If you plan to use ``jaxhps`` to compute solutions of PDEs with large numbers of discretization points, the default JAX behavior may become problematic.
 Because of this, we suggest to override the default device used by ``jax`` by running this line of code:
 
 .. code:: python

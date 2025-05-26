@@ -1,16 +1,16 @@
 import numpy as np
 
-from hahps.merge._nosource_uniform_2D_ItI import (
+from jaxhps.merge._nosource_uniform_2D_ItI import (
     nosource_merge_stage_uniform_2D_ItI,
     _nosource_uniform_quad_merge_ItI,
 )
 
-from hahps.local_solve._nosource_uniform_2D_ItI import (
+from jaxhps.local_solve._nosource_uniform_2D_ItI import (
     nosource_local_solve_stage_uniform_2D_ItI,
 )
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._domain import Domain
-from hahps._pdeproblem import PDEProblem
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._domain import Domain
+from jaxhps._pdeproblem import PDEProblem
 
 
 class Test_nosource_merge_stage_uniform_2D_ItI:

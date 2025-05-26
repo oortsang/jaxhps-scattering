@@ -1,9 +1,9 @@
-from hahps._discretization_tree import (
+from jaxhps._discretization_tree import (
     DiscretizationNode3D,
     get_all_leaves,
     get_discretization_node_area,
 )
-from hahps._discretization_tree_operations_3D import (
+from jaxhps._discretization_tree_operations_3D import (
     add_eight_children,
     get_all_leaves_special_ordering_3D,
     find_nodes_along_interface_3D,

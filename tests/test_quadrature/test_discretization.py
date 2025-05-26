@@ -1,4 +1,4 @@
-from hahps.quadrature import (
+from jaxhps.quadrature import (
     chebyshev_points,
     chebyshev_weights,
     affine_transform,

@@ -401,7 +401,7 @@ if __name__ == "__main__":
         root_logger.handlers.clear()
 
     # Configure the logger
-    FMT = "%(asctime)s:ha-hps: %(levelname)s - %(message)s"
+    FMT = "%(asctime)s:jaxhps: %(levelname)s - %(message)s"
     TIMEFMT = "%Y-%m-%d %H:%M:%S"
     handler = logging.StreamHandler()
     formatter = logging.Formatter(FMT, datefmt=TIMEFMT)

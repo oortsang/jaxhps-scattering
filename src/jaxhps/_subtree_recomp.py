@@ -31,7 +31,7 @@ def solve_subtree(
     for the root of the subtrees, and then performing the highest level merges. This allows us to
     greatly reduce the number of data movements between the CPU and GPU, at the cost of more floating point operations.
 
-    Unlike the :func:`hahps.build_solver` method, this function does not save any of the solution matrices computed during the upward pass.
+    Unlike the :func:`jaxhps.build_solver` method, this function does not save any of the solution matrices computed during the upward pass.
     Thus, it is most appropriate when we want to solve one instance of the problem very quickly.
 
     Parameters
@@ -401,7 +401,7 @@ def upward_pass_subtree(
     """
      Does the upward pass of the subtree recomputation algorithm, returns the top-level Poincare--Steklov matrix, and
      stores the high-level :math:`S` and :math:`\\tilde{g}` data. This is meant to be used in conjunction with
-     :func:`hahps.downward_pass_subtree` for large problems where the boundary data must be specified after the upward pass,
+     :func:`jaxhps.downward_pass_subtree` for large problems where the boundary data must be specified after the upward pass,
      such as a wave scattering context, where the boundary impedance values can not be computed without the top-level ItI matrix.
 
     Parameters
@@ -465,7 +465,7 @@ def downward_pass_subtree(
 ) -> jax.Array:
     """
      Does the downward pass of the subtree recomputation algorithm. This is meant to be used in conjunction with
-     func:`hahps.upward_pass_subtree` for large problems where the boundary data must be specified after the upward pass,
+     func:`jaxhps.upward_pass_subtree` for large problems where the boundary data must be specified after the upward pass,
      such as a wave scattering context, where the boundary impedance values can not be computed without the top-level ItI matrix.
 
     Parameters

@@ -1,22 +1,22 @@
 import numpy as np
 import jax.numpy as jnp
 import jax
-from hahps._discretization_tree import (
+from jaxhps._discretization_tree import (
     DiscretizationNode2D,
     get_all_leaves,
 )
-from hahps._domain import Domain
-from hahps._pdeproblem import PDEProblem
-from hahps._discretization_tree_operations_2D import add_four_children
-from hahps.merge._adaptive_2D_DtN import (
+from jaxhps._domain import Domain
+from jaxhps._pdeproblem import PDEProblem
+from jaxhps._discretization_tree_operations_2D import add_four_children
+from jaxhps.merge._adaptive_2D_DtN import (
     merge_stage_adaptive_2D_DtN,
 )
-from hahps.local_solve._adaptive_2D_DtN import (
+from jaxhps.local_solve._adaptive_2D_DtN import (
     local_solve_stage_adaptive_2D_DtN,
 )
 import logging
 
-from hahps.down_pass._adaptive_2D_DtN import (
+from jaxhps.down_pass._adaptive_2D_DtN import (
     down_pass_adaptive_2D_DtN,
     _propogate_down_quad,
 )

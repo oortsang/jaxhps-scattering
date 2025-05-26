@@ -1,20 +1,20 @@
 import numpy as np
 import jax.numpy as jnp
 import jax
-from hahps.local_solve._adaptive_3D_DtN import (
+from jaxhps.local_solve._adaptive_3D_DtN import (
     local_solve_stage_adaptive_3D_DtN,
 )
 import logging
-from hahps._discretization_tree import (
+from jaxhps._discretization_tree import (
     DiscretizationNode3D,
     get_all_leaves,
     get_nodes_at_level,
 )
-from hahps._domain import Domain
-from hahps._discretization_tree_operations_3D import add_eight_children
-from hahps._pdeproblem import PDEProblem
+from jaxhps._domain import Domain
+from jaxhps._discretization_tree_operations_3D import add_eight_children
+from jaxhps._pdeproblem import PDEProblem
 
-from hahps.merge._adaptive_3D_DtN import (
+from jaxhps.merge._adaptive_3D_DtN import (
     merge_stage_adaptive_3D_DtN,
     _oct_merge,
     oct_merge_nonuniform_whole_level,

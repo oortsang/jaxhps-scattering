@@ -8,7 +8,7 @@ from pathlib import Path
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "ha-hps"
+project = "jaxhps"
 copyright = "2025, Owen Melia"
 author = "Owen Melia"
 
@@ -32,7 +32,7 @@ html_static_path = ["_static"]
 
 autodoc_preserve_defaults = True
 
-# Patch the path to allow for importing hahps
+# Patch the path to allow for importing jaxhps
 
 
 sys.path.insert(0, str(Path("..", "src").resolve()))

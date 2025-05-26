@@ -1,21 +1,21 @@
 import logging
 from typing import Dict
 import jax.numpy as jnp
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._domain import Domain
-from hahps._pdeproblem import PDEProblem
-from hahps.local_solve import (
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._domain import Domain
+from jaxhps._pdeproblem import PDEProblem
+from jaxhps.local_solve import (
     local_solve_stage_uniform_2D_ItI,
     nosource_local_solve_stage_uniform_2D_ItI,
     nosource_local_solve_stage_uniform_2D_DtN,
 )
-from hahps.merge import (
+from jaxhps.merge import (
     merge_stage_uniform_2D_ItI,
     nosource_merge_stage_uniform_2D_DtN,
     nosource_merge_stage_uniform_2D_ItI,
 )
-from hahps.up_pass import up_pass_uniform_2D_DtN, up_pass_uniform_2D_ItI
-from hahps.down_pass import down_pass_uniform_2D_DtN, down_pass_uniform_2D_ItI
+from jaxhps.up_pass import up_pass_uniform_2D_DtN, up_pass_uniform_2D_ItI
+from jaxhps.down_pass import down_pass_uniform_2D_DtN, down_pass_uniform_2D_ItI
 
 from .cases import (
     XMIN,
@@ -40,7 +40,7 @@ from .cases import (
 
 # Imports necessary for the plotting functions, which are currently disabled.
 # These are useful to sniff out bugs.
-# from hahps._utils import plot_soln_from_cheby_nodes
+# from jaxhps._utils import plot_soln_from_cheby_nodes
 # import matplotlib.pyplot as plt
 
 ATOL_NONPOLY = 1e-8
@@ -140,7 +140,7 @@ def check_merge_accuracy_nosource_2D_ItI_uniform_Helmholtz_like(
         expected_soln.shape,
     )
 
-    # Plot the solution. This function can be found in src/hahps/_utils.py
+    # Plot the solution. This function can be found in src//_utils.py
     # plot_soln_from_cheby_nodes(
     #     cheby_nodes=domain.interior_points.reshape(-1, 2),
     #     corners=None,
@@ -357,7 +357,7 @@ def check_merge_accuracy_nosource_2D_DtN_uniform(
     )
     expected_soln = expected_soln_homog + expected_soln_part
 
-    # Plot the solution. This function can be found in src/hahps/_utils.py
+    # Plot the solution. This function can be found in src//_utils.py
     # plot_soln_from_cheby_nodes(
     #     cheby_nodes=domain.interior_points.reshape(-1, 2),
     #     corners=None,

@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 
-from hahps._precompute_operators_2D import (
+from jaxhps._precompute_operators_2D import (
     precompute_diff_operators_2D,
     precompute_N_matrix_2D,
     precompute_P_2D_ItI,
@@ -9,12 +9,12 @@ from hahps._precompute_operators_2D import (
     precompute_QH_2D_ItI,
     precompute_projection_ops_2D,
 )
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._grid_creation_2D import (
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._grid_creation_2D import (
     compute_interior_Chebyshev_points_adaptive_2D,
     compute_boundary_Gauss_points_adaptive_2D,
 )
-from hahps.quadrature import affine_transform, gauss_points
+from jaxhps.quadrature import affine_transform, gauss_points
 
 
 class Test_precompute_P_2D_ItI:

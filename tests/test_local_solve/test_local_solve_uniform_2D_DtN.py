@@ -1,16 +1,16 @@
 import numpy as np
 import jax.numpy as jnp
 import jax
-from hahps.local_solve._uniform_2D_DtN import (
+from jaxhps.local_solve._uniform_2D_DtN import (
     local_solve_stage_uniform_2D_DtN,
     _gather_coeffs_2D,
     assemble_diff_operator,
     get_DtN,
 )
-from hahps._precompute_operators_2D import precompute_diff_operators_2D
-from hahps._discretization_tree import DiscretizationNode2D
-from hahps._domain import Domain
-from hahps._pdeproblem import PDEProblem
+from jaxhps._precompute_operators_2D import precompute_diff_operators_2D
+from jaxhps._discretization_tree import DiscretizationNode2D
+from jaxhps._domain import Domain
+from jaxhps._pdeproblem import PDEProblem
 
 
 class Test_gather_coeffs_2D:

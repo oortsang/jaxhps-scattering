@@ -1,4 +1,4 @@
-from hahps.quadrature import (
+from jaxhps.quadrature import (
     barycentric_lagrange_interpolation_matrix_1D,
     barycentric_lagrange_interpolation_matrix_2D,
     barycentric_lagrange_interpolation_matrix_3D,

@@ -1,15 +1,15 @@
 import jax.numpy as jnp
 
-from hahps._adaptive_discretization_3D import (
+from jaxhps._adaptive_discretization_3D import (
     node_to_bounds,
     generate_adaptive_mesh_level_restriction,
     get_squared_l2_norm_single_voxel,
 )
-from hahps._grid_creation_3D import (
+from jaxhps._grid_creation_3D import (
     compute_interior_Chebyshev_points_adaptive_3D,
 )
-from hahps._discretization_tree import DiscretizationNode3D, get_all_leaves
-from hahps._discretization_tree_operations_3D import add_eight_children
+from jaxhps._discretization_tree import DiscretizationNode3D, get_all_leaves
+from jaxhps._discretization_tree_operations_3D import add_eight_children
 import numpy as np
 
 

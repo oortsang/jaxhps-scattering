@@ -258,7 +258,7 @@ if __name__ == "__main__":
     else:
         level = logging.INFO
     logging.basicConfig(
-        format="%(asctime)s:ha-hps: %(levelname)s - %(message)s",
+        format="%(asctime)s:jaxhps: %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         level=level,
     )

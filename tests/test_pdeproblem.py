@@ -1,11 +1,11 @@
-from hahps._pdeproblem import PDEProblem, _get_PDEProblem_chunk
+from jaxhps._pdeproblem import PDEProblem, _get_PDEProblem_chunk
 import jax.numpy as jnp
 
-from hahps._discretization_tree import (
+from jaxhps._discretization_tree import (
     DiscretizationNode2D,
     DiscretizationNode3D,
 )
-from hahps._domain import Domain
+from jaxhps._domain import Domain
 
 
 class Test_PDEProblem_init:

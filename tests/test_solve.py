@@ -1,17 +1,17 @@
 import logging
 import jax.numpy as jnp
 import numpy as np
-from hahps._build_solver import build_solver
-from hahps._solve import solve
-from hahps._domain import Domain
-from hahps._discretization_tree import (
+from jaxhps._build_solver import build_solver
+from jaxhps._solve import solve
+from jaxhps._domain import Domain
+from jaxhps._discretization_tree import (
     DiscretizationNode2D,
     DiscretizationNode3D,
 )
-from hahps._discretization_tree_operations_2D import add_four_children
-from hahps._discretization_tree_operations_3D import add_eight_children
+from jaxhps._discretization_tree_operations_2D import add_four_children
+from jaxhps._discretization_tree_operations_3D import add_eight_children
 
-from hahps._pdeproblem import PDEProblem
+from jaxhps._pdeproblem import PDEProblem
 
 
 class Test_solve:
