@@ -49,11 +49,13 @@ Merge Stage
 .. automodule:: hahps.merge
    :members:
 
-
-
 Downward Pass
 ----------------
 
-
 .. automodule:: hahps.down_pass
+   :members:
+
+Upward Pass 
+----------------
+.. automodule:: hahps.up_pass
    :members:
