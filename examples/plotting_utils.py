@@ -1,14 +1,54 @@
 import logging
 
 import jax.numpy as jnp
+import jax
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from typing import List
+
+from hahps import DiscretizationNode2D, DiscretizationNode3D
 
 FIGSIZE = 5
 
 FONTSIZE = 16
 
 TICKSIZE = 15
+
+
+def plot_func_with_grid(
+    pts: jax.Array,
+    samples: jax.Array,
+    leaves: List[DiscretizationNode2D | DiscretizationNode3D],
+    plot_fp: str,
+) -> None:
+    # Make a figure with 3 panels. First col is computed u, second col is expected u, third col is the absolute error
+    fig, ax = plt.subplots(figsize=(5, 5))
+
+    #############################################################
+    # First column: Computed u
+
+    extent = [
+        pts[..., 0].min(),
+        pts[..., 0].max(),
+        pts[..., 1].min(),
+        pts[..., 1].max(),
+    ]
+
+    im_0 = ax.imshow(samples, cmap="plasma", extent=extent)
+    plt.colorbar(im_0, ax=ax)
+    ax.set_xlabel("$x_1$", fontsize=FONTSIZE)
+    ax.set_ylabel("$x_2$", fontsize=FONTSIZE)
+
+    #############################################################
+    # Find all nodes that intersect z=0 and plot them.
+
+    for l in leaves:
+        x = [l.xmin, l.xmax, l.xmax, l.xmin, l.xmin]
+        y = [l.ymin, l.ymin, l.ymax, l.ymax, l.ymin]
+        ax.plot(x, y, "-", color="gray", linewidth=1)
+    plt.savefig(plot_fp, bbox_inches="tight")
+    plt.clf()
+    plt.close(fig)
 
 
 def plot_field_for_wave_scattering_experiment(

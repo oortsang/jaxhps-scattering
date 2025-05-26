@@ -5,8 +5,6 @@ import jax.numpy as jnp
 from ._pdeproblem import PDEProblem, _get_PDEProblem_chunk
 
 from ._device_config import (
-    HOST_DEVICE,
-    DEVICE_ARR,
     local_solve_chunksize_2D,
     local_solve_chunksize_3D,
 )
@@ -40,8 +38,8 @@ from ._discretization_tree import get_all_leaves
 def build_solver(
     pde_problem: PDEProblem,
     return_top_T: bool = False,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> None | jax.Array:
     """
     This function builds all of the matrices for the fast direct solver. This comprises of
@@ -179,8 +177,8 @@ def build_solver(
 def _adaptive_build_solver(
     pde_problem: PDEProblem,
     return_top_T: bool = False,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> None:
     if pde_problem.domain.bool_2D:
         Y_arr_host, T_arr_host, v_host, h_host = (
@@ -206,15 +204,39 @@ def _adaptive_build_solver(
         )
 
     else:
-        Y_arr_host, T_arr_host, v_host, h_host = (
-            local_solve_stage_adaptive_3D_DtN(
-                pde_problem=pde_problem,
-                device=compute_device,
-                host_device=host_device,
+        # We will need to break this problem into chunks if it is large.
+        chunksize = local_solve_chunksize_3D(pde_problem.domain.p, jnp.float64)
+        Y_arr_lst = []
+        T_arr_lst = []
+        v_lst = []
+        h_lst = []
+        for start_idx in range(0, pde_problem.domain.n_leaves, chunksize):
+            end_idx = min(start_idx + chunksize, pde_problem.domain.n_leaves)
+            # Get a chunk of the PDEProblem
+            chunk_i = _get_PDEProblem_chunk(
+                pde_problem=pde_problem, start_idx=start_idx, end_idx=end_idx
             )
-        )
-        pde_problem.Y = Y_arr_host
-        pde_problem.v = v_host
+            logging.debug(
+                "build_solver: chunk_i.source.shape = %s", chunk_i.source.shape
+            )
+            # Perform the local solve stage on the chunk
+            Y_arr_chunk, T_arr_chunk, v_chunk, h_chunk = (
+                local_solve_stage_adaptive_3D_DtN(
+                    pde_problem=chunk_i,
+                    device=compute_device,
+                    host_device=host_device,
+                )
+            )
+            Y_arr_lst.append(Y_arr_chunk)
+            T_arr_lst.append(T_arr_chunk)
+            v_lst.append(v_chunk)
+            h_lst.append(h_chunk)
+
+        # Concatenate the results from all chunks
+        Y_arr_host = jnp.concatenate(Y_arr_lst, axis=0)
+        T_arr_host = jnp.concatenate(T_arr_lst, axis=0)
+        v_host = jnp.concatenate(v_lst, axis=0)
+        h_host = jnp.concatenate(h_lst, axis=0)
 
         # Need to set all Y, T, v, h attributes in the leaves
         leaves = get_all_leaves(pde_problem.domain.root)
@@ -239,8 +261,8 @@ def _adaptive_build_solver(
 def _nosource_build_solver(
     pde_problem: PDEProblem,
     return_top_T: bool = False,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> None | jax.Array:
     # Determine if batching is necessary.
     chunksize = local_solve_chunksize_2D(pde_problem.domain.p, jnp.complex128)

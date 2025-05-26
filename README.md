@@ -64,10 +64,18 @@ This should produce an image showing the computed solution, generated grid, and 
 We have an implementation of a low-dimensional optimization problem using automatic differentiation:
 
 ```
-python examples/inverse_wave_scattering.py --n_iter 20
+python examples/inverse_wave_scattering.py --n_iter 25
 ```
 
 This is an inverse scattering problem where we try to recover the locations of four Gaussian bumps which make up the scattering potential. Running the code should produce plots showing the optimization variables converging at the centers of the Gaussian bumps in the scattering potential, as well as a plot showing the convergence of the objective function:
 
 ![Showing the convergence of the objective function in our inverse scattering example.](.github/assets/inverse_scattering_residuals.svg)
 ![Showing the convergence of the iterates to the centers of the Gaussian bumps.](.github/assets/inverse_scattering_iterates.svg)
+
+## Linearized Poisson--Boltzmann equation
+
+Our method can be used to solve the a linearized Poisson-Boltzmann equation, which models the electrostatic properties of a molecule in solution. 
+
+```
+python examples/poisson_boltzmann_example.py --tol 1e-01 1e-03 -p 10 
+```

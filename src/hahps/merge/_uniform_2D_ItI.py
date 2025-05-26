@@ -7,7 +7,6 @@ import jax.numpy as jnp
 from ._schur_complement import (
     assemble_merge_outputs_ItI,
 )
-from .._device_config import DEVICE_ARR, HOST_DEVICE
 from ._uniform_2D_DtN import (
     get_quadmerge_blocks_a,
     get_quadmerge_blocks_b,
@@ -21,10 +20,11 @@ def merge_stage_uniform_2D_ItI(
     T_arr: jnp.array,
     h_arr: jnp.array,
     l: int,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
     subtree_recomp: bool = False,
     return_T: bool = False,
+    return_h: bool = False,
 ) -> Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]:
     """
     Implements uniform 2D merges of ItI matrices. Merges the nodes in the quadtree four at a time.
@@ -72,6 +72,7 @@ def merge_stage_uniform_2D_ItI(
         The top-level DtN matrix, which is only returned if ``return_T=True``. Has shape (4q, 4q).
 
     """
+    logging.debug("merge_stage_uniform_2D_ItI: started. device=%s", device)
 
     if not subtree_recomp:
         # Start lists to output data
@@ -165,12 +166,17 @@ def merge_stage_uniform_2D_ItI(
         g_tilde_lst.append(
             jax.device_put(jnp.expand_dims(g_tilde_last, axis=0), host_device)
         )
+        out = (S_lst, g_tilde_lst)
 
         if return_T:
             T_last_out = jax.device_put(T_last, host_device)
-            return S_lst, g_tilde_lst, T_last_out
-        else:
-            return S_lst, g_tilde_lst
+            out = out + (T_last_out,)
+
+        if return_h:
+            h_last_out = jax.device_put(h_last, host_device)
+            out = out + (h_last_out,)
+
+        return out
 
 
 @jax.jit

@@ -2,7 +2,6 @@ import jax.numpy as jnp
 import jax
 
 from .._pdeproblem import PDEProblem
-from .._device_config import DEVICE_ARR, HOST_DEVICE
 from typing import Tuple
 
 from ._uniform_2D_DtN import (
@@ -13,8 +12,8 @@ from ._uniform_2D_DtN import (
 
 def local_solve_stage_uniform_3D_DtN(
     pde_problem: PDEProblem,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     This function performs the local solve stage for 3D problems with a uniform quadtree, creating DtN matrices.

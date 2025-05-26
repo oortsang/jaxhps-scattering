@@ -4,7 +4,6 @@ import jax
 import jax.numpy as jnp
 
 
-from .._device_config import DEVICE_ARR, HOST_DEVICE
 from ._schur_complement import (
     _oct_merge_from_submatrices,
 )
@@ -14,8 +13,8 @@ def merge_stage_uniform_3D_DtN(
     T_arr: jax.Array,
     h_arr: jax.Array,
     l: int,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
     return_T: bool = False,
 ) -> Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]:
     """

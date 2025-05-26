@@ -3,6 +3,7 @@ import argparse
 import logging
 import numpy as np
 import jax.numpy as jnp
+import jax
 import matplotlib.pyplot as plt
 from timeit import default_timer
 from scipy.io import savemat
@@ -14,8 +15,6 @@ from hahps import (
     PDEProblem,
     build_solver,
     solve,
-    HOST_DEVICE,
-    DEVICE_ARR,
     get_all_leaves,
 )
 from wavefront_data import (
@@ -29,6 +28,8 @@ from wavefront_data import (
 # Suppress matplotlib debug messages
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logging.getLogger("jax").setLevel(logging.WARNING)
+
+jax.config.update("jax_default_device", jax.devices("cpu")[0])
 
 
 def setup_args() -> argparse.Namespace:
@@ -200,7 +201,7 @@ def hp_convergence_study() -> None:
         # Interpolate to a uniform grid
 
         x = jnp.linspace(XMIN, XMAX, args.n)
-        y = jnp.linspace(YMIN, YMAX, args.n)
+        y = jnp.flipud(jnp.linspace(YMIN, YMAX, args.n))
 
         u_reg = domain.interp_from_interior_points(
             computed_soln,
@@ -454,8 +455,6 @@ def adaptive_convergence_study() -> None:
 
 
 def main(args: argparse.Namespace) -> None:
-    logging.info("Host device: %s", HOST_DEVICE)
-    logging.info("Compute device: %s", DEVICE_ARR[0])
     ############################################################
     # Set up output directory
     args.plot_dir = os.path.join(

@@ -32,6 +32,8 @@ from plotting_utils import make_scaled_colorbar, TICKSIZE, FONTSIZE, FIGSIZE
 logging.getLogger("matplotlib").disabled = True
 logging.getLogger("matplotlib.font_manager").disabled = True
 
+jax.config.update("jax_default_device", jax.devices("cpu")[0])
+
 
 # Uncomment for debugging NaNs. Slows code down.
 # jax.config.update("jax_debug_nans", True)
@@ -41,7 +43,7 @@ N_BUMPS = 4
 
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=1000)
     parser.add_argument(
         "--plots_dir",
         type=str,
@@ -78,21 +80,6 @@ def plot_uscat(
     ax.tick_params(axis="both", which="major", labelsize=TICKSIZE)
     plt.savefig(uscat_real_fp, bbox_inches="tight")
     plt.clf()
-
-    # uscat_abs_fp = os.path.join(plots_dir, "utot_ground_truth_abs.png")
-    # logging.info("plot_uscat: Saving uscat plot to %s", uscat_abs_fp)
-    # ax = plt.gca()
-    # im = ax.imshow(
-    #     jnp.abs(uscat_regular),
-    #     cmap="hot",
-    #     extent=(XMIN, XMAX, YMIN, YMAX),
-    # )
-    # make_scaled_colorbar(im, ax, fontsize=TICKSIZE)
-    # ax.set_xticks([-1, 0, 1])
-    # ax.set_yticks([-1, 0, 1])
-    # ax.tick_params(axis="both", which="major", labelsize=TICKSIZE)
-    # plt.savefig(uscat_abs_fp, bbox_inches="tight")
-    # plt.clf()
 
 
 def plot_iterates(
@@ -194,7 +181,7 @@ def plot_residuals(residuals: jnp.array, plot_fp: str) -> None:
         fontsize=FONTSIZE,
     )
     # Make the x-ticks integers [0, 5, 10, 15]
-    plt.xticks(np.arange(0, 20, 5))
+    plt.xticks(np.arange(0, 25, 5))
     ax.tick_params(axis="both", which="major", labelsize=TICKSIZE)
     # Turn off the top and right spines
     # ax.spines["top"].set_visible(False)
@@ -239,17 +226,19 @@ def gauss_newton_iterations(
 
         def rmatvec_fn(x: jnp.array) -> jnp.array:
             # x has shape (nobs,)
+            # Trying to do J^H @ x
+            # which is equivalent to (J^T @ x.conj()).conj()
             logging.debug("rmatvec_fn: called")
             x = jax.device_put(x, jax.devices()[0])
             x = jnp.conj(x)
             out = vjp_fn(x)[0]
+            out = jnp.conj(out)
 
             out = jax.device_put(out, jax.devices("cpu")[0])
             return out
 
         def matvec_fn(delta: jnp.array) -> jnp.array:
             # Delta has shape (2,)
-            # Check if input contains NaNs
             logging.debug("matvec_fn: called")
             delta = jax.device_put(delta, jax.devices()[0])
             a, b = jax.jvp(forward_model, (x_t,), (delta,))
@@ -262,10 +251,6 @@ def gauss_newton_iterations(
             rmatvec=rmatvec_fn,
             dtype=jnp.complex128,
         )
-
-        # s = get_singular_vals(x_t)
-        # logging.info("J singular values: %s", s)
-        # svd_vals = svd_vals.at[t].set(s)
 
         lsqr_out = lsqr(linop, r_t, damp=reg_lambda, atol=1e-06, btol=1e-06)
         delta_t = lsqr_out[0]
@@ -294,10 +279,15 @@ def main(args: argparse.Namespace) -> None:
     logging.debug("Observation points has shape %s", observation_pts.shape)
 
     # Set up ground-truth scatterer locations and evaluate the scattering potential by
-    # random initialization
-    key = jax.random.key(3)
-    ground_truth_locations = jax.random.uniform(
-        key, minval=-0.5, maxval=0.5, shape=(N_BUMPS, 2)
+    # random initialization. For some random inits the optimization.
+    # converges to a local minimum.
+    # I am using the numpy random module because the jax one
+    # is giving me different draws on different devices.
+
+    # Set the random seed
+    np.random.seed(args.seed)
+    ground_truth_locations = jnp.array(
+        np.random.uniform(low=-0.5, high=0.5, size=(N_BUMPS, 2))
     )
 
     logging.info("Ground-truth locations: %s", ground_truth_locations)
@@ -347,9 +337,8 @@ def main(args: argparse.Namespace) -> None:
     reg_lambda = 0.0
 
     # Initialize the optimization variables randomly
-    key = jax.random.key(1)
-    x_t = jax.random.uniform(
-        key, minval=-0.5, maxval=0.5, shape=(N_BUMPS, 2)
+    x_t = jnp.array(
+        np.random.uniform(low=-0.5, high=0.5, size=(N_BUMPS, 2))
     ).flatten()
 
     iterates, resid_norms, cond_vals = gauss_newton_iterations(

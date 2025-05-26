@@ -2,7 +2,6 @@ import jax.numpy as jnp
 import jax
 
 from .._pdeproblem import PDEProblem
-from .._device_config import DEVICE_ARR, HOST_DEVICE
 from ._uniform_2D_DtN import _gather_coeffs_2D, vmapped_assemble_diff_operator
 from typing import Tuple
 import logging
@@ -10,8 +9,8 @@ import logging
 
 def local_solve_stage_uniform_2D_ItI(
     pde_problem: PDEProblem,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     This function performs the local solve stage for 2D problems with a uniform quadtree, creating ItI matrices.
@@ -36,7 +35,9 @@ def local_solve_stage_uniform_2D_ItI(
     h : jax.Array
         Outgoing boundary data. This is the outgoing impedance data of the particular solution :math:`v_n - i \\eta v`. Has shape (n_leaves, 4q) if there is a single source term, or (n_leaves, 4q, nsrc) if there are multiple source terms.
     """
-    logging.debug("_local_solve_stage_2D_ItI: started")
+    logging.debug(
+        "local_solve_stage_uniform_2D_ItI: started. device=%s", device
+    )
 
     # Gather the coefficients into a single array.
     coeffs_gathered, which_coeffs = _gather_coeffs_2D(

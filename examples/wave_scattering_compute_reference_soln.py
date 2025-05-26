@@ -25,6 +25,8 @@ from plotting_utils import plot_field_for_wave_scattering_experiment
 logging.getLogger("matplotlib").disabled = True
 logging.getLogger("matplotlib.font_manager").disabled = True
 
+jax.config.update("jax_default_device", jax.devices("cpu")[0])
+
 
 def setup_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(

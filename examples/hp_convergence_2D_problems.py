@@ -2,6 +2,7 @@ import argparse
 import os
 import logging
 
+import jax
 import jax.numpy as jnp
 from scipy.io import savemat
 
@@ -20,6 +21,8 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 # Uncomment for debugging NaNs. Slows code down.
 # jax.config.update("jax_debug_nans", True)
+
+jax.config.update("jax_default_device", jax.devices("cpu")[0])
 
 
 def setup_args() -> argparse.Namespace:

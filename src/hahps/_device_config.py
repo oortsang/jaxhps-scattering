@@ -20,7 +20,6 @@ GPU_AVAILABLE = any("NVIDIA" in device.device_kind for device in jax.devices())
 
 #: Array of acceleration devices (GPUs) available for computation. If no GPUs are available, this will have a single entry for the CPU device.
 DEVICE_ARR = np.array(jax.devices()).flatten()
-jax.config.update("jax_default_device", jax.devices("cpu")[0])
 
 DEVICE_MESH = jax.sharding.Mesh(DEVICE_ARR, axis_names=("x",))
 

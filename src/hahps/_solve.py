@@ -3,10 +3,6 @@ import jax.numpy as jnp
 from typing import List
 from ._pdeproblem import PDEProblem
 
-from ._device_config import (
-    HOST_DEVICE,
-    DEVICE_ARR,
-)
 
 from .down_pass import (
     down_pass_uniform_2D_ItI,
@@ -23,8 +19,8 @@ def solve(
     pde_problem: PDEProblem,
     boundary_data: jax.Array | List[jax.Array],
     source: jax.Array = None,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> jax.Array:
     """
     This function performs the downward pass of the HPS algorithm, after the solution operators have
