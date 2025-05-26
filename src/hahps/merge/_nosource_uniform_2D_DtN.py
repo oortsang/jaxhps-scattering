@@ -7,7 +7,6 @@ import jax.numpy as jnp
 from ._schur_complement import (
     nosource_assemble_merge_outputs_DtN,
 )
-from .._device_config import DEVICE_ARR, HOST_DEVICE
 from ._uniform_2D_DtN import (
     get_quadmerge_blocks_a,
     get_quadmerge_blocks_b,
@@ -20,8 +19,8 @@ import logging
 def nosource_merge_stage_uniform_2D_DtN(
     T_arr: jax.Array,
     l: int,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
     return_T: bool = False,
 ) -> Tuple[List[jnp.ndarray], List[jnp.ndarray], List[jnp.ndarray]]:
     """

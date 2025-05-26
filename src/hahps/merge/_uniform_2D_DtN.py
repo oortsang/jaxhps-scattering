@@ -8,15 +8,14 @@ import jax.numpy as jnp
 from ._schur_complement import (
     assemble_merge_outputs_DtN,
 )
-from .._device_config import DEVICE_ARR, HOST_DEVICE
 
 
 def merge_stage_uniform_2D_DtN(
     T_arr: jnp.array,
     h_arr: jnp.array,
     l: int,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
     subtree_recomp: bool = False,
     return_T: bool = False,
 ) -> Tuple[List[jnp.array], List[jnp.array], List[jnp.array]]:

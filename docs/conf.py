@@ -30,6 +30,8 @@ html_static_path = ["_static"]
 #     "sidebarwidth": 400,
 # }
 
+autodoc_preserve_defaults = True
+
 # Patch the path to allow for importing hahps
 
 

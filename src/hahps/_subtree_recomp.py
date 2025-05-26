@@ -4,8 +4,6 @@ from typing import List, Callable
 from ._pdeproblem import PDEProblem, _get_PDEProblem_chunk
 import logging
 from ._device_config import (
-    HOST_DEVICE,
-    DEVICE_ARR,
     local_solve_chunksize_2D,
 )
 from .local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
@@ -23,8 +21,8 @@ def solve_subtree(
     pde_problem: PDEProblem,
     boundary_data: jax.Array | List,
     subtree_height: int = 7,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> jax.Array:
     """
     This function solves the PDE using the novel subtree recomputation strategy.
@@ -168,8 +166,8 @@ def solve_subtree(
 def _all_together_ItI(
     pde_problem: PDEProblem,
     boundary_data: jax.Array,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> jax.Array:
     # Perform the local solve stage on the whole problem
     Y, T, v, h = local_solve_stage_uniform_2D_ItI(
@@ -201,8 +199,8 @@ def _all_together_ItI(
 def _all_together_DtN(
     pde_problem: PDEProblem,
     boundary_data: jax.Array,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> jax.Array:
     # Perform the local solve stage on the whole problem
     Y, T, v, h = local_solve_stage_uniform_2D_DtN(
@@ -397,8 +395,8 @@ def _local_solve_and_build(
 def upward_pass_subtree(
     pde_problem: PDEProblem,
     subtree_height: int = 7,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> jax.Array:
     """
      Does the upward pass of the subtree recomputation algorithm, returns the top-level Poincare--Steklov matrix, and
@@ -462,8 +460,8 @@ def downward_pass_subtree(
     pde_problem: PDEProblem,
     boundary_data: jax.Array,
     subtree_height: int = 7,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> jax.Array:
     """
      Does the downward pass of the subtree recomputation algorithm. This is meant to be used in conjunction with

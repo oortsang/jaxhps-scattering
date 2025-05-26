@@ -4,8 +4,6 @@ import jax
 import jax.numpy as jnp
 import logging
 
-from .._device_config import HOST_DEVICE, DEVICE_ARR
-
 
 def down_pass_uniform_2D_ItI(
     boundary_data: jax.Array,
@@ -13,8 +11,8 @@ def down_pass_uniform_2D_ItI(
     g_tilde_lst: List[jax.Array],
     Y_arr: jax.Array,
     v_arr: jax.Array,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> None:
     """
     Computes the downward pass of the HPS algorithm. This function takes the incoming impedance data

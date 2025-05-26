@@ -1,7 +1,6 @@
 from typing import List, Tuple
 import jax
 import jax.numpy as jnp
-from .._device_config import HOST_DEVICE, DEVICE_ARR
 from .._pdeproblem import PDEProblem
 from ..local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
 import logging
@@ -10,8 +9,8 @@ import logging
 def up_pass_uniform_2D_ItI(
     source: jax.Array,
     pde_problem: PDEProblem,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
     return_h_last: bool = False,
 ) -> Tuple[jax.Array, List[jax.Array], jax.Array]:
     """

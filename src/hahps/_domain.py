@@ -375,9 +375,11 @@ class Domain:
     ) -> "Domain":
         """
         This is a constructor for creating a ``Domain`` when using an adaptive discretization.
-        Given the root of the domain and a function ```f`` to be evaluated on the domain, this method
+        Given the root of the domain and a function ``f`` to be evaluated on the domain, this method
         will adaptively refine the HPS grid until reaching a specified tolerance ``tol``. Multiple
         functions for adaptive refinement can be specified in a list.
+
+        The tolerance is enforced in the :math:`\ell_\infty` norm by default, but can also be enforced in :math:`\\ell_2`.
 
         Args:
             p (int): Polynomial order for Chebyshev points.
@@ -392,7 +394,7 @@ class Domain:
 
             use_level_restriction (bool, optional): Whether to enforce the level restriction criterion. Defaults to True. If set to False, could cause errors in the merge stage.
 
-            use_l_2_norm (bool, optional): If set to True, the refinement uses a relative :math:`\\ell_2` criterion instead of the standard :math:`\\ell_\\infty` criterion. Defaults to False.
+            use_l_2_norm (bool, optional): If set to True, the refinement uses a relative L_2 criterion instead of L_infinity.
 
         Returns:
             Domain: The domain object with an adaptively-refined discretization tree.

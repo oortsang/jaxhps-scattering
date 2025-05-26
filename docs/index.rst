@@ -35,8 +35,8 @@ To install the ``hahps`` package, you can use `pip` to install it directly from 
    pip install git+https://github.com/meliao/ha-hps.git
 
 
-Usage 
---------
+Usage quickstart
+-------------------
 
 You can use the ``hahps`` package to solve systems of linear elliptic PDEs by first specifying the root of the domain, and then specify the parameters for the high-order composite spectral collocation scheme:
 
@@ -105,13 +105,16 @@ In the ``hahps`` package, there are many more utilities for working with HPS alg
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
-
-   Device_and_data
+   
    DiscretizationNode
    PDEProblem
    solution_methods
+   method_API
    quadrature
    Examples
+   Device_and_data
+   Contributing
+
 
    
 

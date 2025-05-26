@@ -1,5 +1,6 @@
-Quadrature utilities
-=======================
+===================================
+Spectral discretization utilities
+===================================
 The ``quadrature`` module provides utilities for computing quadrature rules and weights for numerical integration. It also includes routines for building barycentric Lagrange interpolation matrices.
 
 

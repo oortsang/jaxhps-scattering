@@ -3,7 +3,6 @@ import jax
 
 from .._pdeproblem import PDEProblem
 from .._domain import get_all_leaves
-from .._device_config import DEVICE_ARR, HOST_DEVICE
 from ._uniform_2D_DtN import _gather_coeffs_2D, get_DtN, assemble_diff_operator
 from .._precompute_operators_2D import precompute_Q_2D_DtN
 from typing import Tuple
@@ -13,8 +12,8 @@ from functools import partial
 
 def local_solve_stage_adaptive_2D_DtN(
     pde_problem: PDEProblem,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
     """
     This function performs the local solve stage for 2D adaptive discretization problems, creating DtN matrices.

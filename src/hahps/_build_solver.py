@@ -5,8 +5,6 @@ import jax.numpy as jnp
 from ._pdeproblem import PDEProblem, _get_PDEProblem_chunk
 
 from ._device_config import (
-    HOST_DEVICE,
-    DEVICE_ARR,
     local_solve_chunksize_2D,
     local_solve_chunksize_3D,
 )
@@ -40,8 +38,8 @@ from ._discretization_tree import get_all_leaves
 def build_solver(
     pde_problem: PDEProblem,
     return_top_T: bool = False,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> None | jax.Array:
     """
     This function builds all of the matrices for the fast direct solver. This comprises of
@@ -179,8 +177,8 @@ def build_solver(
 def _adaptive_build_solver(
     pde_problem: PDEProblem,
     return_top_T: bool = False,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> None:
     if pde_problem.domain.bool_2D:
         Y_arr_host, T_arr_host, v_host, h_host = (
@@ -263,8 +261,8 @@ def _adaptive_build_solver(
 def _nosource_build_solver(
     pde_problem: PDEProblem,
     return_top_T: bool = False,
-    compute_device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    compute_device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> None | jax.Array:
     # Determine if batching is necessary.
     chunksize = local_solve_chunksize_2D(pde_problem.domain.p, jnp.complex128)

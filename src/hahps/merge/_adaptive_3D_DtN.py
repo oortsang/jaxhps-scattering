@@ -31,8 +31,8 @@ def merge_stage_adaptive_3D_DtN(
     pde_problem: PDEProblem,
     T_arr: jax.Array,
     h_arr: jax.Array,
-    device: jax.Device = DEVICE_ARR[0],
-    host_device: jax.Device = HOST_DEVICE,
+    device: jax.Device = jax.devices()[0],
+    host_device: jax.Device = jax.devices("cpu")[0],
 ) -> None:
     """
     Implements adaptive 3D merges of DtN matrices. Merges the nodes in the quadtree eight at a time,
