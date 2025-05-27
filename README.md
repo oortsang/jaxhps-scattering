@@ -1,4 +1,4 @@
-# ha-hps
+# jaxhps
 A JAX package implementing hardware acceleration for HPS methods in two and three dimensions.
 
 See our preprint on arXiv: [Hardware Acceleration for HPS Methods in Two and Three Dimensions](https://arxiv.org/abs/2503.17535)
