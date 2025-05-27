@@ -5,18 +5,18 @@ See our preprint on arXiv: [Hardware Acceleration for HPS Methods in Two and Thr
 
 ## Installation
 
-Currently, installation from GitHub: 
+To install, you can use `pip`: 
 
 ```
-pip install git+https://github.com/meliao/ha-hps.git
+pip install jaxhps
 ```
 
-Requirements are:
+The examples require additional packages `matplotlib` and `h5py`. If you want to install them automatically, use:
+
 ```
-jax
-matplotlib
-scipy
+pip install jaxhps[examples]
 ```
+
 
 ## Documentation
 

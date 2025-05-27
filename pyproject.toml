@@ -1,3 +1,63 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["version"]
+name = "jaxhps"
+dependencies = [
+    "scipy>=1.14",
+    "jax>=0.4"
+]
+requires-python = ">= 3.10"
+authors = [
+    {name = "Owen Melia", email = "owenjmelia@gmail.com"}
+]
+description = "An elliptic PDE solver built with machine learning in mind"
+readme = "README.md"
+license = "MIT"
+keywords = [
+    "jax", 
+    "PDE", 
+    "elliptic", 
+    "HPS", 
+    "spectral", 
+    "numerical analysis"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Mathematics"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.4",
+    "Sphinx>=8.1.3",
+    "sphinx-rtd-theme>=3.0.2",
+    "pre_commit>=4.2.0",
+    "ruff>=0.11.2",
+    "matplotlib>=3.8.4",
+    "h5py>=3.11.0"
+]
+examples = [
+    "matplotlib>=3.8.4",
+    "h5py>=3.11.0"
+]
+
+[project.urls]
+homepage = "https://github.com/meliao/ha-hps"
+documentation = "https://jaxhps.readthedocs.io/en/latest/"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "jaxhps.__version__"} 
+
+
 [tool.ruff]
 # Set the maximum line length to 79.
 line-length = 79
@@ -17,3 +77,4 @@ omit = ["src/jaxhps/_utils.py"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+

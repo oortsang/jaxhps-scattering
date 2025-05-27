@@ -32,8 +32,13 @@ To install the ``jaxhps`` package, you can use `pip` to install it directly from
 
 .. code:: bash
 
-   pip install git+https://github.com/meliao/ha-hps.git
+   pip install jaxhps
 
+The examples require additional packages ``matplotlib`` and ``h5py``. If you want to install them automatically, use:
+
+.. code:: bash
+
+   pip install jaxhps[examples]
 
 Usage quickstart
 -------------------

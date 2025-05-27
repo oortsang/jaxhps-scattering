@@ -1,13 +1,12 @@
 Contributing
 =========================
 
-We welcome contributions to the ``jaxhps`` package! Please make contributions through pull requests `on GitHub <https://github.com/meliao/ha-hps>`_. To make development easier, forking the repository then installing the package in editable mode and using the ``dev_requirements.txt`` is recommended: 
+We welcome contributions to the ``jaxhps`` package! Please make contributions through pull requests `on GitHub <https://github.com/meliao/ha-hps>`_. To make development easier, forking the repository then installing the package in editable mode with the optional dev requirements is recommended: 
 
 .. code:: bash
 
    cd ha-hps
-   pip install dev_requirements.txt
-   pip install -e .
+   pip install -e .[dev]
 
 
 Potential contributions include:
