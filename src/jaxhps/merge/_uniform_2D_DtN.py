@@ -68,11 +68,17 @@ def merge_stage_uniform_2D_DtN(
     T_arr = jax.device_put(T_arr, device)
     h_arr = jax.device_put(h_arr, device)
 
+    bool_multi_source = h_arr.ndim == 3
+
     # Reshape the arrays into groups of 4 for merging if necessary
     if len(T_arr.shape) < 4:
         n_leaves, n_ext, _ = T_arr.shape
         T_arr = T_arr.reshape(n_leaves // 4, 4, n_ext, n_ext)
-        h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext)
+        if bool_multi_source:
+            n_src = h_arr.shape[-1]
+            h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext, n_src)
+        else:
+            h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext, 1)
 
     if not subtree_recomp:
         # Start lists to store S and g_tilde arrays
@@ -93,6 +99,11 @@ def merge_stage_uniform_2D_DtN(
         # Only do these copies and GPU -> CPU moves if necessary.
         # Necessary when we are not doing subtree recomp and we want
         # the data on the CPU.
+
+        if not bool_multi_source:
+            # Remove source dimension from g_tilde_arr
+            g_tilde_arr = jnp.squeeze(g_tilde_arr, axis=-1)
+
         if host_device != device:
             if not subtree_recomp:
                 logging.debug("_merge_stage_2D: Moving data to CPU")
@@ -121,6 +132,11 @@ def merge_stage_uniform_2D_DtN(
         h_arr[0, 2],
         h_arr[0, 3],
     )
+
+    if not bool_multi_source:
+        # Remove source dimension from g_tilde_last and h_last
+        g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
+        h_last = jnp.squeeze(h_last, axis=-1)
 
     if subtree_recomp:
         # In this branch, we only return T_last and h_last

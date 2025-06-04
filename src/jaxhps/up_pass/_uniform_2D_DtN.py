@@ -48,6 +48,14 @@ def up_pass_uniform_2D_DtN(
         Outward pointing normal derivative data for the particular solution evaluated at the domain boundary. Has shape (nbdry, nsrc). Is only returned if ``return_h_last=True``.
     """
 
+    bool_multi_source = source.ndim == 3
+    if not bool_multi_source:
+        # Add a source dimension to the source term
+        source = jnp.expand_dims(source, axis=-1)
+        logging.debug(
+            "up_pass_uniform_2D_DtN: new source shape = %s", source.shape
+        )
+
     # Re-do a full local solve.
     pde_problem.source = source
 

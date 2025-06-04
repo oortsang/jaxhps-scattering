@@ -24,7 +24,10 @@ from ._interpolation_methods import (
     interp_to_hps_3D,
 )
 from ._adaptive_discretization_3D import (
-    generate_adaptive_mesh_level_restriction,
+    generate_adaptive_mesh_level_restriction as generate_adaptive_mesh_level_restriction_3D,
+)
+from ._adaptive_discretization_2D import (
+    generate_adaptive_mesh_level_restriction_2D,
 )
 import jax
 import jax.numpy as jnp
@@ -405,19 +408,27 @@ class Domain:
 
         bool_2D = isinstance(root, DiscretizationNode2D)
         if bool_2D:
-            raise NotImplementedError(
-                "Adaptive meshing only implemented for 3D."
-            )
+            for i, func in enumerate(f):
+                generate_adaptive_mesh_level_restriction_2D(
+                    root=root,
+                    f_fn=func,
+                    tol=tol,
+                    p=p,
+                    q=q,
+                    restrict_bool=use_level_restriction,
+                    l2_norm=use_l_2_norm,
+                )
 
-        for i, func in enumerate(f):
-            generate_adaptive_mesh_level_restriction(
-                root=root,
-                f_fn=func,
-                tol=tol,
-                p=p,
-                q=q,
-                restrict_bool=use_level_restriction,
-                l2_norm=use_l_2_norm,
-            )
+        else:
+            for i, func in enumerate(f):
+                generate_adaptive_mesh_level_restriction_3D(
+                    root=root,
+                    f_fn=func,
+                    tol=tol,
+                    p=p,
+                    q=q,
+                    restrict_bool=use_level_restriction,
+                    l2_norm=use_l_2_norm,
+                )
 
         return cls(p=p, q=q, root=root)

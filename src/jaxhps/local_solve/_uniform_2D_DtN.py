@@ -54,6 +54,7 @@ def local_solve_stage_uniform_2D_DtN(
         source_term,
         device,
     )
+    bool_multi_source = source_term.ndim == 3
     # stack the precomputed differential operators into a single array
     diff_ops = jnp.stack(
         [
@@ -74,10 +75,16 @@ def local_solve_stage_uniform_2D_DtN(
     diff_operators = vmapped_assemble_diff_operator(
         coeffs_gathered, which_coeffs, diff_ops
     )
+    if not bool_multi_source:
+        source_term = jnp.expand_dims(source_term, axis=-1)
 
     Y_arr, T_arr, v, h = vmapped_get_DtN_uniform(
         source_term, diff_operators, pde_problem.Q, pde_problem.P
     )
+
+    if not bool_multi_source:
+        h = h[..., 0]
+        v = v[..., 0]
 
     # Return data to the requested device
     T_arr_host = jax.device_put(T_arr, host_device)
@@ -227,7 +234,7 @@ def get_DtN(
 ) -> Tuple[jax.Array]:
     """
     Args:
-        source_term (jax.Array): Array of size (p**2,) containing the source term.
+        source_term (jax.Array): Array of size (p**2, n_src) containing the source term.
         diff_operator (jax.Array): Array of size (p**2, p**2) containing the local differential operator defined on the
                     Cheby grid.
         Q (jax.Array): Array of size (4q, p**2) containing the matrix interpolating from a soln on the interior
@@ -244,6 +251,7 @@ def get_DtN(
             h (jax.Array): Array of size (4q,) containing the outgoing boundary normal derivatives of the particular solution.
     """
     n_cheby_bdry = P.shape[0]
+    n_src = source_term.shape[-1]
 
     A_ii = diff_operator[n_cheby_bdry:, n_cheby_bdry:]
     A_ii_inv = jnp.linalg.inv(A_ii)
@@ -256,7 +264,7 @@ def get_DtN(
     Y = L_2 @ P
     T = Q @ Y
 
-    v = jnp.zeros((diff_operator.shape[0],), dtype=jnp.float64)
+    v = jnp.zeros((diff_operator.shape[0], n_src), dtype=jnp.float64)
     v = v.at[n_cheby_bdry:].set(A_ii_inv @ source_term[n_cheby_bdry:])
     h = Q @ v
 

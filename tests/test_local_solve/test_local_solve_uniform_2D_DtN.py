@@ -1,6 +1,7 @@
 import numpy as np
 import jax.numpy as jnp
 import jax
+import logging
 from jaxhps.local_solve._uniform_2D_DtN import (
     local_solve_stage_uniform_2D_DtN,
     _gather_coeffs_2D,
@@ -72,11 +73,11 @@ class Test_assemble_diff_operator:
 
 
 class Test__local_solve_stage_2D:
-    def test_0(self) -> None:
+    def test_0(self, caplog) -> None:
         """Tests the solve_stage function returns without error and returns the correct shape
         when boundary data are not passed to the function.
         """
-
+        caplog.set_level(logging.DEBUG)
         p = 8
         q = 6
         l = 2
@@ -120,11 +121,12 @@ class Test_get_DtN:
         p = 16
         q = 14
         n_cheby_bdry = 4 * (p - 1)
+        n_src = 3
 
         diff_operator = np.random.normal(size=(p**2, p**2)).astype(np.float64)
         I_P = np.random.normal(size=(n_cheby_bdry, 4 * q)).astype(np.float64)
         Q_D = np.random.normal(size=(4 * q, p**2)).astype(np.float64)
-        source_term = np.random.normal(size=(p**2,)).astype(np.float64)
+        source_term = np.random.normal(size=(p**2, n_src)).astype(np.float64)
 
         Y, DtN, v, v_prime = get_DtN(
             source_term=source_term,
@@ -135,6 +137,6 @@ class Test_get_DtN:
 
         assert Y.shape == (p**2, 4 * q)
         assert DtN.shape == (4 * q, 4 * q)
-        assert v.shape == (p**2,)
-        assert v_prime.shape == (4 * q,)
+        assert v.shape == (p**2, n_src)
+        assert v_prime.shape == (4 * q, n_src)
         jax.clear_caches()

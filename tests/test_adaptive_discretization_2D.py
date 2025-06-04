@@ -7,6 +7,7 @@ from jaxhps._adaptive_discretization_2D import (
 )
 from jaxhps._grid_creation_2D import (
     compute_interior_Chebyshev_points_adaptive_2D,
+    get_all_leaves,
 )
 from jaxhps._discretization_tree import DiscretizationNode2D
 from jaxhps._discretization_tree_operations_2D import add_four_children
@@ -16,23 +17,29 @@ import logging
 
 class Test_generate_adaptive_mesh_level_restriction_2D:
     def test_0(self, caplog) -> None:
+        """TODO: This test is running slowly. I am not sure if that's because it's a problem that is too hard or beca"""
         caplog.set_level(logging.DEBUG)
 
         p = 4
         q = 2
         root = DiscretizationNode2D(
-            xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, depth=0
+            xmin=0.0, xmax=2.0, ymin=0.0, ymax=2.0, depth=0
         )
         add_four_children(root, root=root, q=q)
 
         def f(x: jax.Array) -> jax.Array:
-            """f(x,y) = y + x**2"""
-            return jnp.sin(4 * x[..., 1]) + x[..., 0] ** 2
+            """f(x,y) =sin(4y) + x**2"""
+            return jnp.sin(3 * x[..., 1] ** 2) + x[..., 0] ** 2
 
         # Generate the adaptive mesh level restriction
         generate_adaptive_mesh_level_restriction_2D(
-            root, f, tol=1e-3, p=p, q=q
+            root, f, tol=1e-2, p=p, q=q
         )
+        all_leaves = get_all_leaves(root)
+        logging.info("Number of leaves: %s", len(all_leaves))
+        # Assert that the root node has been refined.
+        assert root.children is not None
+        assert len(root.children) == 4
 
     def test_1(self, caplog) -> None:
         caplog.set_level(logging.DEBUG)
