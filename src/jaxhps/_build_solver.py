@@ -305,12 +305,13 @@ def _nosource_build_solver(
         # h_host = jnp.concatenate(h_lst, axis=0)
     else:
         # Perform the local solve stage all at once for smaller problem sizes
-        Y_arr_host, T_arr_host = local_solve_fn(
+        Y_arr_host, T_arr_host, Phi_arr_host = local_solve_fn(
             pde_problem=pde_problem,
             device=compute_device,
             host_device=host_device,
         )
     pde_problem.Y = Y_arr_host
+    pde_problem.Phi = Phi_arr_host
     # pde_problem.v = v_host
 
     # Perform the merge stage

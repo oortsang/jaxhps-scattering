@@ -231,6 +231,7 @@ class PDEProblem:
         self.BD_inv_lst: List[
             jax.Array
         ] = []  #: (jax.Array) Stores pre-computed BD^{-1} operators for the upward pass.
+        self.Phi: jax.Array = None  #: (jax.Array) Stores pre-computed particular solution operators.
 
     def reset(self) -> None:
         """
@@ -243,6 +244,7 @@ class PDEProblem:
         self.g_tilde_lst = []
         self.D_inv_lst = []
         self.BD_inv_lst = []
+        self.Phi = None
 
     def update_coefficients(
         self,

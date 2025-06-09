@@ -10,7 +10,7 @@ def nosource_local_solve_stage_uniform_2D_ItI(
     pde_problem: PDEProblem,
     device: jax.Device = jax.devices()[0],
     host_device: jax.Device = jax.devices("cpu")[0],
-) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+) -> Tuple[jax.Array, jax.Array, jax.Array]:
     """
     This function performs the local solve stage for 2D problems with a uniform quadtree, creating ItI matrices.
 
@@ -29,6 +29,8 @@ def nosource_local_solve_stage_uniform_2D_ItI(
         Solution operators mapping from Impedance boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^2, 4q)
     T : jax.Array
         Impedance-to-Impedance matrices for each leaf. Has shape (n_leaves, 4q, 4q)
+    Phi : jax.Array
+        Particular solution operators mapping from the source term evaluated on the interior Cheby nodes to the particular solution on all of the Cheby nodes. Has shape (n_leaves, p^2, (p-1)^2).
     """
 
     # Gather the coefficients into a single array.
@@ -61,7 +63,7 @@ def nosource_local_solve_stage_uniform_2D_ItI(
         coeffs_gathered, which_coeffs, diff_ops
     )
 
-    R_arr, Y_arr = vmapped_get_ItI_nosource(
+    R_arr, Y_arr, Phi_arr = vmapped_get_ItI_nosource(
         all_diff_operators,
         pde_problem.P,
         pde_problem.QH,
@@ -70,8 +72,9 @@ def nosource_local_solve_stage_uniform_2D_ItI(
 
     R_arr_host = jax.device_put(R_arr, host_device)
     Y_arr_host = jax.device_put(Y_arr, host_device)
+    Phi_arr_host = jax.device_put(Phi_arr, host_device)
 
-    return Y_arr_host, R_arr_host
+    return Y_arr_host, R_arr_host, Phi_arr_host
 
 
 @jax.jit
@@ -80,7 +83,7 @@ def get_ItI_nosource(
     P: jax.Array,
     QH: jax.Array,
     G: jax.Array,
-) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+) -> Tuple[jax.Array, jax.Array, jax.Array]:
     """Given the coefficients specifying a partial differential operator on a leaf, this function
     computes the particular solution, particular solution boundary fluxes, the
     impedance to impedance map, and the impedance to solution map.
@@ -105,6 +108,7 @@ def get_ItI_nosource(
                 boundary Gauss nodes to the outgoing impedance data on the boundary Gauss nodes.
             Y (jax.Array): Has shape (p**2, 4q). This is the interior solution operator, which maps from incoming impedance
                 data on the boundary Gauss nodes to the resulting homogeneous solution on the Chebyshev nodes.
+            Phi (jax.Array): Has shape (p**2, (p-1)**2) and maps from the source term evaluated on the interior Cheby nodes to the particular solution on all of the Cheby nodes.
 
     """
     # print("get_ItI: I_P_0 shape: ", I_P_0.shape)
@@ -125,13 +129,18 @@ def get_ItI_nosource(
     # homogeneous solution on all of the Cheby nodes.
     Y = B_inv[:, :n_cheby_bdry_pts] @ P
 
+    # Phi has shape (n_cheby_pts, n_cheby_interior_pts). It maps from the source
+    # term evaluated on the interior Cheby nodes to the particular soln on all of
+    # the Cheby nodes.
+    Phi = B_inv[:, n_cheby_bdry_pts:]
+
     # Interpolate to Gauss nodes
     T = QH @ Y
-    return (T, Y)
+    return (T, Y, Phi)
 
 
 vmapped_get_ItI_nosource = jax.vmap(
     get_ItI_nosource,
     in_axes=(0, None, None, None),
-    out_axes=(0, 0),
+    out_axes=(0, 0, 0),
 )

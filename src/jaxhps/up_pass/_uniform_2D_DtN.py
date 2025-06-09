@@ -2,7 +2,6 @@ from typing import List, Tuple
 import jax
 import jax.numpy as jnp
 from .._pdeproblem import PDEProblem
-from ..local_solve._uniform_2D_DtN import local_solve_stage_uniform_2D_DtN
 import logging
 
 
@@ -63,11 +62,25 @@ def up_pass_uniform_2D_DtN(
     D_inv_lst = pde_problem.D_inv_lst
     BD_inv_lst = pde_problem.BD_inv_lst
 
-    Y, T, v, h_in = local_solve_stage_uniform_2D_DtN(
-        pde_problem=pde_problem,
-        device=device,
-        host_device=host_device,
+    # Compute v via an einsum between the source term and the Phi matrices
+    # which are stored in pde_problem.Phi
+    # first init v to zeros then fill in the interior values.
+    v = jnp.zeros_like(source)
+    n_cheby_bdry = 4 * (pde_problem.domain.p - 1)
+    v = v.at[:, n_cheby_bdry:].set(
+        jnp.einsum(
+            "ijk,ikl->ijl",
+            pde_problem.Phi,
+            source[:, n_cheby_bdry:],
+        )
     )
+    h_in = jnp.einsum("ij,kjl->kil", pde_problem.Q, v)
+
+    # Y, T, v, h_in = local_solve_stage_uniform_2D_DtN(
+    #     pde_problem=pde_problem,
+    #     device=device,
+    #     host_device=host_device,
+    # )
     logging.debug(
         "up_pass_uniform_2D_DtN: after local solve, h_in shape = %s",
         h_in.shape,
@@ -78,8 +91,8 @@ def up_pass_uniform_2D_DtN(
     for i in range(len(D_inv_lst)):
         # Get h and g_tilde for this level
 
-        nnodes, nbdry = h_in.shape
-        h_in = h_in.reshape(nnodes // 4, 4, nbdry)
+        nnodes, nbdry, nsrc = h_in.shape
+        h_in = h_in.reshape(nnodes // 4, 4, nbdry, nsrc)
         D_inv = D_inv_lst[i]
         BD_inv = BD_inv_lst[i]
 

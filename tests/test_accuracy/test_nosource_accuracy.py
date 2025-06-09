@@ -88,10 +88,15 @@ def check_merge_accuracy_nosource_2D_ItI_uniform_Helmholtz_like(
 
     ##############################################################
     # Build the precomputed solution operators
-    Y, T = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=pde_problem)
+    Y, T, Phi = nosource_local_solve_stage_uniform_2D_ItI(
+        pde_problem=pde_problem
+    )
     S_lst, D_inv_lst, BD_inv_lst, T = nosource_merge_stage_uniform_2D_ItI(
         T, domain.L, return_T=True
     )
+
+    pde_problem.Y = Y
+    pde_problem.Phi = Phi
 
     pde_problem.D_inv_lst = D_inv_lst
     pde_problem.BD_inv_lst = BD_inv_lst
@@ -191,9 +196,14 @@ def check_against_standard_2D_ItI_uniform(
 
     ##############################################################
     # Check outputs of local solve stage
-    Y_nosource, T_nosource = nosource_local_solve_stage_uniform_2D_ItI(
-        pde_problem=pde_problem_nosource
+    Y_nosource, T_nosource, Phi_nosource = (
+        nosource_local_solve_stage_uniform_2D_ItI(
+            pde_problem=pde_problem_nosource
+        )
     )
+    pde_problem_nosource.Y = Y_nosource
+    pde_problem_nosource.Phi = Phi_nosource
+
     Y, T, v, h = local_solve_stage_uniform_2D_ItI(
         pde_problem=pde_problem_source
     )
@@ -295,7 +305,11 @@ def check_merge_accuracy_nosource_2D_DtN_uniform(
 
     ##############################################################
     # Build the precomputed solution operators
-    Y, T = nosource_local_solve_stage_uniform_2D_DtN(pde_problem=pde_problem)
+    Y, T, Phi = nosource_local_solve_stage_uniform_2D_DtN(
+        pde_problem=pde_problem
+    )
+    pde_problem.Y = Y
+    pde_problem.Phi = Phi
     S_lst, D_inv_lst, BD_inv_lst, T = nosource_merge_stage_uniform_2D_DtN(
         T, domain.L, return_T=True
     )
@@ -322,7 +336,7 @@ def check_merge_accuracy_nosource_2D_DtN_uniform(
     # Compute the incoming impedance data
 
     # Assemble incoming impedance data
-    boundary_u = test_case[K_DIRICHLET](domain.boundary_points)
+    boundary_u = test_case[K_DIRICHLET](domain.boundary_points)[..., None]
     logging.debug(
         "check_leaf_accuracy_ItI_Helmholtz_like: boundary_u shape: %s",
         boundary_u.shape,

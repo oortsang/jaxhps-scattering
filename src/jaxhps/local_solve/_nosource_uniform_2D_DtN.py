@@ -10,7 +10,7 @@ def nosource_local_solve_stage_uniform_2D_DtN(
     pde_problem: PDEProblem,
     device: jax.Device = jax.devices()[0],
     host_device: jax.Device = jax.devices("cpu")[0],
-) -> Tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+) -> Tuple[jax.Array, jax.Array, jax.Array]:
     """
     This function performs the local solve stage for 2D problems with a uniform quadtree, creating DtN matrices.
 
@@ -26,9 +26,11 @@ def nosource_local_solve_stage_uniform_2D_DtN(
     Returns
     -------
     Y : jax.Array
-        Solution operators mapping from Impedance boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^2, 4q)
+        Solution operators mapping from Dirichlet boundary data to homogeneous solutions on the leaf interiors. Has shape (n_leaves, p^2, 4q)
     T : jax.Array
-        Impedance-to-Impedance matrices for each leaf. Has shape (n_leaves, 4q, 4q)
+        Dirichlet-to-Neumann matrices for each leaf. Has shape (n_leaves, 4q, 4q)
+    Phi : jax.Array
+        Particular solution operators mapping from the source term evaluated on the interior Cheby nodes to the particular solution on all of the Cheby nodes. Has shape (n_leaves, p^2, (p-1)^2).
     """
 
     # Gather the coefficients into a single array.
@@ -61,14 +63,14 @@ def nosource_local_solve_stage_uniform_2D_DtN(
         coeffs_gathered, which_coeffs, diff_ops
     )
 
-    Y_arr, T_arr = vmapped_get_DtN_nosource(
+    Y_arr, T_arr, Phi_arr = vmapped_get_DtN_nosource(
         all_diff_operators, pde_problem.Q, pde_problem.P
     )
 
     T_arr_host = jax.device_put(T_arr, host_device)
     Y_arr_host = jax.device_put(Y_arr, host_device)
-
-    return Y_arr_host, T_arr_host
+    Phi_arr_host = jax.device_put(Phi_arr, host_device)
+    return Y_arr_host, T_arr_host, Phi_arr_host
 
 
 @jax.jit
@@ -109,11 +111,11 @@ def get_DtN_nosource(
     Y = L_2 @ P
     T = Q @ Y
 
-    return Y, T
+    return Y, T, A_ii_inv
 
 
 vmapped_get_DtN_nosource = jax.vmap(
     get_DtN_nosource,
     in_axes=(0, None, None),
-    out_axes=(0, 0),
+    out_axes=(0, 0, 0),
 )

@@ -60,11 +60,17 @@ def down_pass_uniform_2D_DtN(
 
     n_levels = len(S_lst)
 
-    # Reshape to (1, n_bdry)
-    if len(boundary_data.shape) == 1:
+    bool_multi_source = len(g_tilde_lst) and g_tilde_lst[0].ndim == 3
+    if bool_multi_source and boundary_data.ndim == 1:
+        raise ValueError(
+            "For multi-source downward pass, need to specify boundary data for each source."
+        )
+
+    # Reshape to (1, n_bdry, nsrc)
+    if (bool_multi_source and boundary_data.ndim == 2) or (
+        not bool_multi_source and boundary_data.ndim == 1
+    ):
         bdry_data = jnp.expand_dims(boundary_data, axis=0)
-    else:
-        bdry_data = boundary_data
 
     # propagate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
@@ -73,16 +79,24 @@ def down_pass_uniform_2D_DtN(
 
         bdry_data = vmapped_propagate_down_2D_DtN(S_arr, bdry_data, g_tilde)
         # Reshape from (-1, 4, n_bdry) to (-1, n_bdry)
-        n_bdry = bdry_data.shape[-1]
-        bdry_data = bdry_data.reshape((-1, n_bdry))
+        n_bdry = bdry_data.shape[2]
+        if bool_multi_source:
+            nsrc = bdry_data.shape[-1]
+            bdry_data = bdry_data.reshape((-1, n_bdry, nsrc))
+        else:
+            bdry_data = bdry_data.reshape((-1, n_bdry))
 
-    root_dirichlet_data = bdry_data
+    root_incoming_data = bdry_data
 
     if Y_arr is None:
-        return root_dirichlet_data
+        return root_incoming_data
 
-    # Batched matrix multiplication to compute homog solution on all leaves
-    leaf_homog_solns = jnp.einsum("ijk,ik->ij", Y_arr, root_dirichlet_data)
+    if bool_multi_source:
+        leaf_homog_solns = jnp.einsum(
+            "ijk,ikl->ijl", Y_arr, root_incoming_data
+        )
+    else:
+        leaf_homog_solns = jnp.einsum("ijk,ik->ij", Y_arr, root_incoming_data)
     leaf_solns = leaf_homog_solns + v_arr
     leaf_solns = jax.device_put(leaf_solns, host_device)
     return leaf_solns
