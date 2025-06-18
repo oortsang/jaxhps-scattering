@@ -30,9 +30,9 @@ def local_solve_stage_uniform_2D_DtN(
     T : jax.Array
         Dirichlet-to-Neumann matrices for each leaf. Has shape (n_leaves, 4q, 4q)
     v : jax.Array
-        Leaf-level particular solutions. Has shape (n_leaves, p^2)
+        Leaf-level particular solutions. Has shape (n_leaves, p^2) or (n_leaves, p**2, n_src) if multi-source.
     h : jax.Array
-        Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 4q)
+        Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 4q) or (n_leaves, 4q, n_src) if multi-source.
     """
     logging.debug("local_solve_stage_uniform_2D_DtN: started")
 

@@ -52,6 +52,51 @@ class Test_merge_stage_uniform_3D_DtN:
             assert S_arr_lst[i].shape[-2] == g_tilde_lst[i].shape[-1]
         jax.clear_caches()
 
+    def test_1(self, caplog) -> None:
+        # Make sure it runs with correct inputs and outputs.
+        caplog.set_level(logging.DEBUG)
+        p = 6
+        q = 4
+        l = 1
+        nsrc = 3
+        root = DiscretizationNode3D(
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=0.0,
+            zmax=1.0,
+            depth=0,
+        )
+        n_leaves = 8**l
+        domain = Domain(p=p, q=q, root=root, L=l)
+
+        d_xx_coeffs = np.random.normal(size=(n_leaves, p**3))
+        source_term = np.random.normal(size=(n_leaves, p**3, nsrc))
+
+        t = PDEProblem(
+            domain=domain, D_xx_coefficients=d_xx_coeffs, source=source_term
+        )
+
+        Y_arr, T_arr, v, h = local_solve_stage_uniform_3D_DtN(t)
+        assert Y_arr.shape == (n_leaves, p**3, 6 * q**2)
+
+        S_arr_lst, g_tilde_lst = merge_stage_uniform_3D_DtN(
+            T_arr=T_arr, h_arr=h, l=l
+        )
+        assert len(S_arr_lst) == l
+        assert len(g_tilde_lst) == l
+        for i in range(l):
+            logging.debug(
+                "S_arr_lst[%d].shape = %s, g_tilde_lst[%d].shape = %s",
+                i,
+                S_arr_lst[i].shape,
+                i,
+                g_tilde_lst[i].shape,
+            )
+            assert S_arr_lst[i].shape[-2] == g_tilde_lst[i].shape[0]
+        jax.clear_caches()
+
 
 class Test__uniform_oct_merge_DtN:
     def test_0(self):

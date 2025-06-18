@@ -100,9 +100,16 @@ def local_solve_stage_adaptive_3D_DtN(
             pde_problem.domain.q,
         )
     )
+    # Add a dummy source dimension
+    source_term = jnp.expand_dims(source_term, axis=-1)
+
     Y_arr, T_arr, v, h = vmapped_get_DtN_adaptive(
         source_term, all_diff_operators, Q_Ds, pde_problem.P
     )
+
+    # Remove the dummy source dimension from v and h
+    v = v[..., 0]
+    h = h[..., 0]
 
     # Return data to the requested device
     T_arr_host = jax.device_put(T_arr, host_device)

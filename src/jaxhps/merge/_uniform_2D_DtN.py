@@ -87,7 +87,6 @@ def merge_stage_uniform_2D_DtN(
 
     # Working on merging the merge pairs at level i
     for i in range(l - 1):
-        logging.debug("_uniform_merge_stage_2D_DtN: i: %i", i)
         (
             S_arr,
             T_arr_new,
@@ -133,10 +132,10 @@ def merge_stage_uniform_2D_DtN(
         h_arr[0, 3],
     )
 
-    if not bool_multi_source:
-        # Remove source dimension from g_tilde_last and h_last
-        g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
-        h_last = jnp.squeeze(h_last, axis=-1)
+    # if not bool_multi_source and l > 1:
+    #     # Remove source dimension from g_tilde_last and h_last
+    #     g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
+    #     h_last = jnp.squeeze(h_last, axis=-1)
 
     if subtree_recomp:
         # In this branch, we only return T_last and h_last
