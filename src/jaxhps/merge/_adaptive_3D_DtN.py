@@ -87,7 +87,7 @@ def merge_stage_adaptive_3D_DtN(
     # We only want to use the DtN arrays that are at the
     # lowest level of the tree
     T_lowest_level = T_arr[lowest_level_bools]
-    h_lowest_level = h_arr[lowest_level_bools]
+    h_lowest_level = h_arr[lowest_level_bools, ..., None]
 
     # Move these arrays to device
     T_lowest_level = jax.device_put(T_lowest_level, device)
@@ -99,8 +99,10 @@ def merge_stage_adaptive_3D_DtN(
     )
     S = jax.device_put(S, host_device)
     T = jax.device_put(T, host_device)
-    h = jax.device_put(h, host_device)
-    g_tilde = jax.device_put(g_tilde, host_device)
+    h = jax.device_put(h, host_device)[..., 0]  # Remove the last dimension
+    g_tilde = jax.device_put(g_tilde, host_device)[
+        ..., 0
+    ]  # Remove the last dimension
 
     # Assign the outputs to the nodes at the penuultimate level
     parents_of_leaves = get_nodes_at_level(root, max_depth - 1)

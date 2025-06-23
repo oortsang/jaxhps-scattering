@@ -102,11 +102,19 @@ def merge_stage_uniform_2D_DtN(
         ) = vmapped_uniform_quad_merge_DtN(T_arr, h_arr)
         T_arr.delete()
         h_arr.delete()
+        logging.debug(
+            "merge_stage_uniform_2D_DtN: Merging level %d. S_arr shape: %s, T_arr_new shape: %s, h_arr_new shape: %s, g_tilde_arr shape: %s",
+            i,
+            S_arr.shape,
+            T_arr_new.shape,
+            h_arr_new.shape,
+            g_tilde_arr.shape,
+        )
         # Only do these copies and GPU -> CPU moves if necessary.
         # Necessary when we are not doing subtree recomp and we want
         # the data on the CPU.
 
-        if not bool_multi_source:
+        if not bool_multi_source and g_tilde_arr.ndim == 3:
             # Remove source dimension from g_tilde_arr
             g_tilde_arr = jnp.squeeze(g_tilde_arr, axis=-1)
 
@@ -364,7 +372,11 @@ def vmapped_uniform_quad_merge_DtN(
     )
     n_merges, n_int, n_ext = S.shape
     T_out = T.reshape((n_merges // 4, 4, n_ext, n_ext))
-    h_out = h_out.reshape((n_merges // 4, 4, n_ext))
+    if h_in.ndim == 2:
+        h_out = h_out.reshape((n_merges // 4, 4, n_ext))
+    else:
+        nsrc = h_in.shape[-1]
+        h_out = h_out.reshape((n_merges // 4, 4, n_ext, nsrc))
 
     return (S, T_out, h_out, g_tilde_out)
 

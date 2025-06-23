@@ -203,9 +203,12 @@ def vmapped_uniform_oct_merge_DtN(
     # print("vmapped_uniform_oct_merge: T_in shape: ", T_in.shape)
     # print("vmapped_uniform_oct_merge: v_prime_in shape: ", v_prime_in.shape)
     n_leaves, a, b = T_in.shape
-    nsrc = v_prime_in.shape[-1]
     T_in = T_in.reshape((-1, 8, a, b))
-    v_prime_in = v_prime_in.reshape((-1, 8, a, nsrc))
+    if v_prime_in.ndim == 2:
+        v_prime_in = v_prime_in.reshape((-1, 8, a))
+    else:
+        nsrc = v_prime_in.shape[-1]
+        v_prime_in = v_prime_in.reshape((-1, 8, a, nsrc))
     # print("vmapped_uniform_oct_merge: T_in shape: ", T_in.shape)
     # print("vmapped_uniform_oct_merge: v_prime_in shape: ", v_prime_in.shape)
     S, T_out, v_prime_ext_out, v_int = _vmapped_uniform_oct_merge_DtN(
