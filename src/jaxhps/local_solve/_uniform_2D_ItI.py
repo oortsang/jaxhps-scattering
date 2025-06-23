@@ -48,6 +48,9 @@ def local_solve_stage_uniform_2D_ItI(
         D_y_coeffs=pde_problem.D_y_coefficients,
         I_coeffs=pde_problem.I_coefficients,
     )
+    logging.debug(
+        "local_solve_stage_uniform_2D_ItI: which_coeffs: %s", which_coeffs
+    )
     source_term = pde_problem.source
     source_term = jax.device_put(
         source_term,

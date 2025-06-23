@@ -60,7 +60,12 @@ class Test_up_pass_uniform_2D_ItI:
             eta=eta,
         )
 
-        Y_arr, T_arr = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=t)
+        Y_arr, T_arr, Phi_arr = nosource_local_solve_stage_uniform_2D_ItI(
+            pde_problem=t
+        )
+        t.Y = Y_arr
+        # t.T = T_arr
+        t.Phi = Phi_arr
 
         assert Y_arr.shape == (n_leaves, p**2, 4 * q)
         # n_leaves, n_bdry, _ = DtN_arr.shape
@@ -120,7 +125,12 @@ class Test_up_pass_uniform_2D_ItI:
             eta=eta,
         )
 
-        Y_arr, T_arr = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=t)
+        Y_arr, T_arr, Phi_arr = nosource_local_solve_stage_uniform_2D_ItI(
+            pde_problem=t
+        )
+
+        t.Y = Y_arr
+        t.Phi = Phi_arr
 
         assert Y_arr.shape == (n_leaves, p**2, 4 * q)
         # n_leaves, n_bdry, _ = DtN_arr.shape
@@ -180,7 +190,13 @@ class Test_up_pass_uniform_2D_ItI:
             eta=eta,
         )
 
-        Y_arr, T_arr = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=t)
+        Y_arr, T_arr, Phi_arr = nosource_local_solve_stage_uniform_2D_ItI(
+            pde_problem=t
+        )
+
+        t.Y = Y_arr
+        # t.T = T_arr
+        t.Phi = Phi_arr
 
         assert Y_arr.shape == (n_leaves, p**2, 4 * q)
         # n_leaves, n_bdry, _ = DtN_arr.shape
@@ -239,7 +255,12 @@ class Test_up_pass_uniform_2D_ItI:
             eta=eta,
         )
 
-        Y_arr, T_arr = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=t)
+        Y_arr, T_arr, Phi_arr = nosource_local_solve_stage_uniform_2D_ItI(
+            pde_problem=t
+        )
+
+        t.Y = Y_arr
+        t.Phi = Phi_arr
 
         assert Y_arr.shape == (n_leaves, p**2, 4 * q)
         # n_leaves, n_bdry, _ = DtN_arr.shape

@@ -44,6 +44,42 @@ class Test_local_solve_stage_uniform_3D_DtN:
         assert h.shape == (n_leaves, n_gauss_bdry)
         jax.clear_caches()
 
+    def test_1(self) -> None:
+        """Tests the _local_solve_stage_3D function returns without error and returns the correct shape
+        when using multiple source terms."""
+        p = 6
+        q = 4
+        l = 1
+        nsrc = 3
+        root = DiscretizationNode3D(
+            xmin=0.0,
+            xmax=1.0,
+            ymin=0.0,
+            ymax=1.0,
+            zmin=0.0,
+            zmax=1.0,
+            depth=0,
+        )
+        n_leaves = 8**l
+        domain = Domain(p=p, q=q, root=root, L=l)
+
+        d_xx_coeffs = np.random.normal(size=(n_leaves, p**3))
+        source_term = np.random.normal(size=(n_leaves, p**3, nsrc))
+
+        t = PDEProblem(
+            domain=domain, D_xx_coefficients=d_xx_coeffs, source=source_term
+        )
+
+        Y_arr, T_arr, v, h = local_solve_stage_uniform_3D_DtN(t)
+
+        n_gauss_bdry = 6 * q**2
+
+        assert Y_arr.shape == (n_leaves, p**3, n_gauss_bdry)
+        assert T_arr.shape == (n_leaves, n_gauss_bdry, n_gauss_bdry)
+        assert v.shape == (n_leaves, p**3, nsrc)
+        assert h.shape == (n_leaves, n_gauss_bdry, nsrc)
+        jax.clear_caches()
+
 
 class Test__gather_coeffs_3D:
     def test_0(self) -> None:

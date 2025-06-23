@@ -38,9 +38,9 @@ def local_solve_stage_uniform_3D_DtN(
     T : jax.Array
         Dirichlet-to-Neumann matrices for each leaf. Has shape (n_leaves, 6q^2, 6q^2)
     v : jax.Array
-        Leaf-level particular solutions. Has shape (n_leaves, p^3)
+        Leaf-level particular solutions. Has shape (n_leaves, p^3) or (n_leaves, p^3, n_src) if multi-source.
     h : jax.Array
-        Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 6q^2)
+        Outgoing boundary data. This is the outward-pointing normal derivative of the particular solution. Has shape (n_leaves, 6q^2) or (n_leaves, 6q^2, n_src) if multi-source.
     """
     coeffs_gathered, which_coeffs = _gather_coeffs_3D(
         D_xx_coeffs=pde_problem.D_xx_coefficients,
@@ -55,6 +55,7 @@ def local_solve_stage_uniform_3D_DtN(
         I_coeffs=pde_problem.I_coefficients,
     )
     source_term = pde_problem.source
+    bool_multi_source = source_term.ndim == 3
     source_term = jax.device_put(source_term, device)
 
     # stack the precomputed differential operators into a single array
@@ -78,9 +79,16 @@ def local_solve_stage_uniform_3D_DtN(
     diff_operators = vmapped_assemble_diff_operator(
         coeffs_gathered, which_coeffs, diff_ops
     )
+    if not bool_multi_source:
+        source_term = jnp.expand_dims(source_term, axis=-1)
     Y_arr, T_arr, v, h = vmapped_get_DtN_uniform(
         source_term, diff_operators, pde_problem.Q, pde_problem.P
     )
+
+    if not bool_multi_source:
+        # Remove the last dimension if it was added
+        h = h[..., 0]
+        v = v[..., 0]
 
     # Return data to the requested device
     T_arr_host = jax.device_put(T_arr, host_device)

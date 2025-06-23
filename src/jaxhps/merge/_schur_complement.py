@@ -101,6 +101,9 @@ def _invert_D_ItI(D_12: jax.Array, D_21: jax.Array) -> jax.Array:
     n, _ = D_12.shape
     m, _ = D_21.shape
     W = jnp.eye(n) - D_12 @ D_21
+
+    # Check the conditioning of W and report it with Jax's debug utility
+    # jax.debug.print("Conditioning of W: {cond}", cond=jnp.linalg.cond(W))
     W_inv = jnp.linalg.inv(W)
 
     D_inv = jnp.zeros((n + m, n + m), dtype=D_12.dtype)

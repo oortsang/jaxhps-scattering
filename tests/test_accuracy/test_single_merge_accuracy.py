@@ -88,8 +88,20 @@ def check_merge_accuracy_2D_DtN_uniform(
         T, h, domain.L - 1, return_T=True
     )
 
-    # Do the down pass
+    # Log shapes of g_tilde_lst
+    logging.debug(
+        "check_merge_accuracy_2D_DtN_uniform: g_tilde_lst shapes = %s",
+        [g_tilde.shape for g_tilde in g_tilde_lst],
+    )
+
+    logging.debug("check_merge_accuracy_2D_DtN_uniform: v shape = %s", v.shape)
     bdry_data = test_case[K_DIRICHLET](domain.boundary_points)
+
+    logging.debug(
+        "check_merge_accuracy_2D_DtN_uniform: bdry_data shape = %s",
+        bdry_data.shape,
+    )
+    # Do the down pass
     computed_soln = down_pass_uniform_2D_DtN(
         bdry_data, S_lst, g_tilde_lst, Y, v
     )

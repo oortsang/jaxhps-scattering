@@ -68,11 +68,24 @@ def merge_stage_uniform_2D_DtN(
     T_arr = jax.device_put(T_arr, device)
     h_arr = jax.device_put(h_arr, device)
 
+    bool_multi_source = h_arr.ndim == 3
+
+    logging.debug(
+        "merge_stage_uniform_2D_DtN: T_arr shape: %s, h_arr shape: %s, l: %d",
+        T_arr.shape,
+        h_arr.shape,
+        l,
+    )
+
     # Reshape the arrays into groups of 4 for merging if necessary
     if len(T_arr.shape) < 4:
         n_leaves, n_ext, _ = T_arr.shape
         T_arr = T_arr.reshape(n_leaves // 4, 4, n_ext, n_ext)
-        h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext)
+        if bool_multi_source:
+            n_src = h_arr.shape[-1]
+            h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext, n_src)
+        else:
+            h_arr = h_arr.reshape(n_leaves // 4, 4, n_ext, 1)
 
     if not subtree_recomp:
         # Start lists to store S and g_tilde arrays
@@ -81,7 +94,6 @@ def merge_stage_uniform_2D_DtN(
 
     # Working on merging the merge pairs at level i
     for i in range(l - 1):
-        logging.debug("_uniform_merge_stage_2D_DtN: i: %i", i)
         (
             S_arr,
             T_arr_new,
@@ -90,9 +102,22 @@ def merge_stage_uniform_2D_DtN(
         ) = vmapped_uniform_quad_merge_DtN(T_arr, h_arr)
         T_arr.delete()
         h_arr.delete()
+        logging.debug(
+            "merge_stage_uniform_2D_DtN: Merging level %d. S_arr shape: %s, T_arr_new shape: %s, h_arr_new shape: %s, g_tilde_arr shape: %s",
+            i,
+            S_arr.shape,
+            T_arr_new.shape,
+            h_arr_new.shape,
+            g_tilde_arr.shape,
+        )
         # Only do these copies and GPU -> CPU moves if necessary.
         # Necessary when we are not doing subtree recomp and we want
         # the data on the CPU.
+
+        if not bool_multi_source and g_tilde_arr.ndim == 3:
+            # Remove source dimension from g_tilde_arr
+            g_tilde_arr = jnp.squeeze(g_tilde_arr, axis=-1)
+
         if host_device != device:
             if not subtree_recomp:
                 logging.debug("_merge_stage_2D: Moving data to CPU")
@@ -111,6 +136,11 @@ def merge_stage_uniform_2D_DtN(
         T_arr = T_arr_new
         h_arr = h_arr_new
 
+    logging.debug(
+        "merge_stage_uniform_2D_DtN: Merging final nodes. h_arr shape: %s",
+        h_arr.shape,
+    )
+
     S_last, T_last, h_last, g_tilde_last = _uniform_quad_merge_DtN(
         T_arr[0, 0],
         T_arr[0, 1],
@@ -121,6 +151,25 @@ def merge_stage_uniform_2D_DtN(
         h_arr[0, 2],
         h_arr[0, 3],
     )
+
+    logging.debug(
+        "merge_stage_uniform_2D_DtN: g_tilde_last shape: %s",
+        g_tilde_last.shape,
+    )
+    logging.debug("merge_stage_uniform_2D_DtN: h_last shape: %s", h_last.shape)
+
+    if not bool_multi_source:
+        # Remove source dimension from g_tilde_last and h_last
+        # Need to check whether the last dimension is 1
+        if g_tilde_last.ndim > 1 and g_tilde_last.shape[-1] == 1:
+            # Remove the last dimension
+            # logging.debug(
+            #     "merge_stage_uniform_2D_DtN: Removing last dimension from g_tilde_last"
+            # )
+            g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
+            h_last = jnp.squeeze(h_last, axis=-1)
+        # g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
+        # h_last = jnp.squeeze(h_last, axis=-1)
 
     if subtree_recomp:
         # In this branch, we only return T_last and h_last
@@ -323,7 +372,11 @@ def vmapped_uniform_quad_merge_DtN(
     )
     n_merges, n_int, n_ext = S.shape
     T_out = T.reshape((n_merges // 4, 4, n_ext, n_ext))
-    h_out = h_out.reshape((n_merges // 4, 4, n_ext))
+    if h_in.ndim == 2:
+        h_out = h_out.reshape((n_merges // 4, 4, n_ext))
+    else:
+        nsrc = h_in.shape[-1]
+        h_out = h_out.reshape((n_merges // 4, 4, n_ext, nsrc))
 
     return (S, T_out, h_out, g_tilde_out)
 

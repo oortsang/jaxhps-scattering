@@ -170,10 +170,10 @@ def generate_adaptive_mesh_level_restriction_2D(
         new_refinement_check_queue = []
         for i, node in enumerate(refinement_check_queue):
             if not checks_bool[i]:
-                logging.debug(
-                    "generate_adaptive_mesh_level_restriction_2D: Refining node %s",
-                    node,
-                )
+                # logging.debug(
+                #     "generate_adaptive_mesh_level_restriction_2D: Refining node %s",
+                #     node,
+                # )
                 add_four_children(node, root=root, q=q)
                 new_refinement_check_queue.extend(node.children)
 

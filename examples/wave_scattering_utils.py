@@ -386,7 +386,7 @@ def solve_scattering_problem(
         )
     else:
         uscat_soln = down_pass_uniform_2D_ItI(
-            boundary_imp_data=incoming_imp_data,
+            boundary_data=incoming_imp_data,
             S_lst=S_arr_lst,
             g_tilde_lst=g_tilde_lst,
             Y_arr=Y_arr,

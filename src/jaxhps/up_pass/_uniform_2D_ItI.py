@@ -2,7 +2,6 @@ from typing import List, Tuple
 import jax
 import jax.numpy as jnp
 from .._pdeproblem import PDEProblem
-from ..local_solve._uniform_2D_ItI import local_solve_stage_uniform_2D_ItI
 import logging
 
 
@@ -58,17 +57,41 @@ def up_pass_uniform_2D_ItI(
         )
 
     # Re-do a full local solve.
-    pde_problem.source = source
+    # pde_problem.source = source
 
     # Get the saved D_inv_lst and BD_inv_lst
     D_inv_lst = pde_problem.D_inv_lst
     BD_inv_lst = pde_problem.BD_inv_lst
 
-    Y, T, v, h_in = local_solve_stage_uniform_2D_ItI(
-        pde_problem=pde_problem,
-        device=device,
-        host_device=host_device,
+    n_ext = 4 * pde_problem.domain.p - 4
+    source_int = source[:, n_ext:]
+    logging.debug(
+        "up_pass_uniform_2D_ItI: pde_problem.Phi shape = %s",
+        pde_problem.Phi.shape,
     )
+    logging.debug(
+        "up_pass_uniform_2D_ItI: source shape = %s", source_int.shape
+    )
+    # Get the particular solution. It's an einsum of the source term with
+    # the Phi array stored in the PDEProblem.
+    v = jnp.einsum("ijk,ikl->ijl", pde_problem.Phi, source_int)
+    logging.debug(
+        "up_pass_uniform_2D_ItI: after local solve, v shape = %s", v.shape
+    )
+    logging.debug(
+        "up_pass_uniform_2D_ItI: QH shape = %s",
+        pde_problem.QH.shape,
+    )
+
+    # Get leaf-level h_in array, which is an einsum between the particular soln and
+    # the QH array stored in the PDEProblem.
+    h_in = jnp.einsum("ij,kjl->kil", pde_problem.QH, v)
+
+    # Y, T, v, h_in = local_solve_stage_uniform_2D_ItI(
+    #     pde_problem=pde_problem,
+    #     device=device,
+    #     host_device=host_device,
+    # )
     logging.debug(
         "up_pass_uniform_2D_ItI: after local solve, h_in shape = %s",
         h_in.shape,

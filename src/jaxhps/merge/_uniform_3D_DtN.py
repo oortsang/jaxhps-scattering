@@ -2,7 +2,7 @@ from typing import Tuple, List
 
 import jax
 import jax.numpy as jnp
-
+import logging
 
 from ._schur_complement import (
     _oct_merge_from_submatrices,
@@ -69,6 +69,13 @@ def merge_stage_uniform_3D_DtN(
     q = int(jnp.sqrt(T_arr.shape[-1] // 6))
 
     for i in range(l - 1, 0, -1):
+        logging.debug("merge_stage_uniform_3D_DtN: i = %d", i)
+        logging.debug(
+            "merge_stage_uniform_3D_DtN: T_arr shape: %s", T_arr.shape
+        )
+        logging.debug(
+            "merge_stage_uniform_3D_DtN: h_arr shape: %s", h_arr.shape
+        )
         S_arr, T_arr, h_arr, g_tilde_arr = vmapped_uniform_oct_merge_DtN(
             jnp.arange(q), T_arr, h_arr
         )
@@ -197,7 +204,11 @@ def vmapped_uniform_oct_merge_DtN(
     # print("vmapped_uniform_oct_merge: v_prime_in shape: ", v_prime_in.shape)
     n_leaves, a, b = T_in.shape
     T_in = T_in.reshape((-1, 8, a, b))
-    v_prime_in = v_prime_in.reshape((-1, 8, a))
+    if v_prime_in.ndim == 2:
+        v_prime_in = v_prime_in.reshape((-1, 8, a))
+    else:
+        nsrc = v_prime_in.shape[-1]
+        v_prime_in = v_prime_in.reshape((-1, 8, a, nsrc))
     # print("vmapped_uniform_oct_merge: T_in shape: ", T_in.shape)
     # print("vmapped_uniform_oct_merge: v_prime_in shape: ", v_prime_in.shape)
     S, T_out, v_prime_ext_out, v_int = _vmapped_uniform_oct_merge_DtN(

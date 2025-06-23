@@ -25,7 +25,7 @@ def down_pass_uniform_3D_DtN(
     ----------
 
     boundary_data : jax.Array
-        An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,)
+        An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,) or (n_bdry, nsrc) for multi-source problems.
 
     S_lst : List[jax.Array]
         A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
@@ -67,10 +67,20 @@ def down_pass_uniform_3D_DtN(
 
     n_levels = len(S_lst)
 
-    if len(boundary_data.shape) == 1:
+    bool_multi_source = len(g_tilde_lst) > 1 and g_tilde_lst[0].ndim == 3
+    if bool_multi_source and boundary_data.ndim == 1:
+        raise ValueError(
+            "For multi-source downward pass, need to specify boundary data for each source."
+        )
+    # Reshape to (1, n_bdry, nsrc)
+    if (bool_multi_source and boundary_data.ndim == 2) or (
+        not bool_multi_source and boundary_data.ndim == 1
+    ):
         bdry_data = jnp.expand_dims(boundary_data, axis=0)
-    else:
-        bdry_data = boundary_data
+
+    # if not bool_multi_source:
+    #     # Reshape to (1, n_bdry)
+    #     bdry_data = jnp.expand_dims(bdry_data, axis=-1)
 
     # Change the last entry of the S_lst and v_int_lst to have batch dimension 1
     S_lst[-1] = jnp.expand_dims(S_lst[-1], axis=0)
@@ -81,23 +91,23 @@ def down_pass_uniform_3D_DtN(
         S_arr = S_lst[level]
         g_tilde = g_tilde_lst[level]
 
-        logging.debug("down_pass_uniform_3D_DtN: levele: %s", level)
-        logging.debug(
-            "down_pass_uniform_3D_DtN: bdry_data shape: %s", bdry_data.shape
-        )
-        logging.debug("down_pass_uniform_3D_DtN: S_arr shape: %s", S_arr.shape)
-        logging.debug(
-            "down_pass_uniform_3D_DtN: g_tilde shape: %s", g_tilde.shape
-        )
-
         bdry_data = vmapped_propogate_down_oct_DtN(S_arr, bdry_data, g_tilde)
         # Reshape from (-1, 4, n_bdry) to (-1, n_bdry)
-        n_bdry = bdry_data.shape[-1]
-        bdry_data = bdry_data.reshape((-1, n_bdry))
+        n_bdry = bdry_data.shape[2]
+        if bool_multi_source:
+            nsrc = bdry_data.shape[-1]
+            bdry_data = bdry_data.reshape((-1, n_bdry, nsrc))
+        else:
+            bdry_data = bdry_data.reshape((-1, n_bdry))
 
     root_dirichlet_data = bdry_data
     # Batched matrix multiplication to compute homog solution on all leaves
-    leaf_homog_solns = jnp.einsum("ijk,ik->ij", Y_arr, root_dirichlet_data)
+    if bool_multi_source:
+        leaf_homog_solns = jnp.einsum(
+            "ijk,ikl->ijl", Y_arr, root_dirichlet_data
+        )
+    else:
+        leaf_homog_solns = jnp.einsum("ijk,ik->ij", Y_arr, root_dirichlet_data)
     leaf_solns = leaf_homog_solns + v_arr
     leaf_solns = jax.device_put(leaf_solns, host_device)
     return leaf_solns

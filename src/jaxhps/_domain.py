@@ -24,7 +24,10 @@ from ._interpolation_methods import (
     interp_to_hps_3D,
 )
 from ._adaptive_discretization_3D import (
-    generate_adaptive_mesh_level_restriction,
+    generate_adaptive_mesh_level_restriction as generate_adaptive_mesh_level_restriction_3D,
+)
+from ._adaptive_discretization_2D import (
+    generate_adaptive_mesh_level_restriction_2D,
 )
 import jax
 import jax.numpy as jnp
@@ -52,9 +55,6 @@ class Domain:
         if self.L is not None:
             self.bool_uniform = True
 
-            #: The number of leaves in the discretization tree.
-            self.n_leaves: int = 4**L
-
             # Depending on whether root is a DiscretizationNode2D or
             # DiscretizationNode3D, we compute the grid points differently
             if self.bool_2D:
@@ -66,6 +66,8 @@ class Domain:
                 self.boundary_points: jax.Array = (
                     compute_boundary_Gauss_points_uniform_2D(root, L, q)
                 )
+                #: The number of leaves in the discretization tree.
+                self.n_leaves: int = 4**L
             else:
                 self.interior_points = (
                     compute_interior_Chebyshev_points_uniform_3D(root, L, p)
@@ -73,6 +75,7 @@ class Domain:
                 self.boundary_points = (
                     compute_boundary_Gauss_points_uniform_3D(root, L, q)
                 )
+                self.n_leaves = 8**L
 
         else:
             # If L is None, we're using an adaptive discretization
@@ -379,7 +382,7 @@ class Domain:
         will adaptively refine the HPS grid until reaching a specified tolerance ``tol``. Multiple
         functions for adaptive refinement can be specified in a list.
 
-        The tolerance is enforced in the :math:`\ell_\infty` norm by default, but can also be enforced in :math:`\\ell_2`.
+        The tolerance is enforced in the :math:`\\ell_\infty` norm by default, but can also be enforced in :math:`\\ell_2`.
 
         Args:
             p (int): Polynomial order for Chebyshev points.
@@ -405,19 +408,27 @@ class Domain:
 
         bool_2D = isinstance(root, DiscretizationNode2D)
         if bool_2D:
-            raise NotImplementedError(
-                "Adaptive meshing only implemented for 3D."
-            )
+            for i, func in enumerate(f):
+                generate_adaptive_mesh_level_restriction_2D(
+                    root=root,
+                    f_fn=func,
+                    tol=tol,
+                    p=p,
+                    q=q,
+                    restrict_bool=use_level_restriction,
+                    l2_norm=use_l_2_norm,
+                )
 
-        for i, func in enumerate(f):
-            generate_adaptive_mesh_level_restriction(
-                root=root,
-                f_fn=func,
-                tol=tol,
-                p=p,
-                q=q,
-                restrict_bool=use_level_restriction,
-                l2_norm=use_l_2_norm,
-            )
+        else:
+            for i, func in enumerate(f):
+                generate_adaptive_mesh_level_restriction_3D(
+                    root=root,
+                    f_fn=func,
+                    tol=tol,
+                    p=p,
+                    q=q,
+                    restrict_bool=use_level_restriction,
+                    l2_norm=use_l_2_norm,
+                )
 
         return cls(p=p, q=q, root=root)

@@ -40,7 +40,9 @@ class Test_nosource_merge_stage_uniform_2D_ItI:
             eta=eta,
         )
 
-        Y_arr, T_arr = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=t)
+        Y_arr, T_arr, _ = nosource_local_solve_stage_uniform_2D_ItI(
+            pde_problem=t
+        )
 
         assert Y_arr.shape == (n_leaves, p**2, 4 * q)
         # n_leaves, n_bdry, _ = DtN_arr.shape
