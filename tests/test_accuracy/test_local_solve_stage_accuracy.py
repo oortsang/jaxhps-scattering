@@ -68,7 +68,9 @@ def check_leaf_accuracy_nosource_ItI_uniform(
 
     ##############################################################
     # Solve the local problem
-    Y, T = nosource_local_solve_stage_uniform_2D_ItI(pde_problem=pde_problem)
+    Y, T, Phi = nosource_local_solve_stage_uniform_2D_ItI(
+        pde_problem=pde_problem
+    )
 
     ##############################################################
     # Check the accuracy of the ItI map

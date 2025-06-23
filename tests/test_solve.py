@@ -2,7 +2,6 @@ import logging
 import jax.numpy as jnp
 import jax
 import numpy as np
-import pytest
 from jaxhps._build_solver import build_solver
 from jaxhps._solve import solve
 from jaxhps._domain import Domain
@@ -442,7 +441,6 @@ class Test_solve:
         assert solns.shape == source.shape
         assert not isinstance(solns, jax.core.Tracer)
 
-    @pytest.mark.skip("TODO: get multi-source uniform 3D working.")
     def test_8(self, caplog) -> None:
         """Uniform 3D DtN with multiple sources"""
         caplog.set_level(logging.DEBUG)
@@ -468,6 +466,7 @@ class Test_solve:
         source = jnp.array(
             np.random.normal(size=(domain.n_leaves, domain.p**3, nsrc))
         )
+        logging.debug("Source shape: %s", source.shape)
 
         # Create a PDEProblem instance
         pde_problem = PDEProblem(
@@ -491,7 +490,7 @@ class Test_solve:
         )
 
         assert pde_problem.S_lst[-1].shape == (n_bdry // 2, n_bdry)
-        assert pde_problem.g_tilde_lst[-1].shape == (n_bdry // 2,)
+        assert pde_problem.g_tilde_lst[-1].shape == (n_bdry // 2, nsrc)
 
         # Solve the problem
         bdry_data = jnp.array(np.random.normal(size=(n_bdry, nsrc)))

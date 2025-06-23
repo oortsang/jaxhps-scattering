@@ -23,6 +23,9 @@ The high-wavenumber scattering example is a GPU implementation of the solver pre
 First, run the MATLAB script ``examples/driver_gen_SD_matrices.m``. This will generate and save exterior single and double-layer kernel matrices. These matrices are necessary to define a boundary integral equation for the scattering problem.
 Once the matrices are in place in place, we can run the script:
 
+.. note::
+   This script only runs and times the code once. To see the large effect of JAX's just-in-time compilation, you may want to edit the script to compute the solution multiple times.
+
 .. code:: bash
 
    python examples/wave_scattering_compute_reference_soln.py \

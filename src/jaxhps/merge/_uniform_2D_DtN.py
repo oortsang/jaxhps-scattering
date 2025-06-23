@@ -70,6 +70,13 @@ def merge_stage_uniform_2D_DtN(
 
     bool_multi_source = h_arr.ndim == 3
 
+    logging.debug(
+        "merge_stage_uniform_2D_DtN: T_arr shape: %s, h_arr shape: %s, l: %d",
+        T_arr.shape,
+        h_arr.shape,
+        l,
+    )
+
     # Reshape the arrays into groups of 4 for merging if necessary
     if len(T_arr.shape) < 4:
         n_leaves, n_ext, _ = T_arr.shape
@@ -121,6 +128,11 @@ def merge_stage_uniform_2D_DtN(
         T_arr = T_arr_new
         h_arr = h_arr_new
 
+    logging.debug(
+        "merge_stage_uniform_2D_DtN: Merging final nodes. h_arr shape: %s",
+        h_arr.shape,
+    )
+
     S_last, T_last, h_last, g_tilde_last = _uniform_quad_merge_DtN(
         T_arr[0, 0],
         T_arr[0, 1],
@@ -132,10 +144,24 @@ def merge_stage_uniform_2D_DtN(
         h_arr[0, 3],
     )
 
-    # if not bool_multi_source and l > 1:
-    #     # Remove source dimension from g_tilde_last and h_last
-    #     g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
-    #     h_last = jnp.squeeze(h_last, axis=-1)
+    logging.debug(
+        "merge_stage_uniform_2D_DtN: g_tilde_last shape: %s",
+        g_tilde_last.shape,
+    )
+    logging.debug("merge_stage_uniform_2D_DtN: h_last shape: %s", h_last.shape)
+
+    if not bool_multi_source:
+        # Remove source dimension from g_tilde_last and h_last
+        # Need to check whether the last dimension is 1
+        if g_tilde_last.ndim > 1 and g_tilde_last.shape[-1] == 1:
+            # Remove the last dimension
+            # logging.debug(
+            #     "merge_stage_uniform_2D_DtN: Removing last dimension from g_tilde_last"
+            # )
+            g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
+            h_last = jnp.squeeze(h_last, axis=-1)
+        # g_tilde_last = jnp.squeeze(g_tilde_last, axis=-1)
+        # h_last = jnp.squeeze(h_last, axis=-1)
 
     if subtree_recomp:
         # In this branch, we only return T_last and h_last

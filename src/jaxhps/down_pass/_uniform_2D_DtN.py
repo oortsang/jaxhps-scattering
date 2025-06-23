@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 from typing import List
+import logging
 
 
 def down_pass_uniform_2D_DtN(
@@ -23,7 +24,7 @@ def down_pass_uniform_2D_DtN(
     ----------
 
     boundary_data : jax.Array
-        An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,)
+        An array specifying Dirichlet data on the boundary of the domain.  Has shape (n_bdry,) or (n_bdry, nsrc) for multi-source problems.
 
     S_lst : List[jax.Array]
         A list of propagation operators. The first element of the list are the propagation operators for the nodes just above the leaves, and the last element of the list is the propagation operator for the root of the quadtree.
@@ -52,7 +53,7 @@ def down_pass_uniform_2D_DtN(
 
     """
 
-    boundary_data = jax.device_put(boundary_data, device)
+    bdry_data = jax.device_put(boundary_data, device)
     Y_arr = jax.device_put(Y_arr, device)
     v_arr = jax.device_put(v_arr, device)
     S_lst = [jax.device_put(S_arr, device) for S_arr in S_lst]
@@ -60,7 +61,12 @@ def down_pass_uniform_2D_DtN(
 
     n_levels = len(S_lst)
 
-    bool_multi_source = len(g_tilde_lst) and g_tilde_lst[0].ndim == 3
+    logging.debug(
+        "down_pass_uniform_2D_DtN: shapes of g_tilde_lst: %s",
+        [g_tilde.shape for g_tilde in g_tilde_lst],
+    )
+
+    bool_multi_source = g_tilde_lst[0].ndim == 3
     if bool_multi_source and boundary_data.ndim == 1:
         raise ValueError(
             "For multi-source downward pass, need to specify boundary data for each source."
@@ -70,12 +76,26 @@ def down_pass_uniform_2D_DtN(
     if (bool_multi_source and boundary_data.ndim == 2) or (
         not bool_multi_source and boundary_data.ndim == 1
     ):
-        bdry_data = jnp.expand_dims(boundary_data, axis=0)
+        bdry_data = jnp.expand_dims(bdry_data, axis=0)
+
+    # Corner case where the boundary data is shaped like (1, nbdry) and g_tilde_lst has a source dimension.
+    if bool_multi_source and bdry_data.ndim == 2:
+        # Reshape to (1, n_bdry, nsrc)
+        bdry_data = jnp.expand_dims(bdry_data, axis=-1)
 
     # propagate the Dirichlet data down the tree using the S maps.
     for level in range(n_levels - 1, -1, -1):
         S_arr = S_lst[level]
         g_tilde = g_tilde_lst[level]
+
+        # Print out the shapes of the arrays
+        logging.debug(
+            "down_pass_uniform_2D_DtN: level %d, S_arr shape: %s, g_tilde shape: %s, bdry_data shape: %s",
+            level,
+            S_arr.shape,
+            g_tilde.shape,
+            bdry_data.shape,
+        )
 
         bdry_data = vmapped_propagate_down_2D_DtN(S_arr, bdry_data, g_tilde)
         # Reshape from (-1, 4, n_bdry) to (-1, n_bdry)

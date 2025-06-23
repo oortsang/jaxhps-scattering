@@ -55,9 +55,6 @@ class Domain:
         if self.L is not None:
             self.bool_uniform = True
 
-            #: The number of leaves in the discretization tree.
-            self.n_leaves: int = 4**L
-
             # Depending on whether root is a DiscretizationNode2D or
             # DiscretizationNode3D, we compute the grid points differently
             if self.bool_2D:
@@ -69,6 +66,8 @@ class Domain:
                 self.boundary_points: jax.Array = (
                     compute_boundary_Gauss_points_uniform_2D(root, L, q)
                 )
+                #: The number of leaves in the discretization tree.
+                self.n_leaves: int = 4**L
             else:
                 self.interior_points = (
                     compute_interior_Chebyshev_points_uniform_3D(root, L, p)
@@ -76,6 +75,7 @@ class Domain:
                 self.boundary_points = (
                     compute_boundary_Gauss_points_uniform_3D(root, L, q)
                 )
+                self.n_leaves = 8**L
 
         else:
             # If L is None, we're using an adaptive discretization
@@ -382,7 +382,7 @@ class Domain:
         will adaptively refine the HPS grid until reaching a specified tolerance ``tol``. Multiple
         functions for adaptive refinement can be specified in a list.
 
-        The tolerance is enforced in the :math:`\ell_\infty` norm by default, but can also be enforced in :math:`\\ell_2`.
+        The tolerance is enforced in the :math:`\\ell_\infty` norm by default, but can also be enforced in :math:`\\ell_2`.
 
         Args:
             p (int): Polynomial order for Chebyshev points.

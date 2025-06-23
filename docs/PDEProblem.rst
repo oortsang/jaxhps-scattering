@@ -13,8 +13,8 @@ Note this is a Robin boundary condition with parameter :math:`\eta`. So, when us
 
 The ``PDEProblem`` class has two utility functions, :func:`jaxhps.PDEProblem.reset` and :func:`jaxhps.PDEProblem.update_coefficients`, which are meant to be used for cases such as inverse problems, where a sequence of PDE on the same domian must be solved iteratively, each time with slightly different coefficients. 
 
-.. note::
-   In the future, I would like to make the boundary condition more explicit when initializing the ``PDEProblem``.
+.. .. note::
+..    In the future, I would like to make the boundary condition more explicit when initializing the ``PDEProblem``.
 
 .. note::
    When initializing the ``PDEProblem`` class, the ``source`` argument is optional. This is because the :func:`jaxhps.build_solver` routine for 2D uniform problems is implemented to build the solver for an arbitrary source term. In this case, :func:`jaxhps.solve` performs an upward pass to compute a particular solution given a new source term, and then a downward pass to compute the homogeneous solution.
