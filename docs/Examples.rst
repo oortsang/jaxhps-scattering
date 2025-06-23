@@ -1,7 +1,7 @@
 Examples
 =============
 
-In the source repository, we include code for a few example uses of the HPS routines. The code for these examples is not distributed in the ``jaxhps`` package, but it is available `in the examples directory of the source repository <https://github.com/meliao/ha-hps/tree/main/examples>`_.
+In the source repository, we include code for a few example uses of the HPS routines. The code for these examples is not distributed in the ``jaxhps`` package, but it is available `in the examples directory of the source repository <https://github.com/meliao/jaxhps/tree/main/examples>`_.
 
 hp convergence on 2D problems with known solutions
 -----------------------------------------------------
