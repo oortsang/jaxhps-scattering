@@ -11,7 +11,7 @@ authors:
     given-names: Willett
 title: Hardware Acceleration for HPS Algorithms in Two and Three Dimensions
 version: 1.0.0
-url: https://github.com/meliao/ha-hps
+url: https://github.com/meliao/jaxhps
 date-released: '2025-03-28'
 preferred-citation:
   authors:

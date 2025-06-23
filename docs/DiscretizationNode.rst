@@ -10,7 +10,7 @@ For instance, in the :doc:`index`, we saw how to use the :class:`jaxhps.Domain` 
    import jaxhps
 
    # Not distributed in the jaxhps package,
-   # see https://github.com/meliao/ha-hps/blob/main/examples/poisson_boltzmann_utils.py
+   # see https://github.com/meliao/jaxhps/blob/main/examples/poisson_boltzmann_utils.py
    from poisson_boltzmann_utils import permittivity_2D
 
    # Create a root node for the domain

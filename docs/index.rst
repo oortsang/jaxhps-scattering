@@ -23,7 +23,7 @@ If you find this work useful, please cite our paper::
 
 Source Repository
 -------------------
-Available on GitHub at `<https://github.com/meliao/ha-hps>`_.
+Available on GitHub at `<https://github.com/meliao/jaxhps>`_.
 
 Installation
 ----------------
