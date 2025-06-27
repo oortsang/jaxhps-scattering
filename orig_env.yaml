@@ -1,0 +1,15 @@
+name: ha-hps
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - jinja2
+  - yaml
+  - pyyaml
+  - ipython
+  - matplotlib
+  - pytest
+  - notebook
+  - h5py
+  - jax
+prefix: /home/meliao/miniconda3/envs/ha-hps
