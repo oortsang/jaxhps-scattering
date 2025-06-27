@@ -40,7 +40,6 @@ def barycentric_lagrange_interpolation_matrix_1D(
         for k in range(p):
             if j != k:
                 w = w.at[j].mul(from_pts[j] - from_pts[k])
-
     # print("barycentric_lagrange_interpolation_matrix: w", w)
 
     # Normalizing factor is sum_j w_j / (x - x_j)
@@ -132,19 +131,28 @@ def barycentric_lagrange_interpolation_matrix_2D(
     # print("barycentric_lagrange_2d_interpolation_matrix: n, p", n, p)
 
     # Compute the inverses of the barycentric weights for x and y dimensions.
-    # w_x[j] = \prod_{k != j} (from_pts_x[j] - from_pts_x[k])
-    w_x = jnp.ones(n_x, dtype=jnp.float64)
-    w_y = jnp.ones(n_y, dtype=jnp.float64)
+    # # w_x[j] = \prod_{k != j} (from_pts_x[j] - from_pts_x[k])
+    # w_x = jnp.ones(n_x, dtype=jnp.float64)
+    # w_y = jnp.ones(n_y, dtype=jnp.float64)
+    # for j in range(n_x):
+    #     for k in range(n_x):
+    #         if j != k:
+    #             w_x = w_x.at[j].mul(from_pts_x[j] - from_pts_x[k])
+    # for j in range(n_y):
+    #     for k in range(n_y):
+    #         if j != k:
+    #             w_y = w_y.at[j].mul(from_pts_y[j] - from_pts_y[k])
 
-    for j in range(n_x):
-        for k in range(n_x):
-            if j != k:
-                w_x = w_x.at[j].mul(from_pts_x[j] - from_pts_x[k])
-
-    for j in range(n_y):
-        for k in range(n_y):
-            if j != k:
-                w_y = w_y.at[j].mul(from_pts_y[j] - from_pts_y[k])
+    # (2025-06-20, OOT) Vectorized version
+    # Seems to be a bit faster than the original
+    from_x_di = jnp.arange(n_x) # for use as diagonal indices for from_pts_x
+    tmp_from_xdist = from_pts_x[:, jnp.newaxis] - from_pts_x[jnp.newaxis, :]
+    tmp_from_xdist = tmp_from_xdist.at[from_x_di,from_x_di].set(1)
+    w_x = jnp.prod(tmp_from_xdist, axis=0)
+    from_y_di = jnp.arange(n_y)
+    tmp_from_ydist = from_pts_y[:, jnp.newaxis] - from_pts_y[jnp.newaxis, :]
+    tmp_from_ydist = tmp_from_ydist.at[from_y_di, from_y_di].set(1)
+    w_y = jnp.prod(tmp_from_ydist, axis=0)
 
     # Compute matrix of distances between x and y points.
     xdist = to_pts_x[None, :] - from_pts_x[:, None]
