@@ -7,6 +7,7 @@
 import jax
 import jax.numpy as jnp
 import numpy as np
+from typing import Tuple, Iterable
 
 from wave_scattering.interp_utils import (
     prep_quadtree_to_unrolled_indices,
@@ -37,15 +38,22 @@ class QuadtreeToUniform:
     and that these points are always in the same positions relative to the leaf boxes
     2. Assume that the domain size does not change
     """
-    def __init__(self, L: int, p: int, n_per_leaf: int, cell_offset: float = 0):
+    def __init__(
+            self,
+            L: int, p: int, n_per_leaf: int,
+            domain_bounds: Iterable = (-1., 1., -1., 1.),
+            rel_offset: float = 0):
         """Set up the reusable objects
         Parameters:
             L (int): number of levels in the tree
             p (int): polynomial order of the leaf-level chebyshev grids
             n_per_leaf (int): number of points in the uniform grid per leaf
-            cell_offset (float): relative offset of where to sample the uniform grid
+            domain_bounds (Iterable): iterable containing
+                [xmin, xmax, ymin, ymax]
+                as the domain boundaries
+            rel_offset (float): relative offset of where to sample the uniform grid
                 If a leaf's chebyshev grid is sampled on the interval [-1, 1],
-                the cell_offset values correspond to the following behavior:
+                the rel_offset values correspond to the following behavior:
                 0:   default behavior, sample at    [0, 1, 2, ..., n_per_leaf-1]*2/n_per_leaf-1
                 0.5: cell-centered, sample at       [0.5, 1.5, 2.5, ..., n_per_leaf-0.5]*2/n_per_leaf-1
                 1:   sample on the opposite end, at [1, 2, ..., n_per_leaf]*2/n_per_leaf-1
@@ -53,19 +61,19 @@ class QuadtreeToUniform:
         self.L = L
         self.p = p
         self.n_per_leaf = n_per_leaf
+        self.domain_bounds = domain_bounds
+        self.leaf_bounds = (-1., 1., -1., 1.)
 
         self.quadtree_to_unrolled_idcs = prep_quadtree_to_unrolled_indices(L)
-        # self.leaf_cheb_x = chebyshev_points(p)
-        # self.leaf_cheb_y = chebyshev_points(p)[::-1]
-        # self.cell_offset = cell_offset
-        # leaf_offset = cell_offset * 0.5/n_per_leaf
-        # self.leaf_unif_x = leaf_offset+jnp.linspace(-1, 1, n_per_leaf, endpoint=False)
-        # self.leaf_unif_y = leaf_offset+jnp.linspace(-1, 1, n_per_leaf, endpoint=False) # [::-1]
 
-        leaf_cheb_grids = prep_grids_cheb_2d(0, p)
+        leaf_cheb_grids  = prep_grids_cheb_2d(
+            0, p, self.leaf_bounds
+        )
+        leaf_unif_grids  = prep_grids_unif_2d(
+            0, n_per_leaf, self.leaf_bounds, rel_offset=rel_offset
+        )
         self.leaf_cheb_x = leaf_cheb_grids[0]
         self.leaf_cheb_y = leaf_cheb_grids[1]
-        leaf_unif_grids = prep_grids_unif_2d(0, n_per_leaf, cell_offset)
         self.leaf_unif_x = leaf_unif_grids[0]
         self.leaf_unif_y = leaf_unif_grids[1]
 
@@ -107,8 +115,13 @@ class QuadtreeToUniform:
         data_leaves_unif = jnp.einsum(
             "jl,il...->ij...",
             self.interp_leaf_cheb_to_unif,
-            data_leaves_cheb
+            data_leaves_cheb,
         )
+        # data_leaves_unif = jnp.einsum(
+        #     "lj,il...->ij...",
+        #     self.interp_leaf_cheb_to_unif_T,
+        #     data_leaves_cheb,
+        # )
 
         # 3. Reshape leaf-level data into square matrices, then rearrange
         data_unif = (
@@ -136,15 +149,23 @@ class UniformToQuadtree:
     For now, fix it at [-1, 1, -1, 1] for both input/output since the true scaling does
     not really matter, other than if the domain were non-square.
     """
-    def __init__(self, L: int, p: int, n_per_leaf: int, cell_offset: float = 0):
+    def __init__(
+            self,
+            L: int, p: int, n_per_leaf: int,
+            domain_bounds: Iterable = (-1., 1., -1., 1.),
+            rel_offset: float = 0
+    ):
         """Set up the reusable objects
         Parameters:
             L (int): number of levels in the tree
             p (int): polynomial order of the leaf-level chebyshev grids
             n_per_leaf (int): number of points in the uniform grid per leaf
-            cell_offset (float): relative offset of where to sample the uniform grid
+            domain_bounds (Iterable): iterable containing
+                [xmin, xmax, ymin, ymax]
+                as the domain boundaries
+            rel_offset (float): relative offset of where to sample the uniform grid
                 If a leaf's chebyshev grid is sampled on the interval [-1, 1],
-                the cell_offset values correspond to the following behavior:
+                the rel_offset values correspond to the following behavior:
                 0:   default behavior, sample at    [0, 1, 2, ..., n_per_leaf-1]*2/n_per_leaf-1
                 0.5: cell-centered, sample at       [0.5, 1.5, 2.5, ..., n_per_leaf-0.5]*2/n_per_leaf-1
                 1:   sample on the opposite end, at [1, 2, ..., n_per_leaf]*2/n_per_leaf-1
@@ -154,17 +175,22 @@ class UniformToQuadtree:
         self.n_per_leaf = n_per_leaf
         n = 2**L * n_per_leaf
         self.n = n
+        self.domain_bounds = domain_bounds
+        self.domain_bounds = domain_bounds
+        self.leaf_bounds = (-1., 1., -1., 1.)
 
         # Permutation maps for ordering leaves and chebyshev points within the leaves
         new_order = (0, 1, 3, 2)
-        self.quadtree_to_unrolled_idcs = prep_quadtree_to_unrolled_indices(L, new_order=new_order)
+        self.quadtree_to_unrolled_idcs = prep_quadtree_to_unrolled_indices(
+            L, s=1, new_order=new_order
+        )
         self.unrolled_to_quadtree_idcs = jnp.argsort(self.quadtree_to_unrolled_idcs) # invert
         self.rearrange_leaf_idcs       = rearrange_indices_ext_int_2D(p)
         self.inv_rearrange_leaf_idcs   = jnp.argsort(self.rearrange_leaf_idcs) # invert
 
         # leaf-level grids, for simplicity scaled on [-1, 1]
-        leaf_cheb_grids = prep_grids_cheb_2d(0, p)
-        leaf_unif_grids = prep_grids_unif_2d(0, n_per_leaf, cell_offset)
+        leaf_cheb_grids = prep_grids_cheb_2d(0, p, self.leaf_bounds)
+        leaf_unif_grids = prep_grids_unif_2d(0, n_per_leaf, self.leaf_bounds, rel_offset)
         self.leaf_cheb_x  = leaf_cheb_grids[0]
         self.leaf_cheb_y  = leaf_cheb_grids[1]
         self.leaf_cheb_xy = leaf_cheb_grids[2]
@@ -172,9 +198,9 @@ class UniformToQuadtree:
         self.leaf_unif_y  = leaf_unif_grids[1]
         self.leaf_unif_xy = leaf_unif_grids[2]
 
-        # Tree-level grids, also scaled on [-1, 1]
-        tree_cheb_grids = prep_grids_cheb_2d(L, p)
-        tree_unif_grids = prep_grids_unif_2d(L, n_per_leaf, cell_offset)
+        # Tree-level grids, scaled on domain_bounds
+        tree_cheb_grids = prep_grids_cheb_2d(L, p, domain_bounds)
+        tree_unif_grids = prep_grids_unif_2d(L, n_per_leaf, domain_bounds, rel_offset)
         self.tree_cheb_x  = tree_cheb_grids[0]
         self.tree_cheb_y  = tree_cheb_grids[1]
         self.tree_cheb_xy = tree_cheb_grids[2]
@@ -211,12 +237,14 @@ class UniformToQuadtree:
         self.tree_unif_to_cheb_y = tree_unif_to_cheb_y
 
     def apply(self, data_unif: jax.Array) -> jax.Array:
-        """Take the data on the uniform grid, then map to the HPS quadtree format with leaf-level chebyshev grids
+        """Take the data on the uniform grid, then map
+        to the HPS quadtree format with leaf-level chebyshev grids
         Assume data_unif has shape (N, N)
         Parameters:
             data_unif (jax.Array, shape (N, N)): data on the uniform grid
         Output:
-            data_tree_cheb (jax.Array, shape (4**L, p**2)): data in the quadtree/chebyshev-grid format
+            data_tree_cheb (jax.Array, shape (4**L, p**2)): data in the
+                quadtree/chebyshev-grid format
         """
         L = self.L
         p = self.p

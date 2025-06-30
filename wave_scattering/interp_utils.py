@@ -23,12 +23,14 @@ import jax.numpy as jnp
 import numpy as np
 
 import scipy.sparse
-from typing import Tuple
+from typing import Tuple, Iterable
 
 from src.jaxhps.quadrature import (
     chebyshev_points,
 )
-
+from src.jaxhps._grid_creation_2D import (
+    rearrange_indices_ext_int as rearrange_indices_ext_int_2D
+)
 
 # 1. Helper functions for Quadtree leaf ordering
 def reorder_leaves_indices(L: int, s: int = 1, new_order: tuple=(3,2,0,1)):
@@ -146,48 +148,75 @@ def _product_grid(xs: jax.Array, ys: jax.Array) -> jax.Array:
         .reshape(-1,2)
     )
 
-def _leaf_to_tree(leaf_xs: jax.Array, L: int) -> jax.Array:
+def _leaf_to_tree(
+        leaf_xs: jax.Array,
+        L: int,
+        domain_bounds: Iterable=(-1., 1.)
+) -> jax.Array:
     """Helper function to generate tree-level grids
     Takes in leaf_xs as a leaf-level grid on [-1, 1]
-    and maps to 2^L shrunken copies of the leaf-level grid on [-1, 1]
-    (i.e., the domain of length 2 gets mapped to a length of 2*2^L)
+    and maps to 2^L shrunken copies of the leaf-level grid on the domain given by domain_bounds
+    (i.e., the domain of length 2 gets mapped to a length of 2*2^L if domain_bounds=[-1., 1]))
     """
-    return jnp.concatenate([
-        (leaf_xs+1) * (1/2**L) - 1 + (2*i/2**L)
+    lb, ub = domain_bounds[:2]
+    # First, compute the leaf points on [0, 1]
+    unit_tree_pts = jnp.concatenate([
+        ((leaf_xs+1)/2 + i) / 2**L
         for i in range(2**L)
     ])
+    # Then it becomes simple to rescale the domain bounds
+    scaled_tree_pts = lb + (ub-lb)*unit_tree_pts
+    return scaled_tree_pts
 
-def prep_grids_cheb_2d(L: int, p: int) -> tuple[jax.Array]:
+def prep_grids_cheb_2d(
+        L: int,
+        p: int,
+        domain_bounds: Iterable = (-1., 1., -1., 1.),
+) -> tuple[jax.Array]:
     """Prepares chebyshev gridpoints on the domain [-1, 1]
     Returns grids for x, y, and their cartesian product
     Parameters:
         L (int): number of quadtree levels
         p (int): polynomial order of the chebyshev nodes
+        domain_bounds (Iterable): iterable containing
+            [xmin, xmax, ymin, ymax]
+            as the domain boundaries
     Returns:
         (tree_cheb_x, tree_cheb_y, tree_cheb_xy):
             Tree-level chebyshev grids for x, y, and cartesian product (x,y)
             shapes: (2^L * p,), (2^L * p,), and (4^L * p^2, 2)
     """
+    # lb_x, ub_x  = domain_bounds[:2]
+    # dl_x = ub_x - lb_x # domain length
+    # leaf_cheb_x = lb_x + dl_x * 0.5 * (1+chebyshev_points(p))
+
+    # lb_y, ub_y  = domain_bounds[2:]
+    # dl_y = ub_y - lb_y # domain length
+    # leaf_cheb_y = lb_y + dl_x * 0.5 * (1+chebyshev_points(p)[::-1])
     leaf_cheb_x = chebyshev_points(p)
     leaf_cheb_y = chebyshev_points(p)[::-1]
 
-    tree_cheb_x  = _leaf_to_tree(leaf_cheb_x, L)
-    tree_cheb_y  = _leaf_to_tree(leaf_cheb_y, L)
+    tree_cheb_x  = _leaf_to_tree(leaf_cheb_x, L, domain_bounds)
+    tree_cheb_y  = _leaf_to_tree(leaf_cheb_y, L, domain_bounds)
     tree_cheb_xy = _product_grid(tree_cheb_x, tree_cheb_y)
     return tree_cheb_x, tree_cheb_y, tree_cheb_xy
 
 def prep_grids_unif_2d(
     L: int,
     n_per_leaf: int,
+    domain_bounds: Iterable = (-1., 1., -1., 1.),
     rel_offset: float = 0,
 ) -> tuple[jax.Array]:
     """Prepares the uniform gridpoints on the domain [-1, 1]
     Parameters:
         L (int): number of quadtree levels
         n_per_leaf (int): number of gridpoints per leaf
+        domain_bounds (Iterable): iterable containing
+            [xmin, xmax, ymin, ymax]
+            as the domain boundaries
         rel_offset (float): relative offset of where to sample the uniform grida
             If a leaf's chebyshev grid is sampled on the interval [-1, 1],
-            the cell_offset values correspond to the following behavior:
+            the rel_offset values correspond to the following behavior:
             0:   default behavior, sample at [0, 1, 2, ..., n_per_leaf-1]*2/n_per_leaf-1
             0.5: cell-centered, sample at [0.5, 1.5, 2.5, ..., n_per_leaf-0.5]*2/n_per_leaf-1
             1:   sample on the opposite end, at [1, 2, ..., n_per_leaf]*2/n_per_leaf-1
@@ -196,12 +225,79 @@ def prep_grids_unif_2d(
             Tree-level uniform grids for x, y, and cartesian product (x,y)
             shapes: (2^L * p,), (2^L * p,), and (4^L * p^2, 2)
     """
+    lb_x, ub_x  = domain_bounds[:2]
+    lb_y, ub_y  = domain_bounds[2:]
     tree_n = 2**L * n_per_leaf
     tree_offset = rel_offset/tree_n
-    tree_unif_x = tree_offset+jnp.linspace(-1, 1, tree_n, endpoint=False)
-    tree_unif_y = tree_offset+jnp.linspace(-1, 1, tree_n, endpoint=False)
+    tree_unif_x = tree_offset+jnp.linspace(lb_x, ub_x, tree_n, endpoint=False)
+    tree_unif_y = tree_offset+jnp.linspace(lb_y, ub_y, tree_n, endpoint=False)
     tree_unif_xy = _product_grid(tree_unif_x, tree_unif_y)
     return tree_unif_x, tree_unif_y, tree_unif_xy
+
+# # A copy of rearrange_indices_ext_int from src/jaxhps/_grid_creation_2D.py
+# # in case we are no longer able to import from the src/ directory in the future...
+# def _rearrange_indices_ext_int_2D(n: int) -> jnp.ndarray:
+#     """This function gives the array indices to rearrange the 2D Cheby grid so that the
+#     4(p-1) boundary points are listed first, starting at the SW corner and going clockwise around the
+#     boundary. The interior points are listed after.
+#     """
+
+#     idxes = np.zeros(n**2, dtype=int)
+#     # S border
+#     for i, j in enumerate(range(n - 1, n**2, n)):
+#         idxes[i] = j
+#     # W border
+#     for i, j in enumerate(range(n**2 - 2, n**2 - n - 1, -1)):
+#         idxes[n + i] = j
+#     # N border
+#     for i, j in enumerate(range(n**2 - 2 * n, 0, -n)):
+#         idxes[2 * n - 1 + i] = j
+#     # S border
+#     for i, j in enumerate(range(1, n - 1)):
+#         idxes[3 * n - 2 + i] = j
+#     # Loop through the indices in column-rasterized form and fill in the ones from the interior.
+#     current_idx = 4 * n - 4
+#     nums = np.arange(n**2)
+#     for i in nums:
+#         if i not in idxes:
+#             idxes[current_idx] = i
+#             current_idx += 1
+#         else:
+#             continue
+
+#     return jnp.array(idxes)
+
+
+
+def reorder_tree_cheb_for_hps(
+        tree_cheb_xy: jax.Array,
+        L: int,
+        p: int,
+        unrolled_to_quadtree_idcs: jax.Array = None,
+        rearrange_leaf_idcs: jax.Array = None,
+) -> jax.Array:
+    """Takes the tiled chebyshev grid (tree-level) in an unrolled ordering
+    and returns the HPS quadtree ordering
+    Expects tree_cheb_xy to have shape (4^L * p^2, 2)
+    """
+    unrolled_to_quadtree_idcs = unrolled_to_quadtree_idcs \
+        if unrolled_to_quadtree_idcs is not None \
+        else jnp.argsort(
+                prep_quadtree_to_unrolled_indices(L, new_order=(0,1,3,2))
+        )
+    rearrange_leaf_idcs = rearrange_leaf_idcs \
+        if rearrange_leaf_idcs is not None \
+        else rearrange_indices_ext_int_2D(p)
+    return (
+        tree_cheb_xy
+        .reshape(2**L, p, 2**L, p, 2)
+        .transpose(2,0,1,3,4)
+        .reshape(4**L, p**2, 2)
+        [unrolled_to_quadtree_idcs, :, :]
+        [:, rearrange_leaf_idcs, :]
+        .reshape(-1, 2)
+    )
+
 
 # 3. Helper functions for grid-to-grid interpolation
 # Modified from the MFISNets repository

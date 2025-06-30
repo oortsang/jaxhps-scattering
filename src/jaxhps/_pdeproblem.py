@@ -20,7 +20,7 @@ from ._precompute_operators_3D import (
     precompute_projection_ops_3D,
 )
 from typing import List, Tuple
-
+import logging
 
 class PDEProblem:
     def __init__(
@@ -157,6 +157,7 @@ class PDEProblem:
             self.D_xy: jax.Array = None
             # #: Spectral differentiation matrix in yy direction. Has shape (p^d, p^d).
             self.D_yy: jax.Array = None
+            logging.info
             self.D_x, self.D_y, self.D_xx, self.D_yy, self.D_xy = (
                 precompute_diff_operators_2D(domain.p, half_side_len)
             )
