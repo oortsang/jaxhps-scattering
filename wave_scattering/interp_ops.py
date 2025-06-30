@@ -1,7 +1,7 @@
 # wave_scattering/interp_ops.py
 # Interpolation operator objects
 # Classes:
-# 1. QuadtreeToUniform
+# 1. QuadtreeToUniformFixedDomain
 # 2. UniformToQuadtree
 
 import jax
@@ -29,8 +29,8 @@ from src.jaxhps.quadrature import (
 # 1. Quadtree-to-uniform object
 ########################################
 
-# Quadtree (Chebyshev) -> Uniform
-class QuadtreeToUniform:
+# Quadtree (Chebyshev) -> Uniform on a fixed domain
+class QuadtreeToUniformFixedDomain:
     """Class to interpolate data from quadtree form with chebyshev-grid leaves
     to a contiguous form on a uniform grid.
     Simplifying assumptions:
@@ -41,16 +41,19 @@ class QuadtreeToUniform:
     def __init__(
             self,
             L: int, p: int, n_per_leaf: int,
-            domain_bounds: Iterable = (-1., 1., -1., 1.),
+            # quad_domain_bounds: Iterable = (-1., 1., -1., 1.),
+            # unif_domain_bounds: Iterable = (-1., 1., -1., 1.),
             rel_offset: float = 0):
         """Set up the reusable objects
         Parameters:
             L (int): number of levels in the tree
             p (int): polynomial order of the leaf-level chebyshev grids
             n_per_leaf (int): number of points in the uniform grid per leaf
-            domain_bounds (Iterable): iterable containing
+            quad_domain_bounds (Iterable): iterable containing
                 [xmin, xmax, ymin, ymax]
-                as the domain boundaries
+                as the domain boundaries for the quadtree grid (input space)
+            unif_domain_bounds (Iterable): domain boundaries for the uniform grid
+                (output space)
             rel_offset (float): relative offset of where to sample the uniform grid
                 If a leaf's chebyshev grid is sampled on the interval [-1, 1],
                 the rel_offset values correspond to the following behavior:
@@ -61,8 +64,8 @@ class QuadtreeToUniform:
         self.L = L
         self.p = p
         self.n_per_leaf = n_per_leaf
-        self.domain_bounds = domain_bounds
-        self.leaf_bounds = (-1., 1., -1., 1.)
+        # self.domain_bounds = domain_bounds
+        self.leaf_bounds = (-1., 1., -1., 1.) # internal representation
 
         self.quadtree_to_unrolled_idcs = prep_quadtree_to_unrolled_indices(L)
 
@@ -117,11 +120,6 @@ class QuadtreeToUniform:
             self.interp_leaf_cheb_to_unif,
             data_leaves_cheb,
         )
-        # data_leaves_unif = jnp.einsum(
-        #     "lj,il...->ij...",
-        #     self.interp_leaf_cheb_to_unif_T,
-        #     data_leaves_cheb,
-        # )
 
         # 3. Reshape leaf-level data into square matrices, then rearrange
         data_unif = (
@@ -135,6 +133,113 @@ class QuadtreeToUniform:
         )
         return data_unif
 
+# Now for a somewhat more flexible version...
+class QuadtreeToUniform():
+    def __init__(
+        self,
+        L: int, p: int, n_per_leaf: int, clip_n: int,
+        quad_domain_bounds: Iterable = (-1., 1., -1., 1.),
+        clip_domain_bounds: Iterable = (-1., 1., -1., 1.),
+        rel_offset: float = 0,
+    ):
+        """QuadtreeToUniform with potentially different input/output domains
+        Expected usage: the HPS quadtree operates on a larger domain than what you need,
+        so provide an option to also interpolate to the clipped domain.
+        Parameters:
+            L (int): number of levels in the tree
+            p (int): polynomial order of the leaf-level chebyshev grids
+            n_per_leaf (int): number of points in the uniform grid per leaf (in the quadtree domain)
+            clip_n (int): number of points in the final output grid, when cropping is requested
+            quad_domain_bounds (Iterable): domain boundaries for the quadtree grid (input)
+            clip_domain_bounds (Iterable): iterable containing
+                [xmin, xmax, ymin, ymax]
+                as the domain boundaries for the clipped output uniform grid
+        """
+        self.qtu_fixed = QuadtreeToUniformFixedDomain(
+            L, p, n_per_leaf, rel_offset=rel_offset,
+        )
+        self.L = L
+        self.p = p
+        self.n_per_leaf = n_per_leaf
+        self.unif_n = 2**L * n_per_leaf
+        self.clip_n = clip_n
+        self.quad_domain_bounds = quad_domain_bounds
+        self.clip_domain_bounds = clip_domain_bounds
+
+        quad_cheb_grids   = prep_grids_cheb_2d(L, p, quad_domain_bounds)
+        quad_unif_grids   = prep_grids_unif_2d(L, n_per_leaf, quad_domain_bounds, rel_offset)
+        clip_unif_grids = prep_grids_unif_2d(0, clip_n, clip_domain_bounds, rel_offset)
+        self.quad_cheb_x  = quad_cheb_grids[0]
+        self.quad_cheb_y  = quad_cheb_grids[1]
+        self.quad_cheb_xy = quad_cheb_grids[2]
+        self.quad_unif_x  = quad_unif_grids[0]
+        self.quad_unif_y  = quad_unif_grids[1]
+        self.quad_unif_xy = quad_unif_grids[2]
+        self.clip_unif_x  = clip_unif_grids[0]
+        self.clip_unif_y  = clip_unif_grids[1]
+        self.clip_unif_xy = clip_unif_grids[2]
+
+        # TODO: decide whether I can simply slice out the outputs
+        # or if interpolation is necessary
+        # compare quad_unif_x and clip_unif_x (and ditto for *_y)
+        quad_unif_dx = self.quad_unif_x[1] - self.quad_unif_x[0]
+        quad_unif_dy = self.quad_unif_y[1] - self.quad_unif_y[0]
+        clip_unif_dx = self.clip_unif_x[1] - self.clip_unif_x[0]
+        clip_unif_dy = self.clip_unif_y[1] - self.clip_unif_y[0]
+        can_slice_for_x = (self.clip_unif_x[0] in self.quad_unif_x) \
+            and quad_unif_dx == clip_unif_dx
+        can_slice_for_y = (self.clip_unif_y[0] in self.quad_unif_y) \
+            and quad_unif_dy == clip_unif_dy
+        self.use_slice = can_slice_for_x and can_slice_for_y
+        if self.use_slice:
+            start_idx_x = jnp.where(self.quad_unif_x == self.clip_unif_x[0])[0].item()
+            self.slice_x_idcs = jnp.arange(
+                start_idx_x,
+                start_idx_x + self.clip_unif_x.shape[0]
+            )
+
+            start_idx_y = jnp.where(self.quad_unif_y == self.clip_unif_y[0])[0].item()
+            self.slice_y_idcs = jnp.arange(
+                start_idx_y,
+                start_idx_y + self.clip_unif_y.shape[0]
+            )
+            self.slice_idcs = jnp.ix_(self.slice_x_idcs, self.slice_y_idcs)
+        else:
+            quad_to_clip_x, quad_to_clip_y = prep_conv_interp_2d(
+                self.quad_unif_x,
+                self.quad_unif_y,
+                self.clip_unif_xy,
+            )
+            self.quad_to_clip_x = jnp.array(quad_to_clip_x.todense())
+            self.quad_to_clip_y = jnp.array(quad_to_clip_y.todense())
+
+    def apply(self, data_quadtree_cheb: jax.Array, output_mode: str = "clip") -> Tuple[jax.Array]:
+        """Apply the Quadtree-to-Uniform operation; can return the outputs on the original uniform
+        grid (with the same bounds as the quadtree) or the clipped uniform grid
+        Parameters:
+            data_quadtree (jax.Array, shape (4^2L, p^2)): data on the quadtree
+            output_mode (string): specify whether to return the data interpolated onto
+                the "quad" domain, "clip" domain, or "both" domains
+        Returns:
+            data_quad_unif (jax.Array): data interpolated onto a uniform grid on the quadtree's domain
+            data_clip_unif (jax.Array): data interpolated onto a uniform grid on the clipped domain
+        """
+        clip_output = output_mode.lower() in ["both", "clip"]
+        data_quad_unif = self.qtu_fixed.apply(data_quadtree_cheb)
+        # extra_shape = data_quadtree_cheb.shape[2:]
+        if clip_output:
+            if self.use_slice:
+                data_clip_unif = data_quad_unif[self.slice_idcs]
+            else:
+                data_clip_unif = apply_conv_interp_2d(
+                    self.quad_to_clip_x,
+                    self.quad_to_clip_y,
+                    data_quad_unif.reshape(self.unif_n, self.unif_n),
+                ).reshape(self.clip_n, self.clip_n)
+        output = (data_quad_unif, data_clip_unif) if output_mode.lower() == "both" \
+            else (data_quad_unif) if output_mode.lower() == "quad" \
+            else (data_clip_unif)
+        return output
 
 
 # 2. Uniform-to-Quadtree (Chebyshev)
@@ -151,18 +256,22 @@ class UniformToQuadtree:
     """
     def __init__(
             self,
-            L: int, p: int, n_per_leaf: int,
-            domain_bounds: Iterable = (-1., 1., -1., 1.),
+            L: int, p: int, n_unif: int,
+            unif_domain_bounds: Iterable = (-1., 1., -1., 1.),
+            quad_domain_bounds: Iterable = (-1., 1., -1., 1.),
+            domain_bounds: Iterable = None,
             rel_offset: float = 0
     ):
         """Set up the reusable objects
         Parameters:
             L (int): number of levels in the tree
             p (int): polynomial order of the leaf-level chebyshev grids
-            n_per_leaf (int): number of points in the uniform grid per leaf
-            domain_bounds (Iterable): iterable containing
+            n_unif (int): total number of points in the uniform grid
+            unif_domain_bounds (Iterable): iterable containing
                 [xmin, xmax, ymin, ymax]
-                as the domain boundaries
+                as the domain boundaries for the uniform grid (input)
+            quad_domain_bounds (Iterable): domain boundaries for the quadtree grid (output)
+            domain_bounds (Iterable): can be used to set the input/output domains at once
             rel_offset (float): relative offset of where to sample the uniform grid
                 If a leaf's chebyshev grid is sampled on the interval [-1, 1],
                 the rel_offset values correspond to the following behavior:
@@ -172,12 +281,16 @@ class UniformToQuadtree:
         """
         self.L = L
         self.p = p
-        self.n_per_leaf = n_per_leaf
-        n = 2**L * n_per_leaf
-        self.n = n
-        self.domain_bounds = domain_bounds
-        self.domain_bounds = domain_bounds
-        self.leaf_bounds = (-1., 1., -1., 1.)
+        # self.n_per_leaf = n_per_leaf
+        # n = 2**L * n_per_leaf
+        self.n = n_unif
+        self.n_per_leaf = n_unif // 2**L
+        if domain_bounds is not None:
+            self.unif_domain_bounds = domain_bounds
+            self.quad_domain_bounds = domain_bounds
+        else:
+            self.unif_domain_bounds = unif_domain_bounds
+            self.quad_domain_bounds = quad_domain_bounds
 
         # Permutation maps for ordering leaves and chebyshev points within the leaves
         new_order = (0, 1, 3, 2)
@@ -188,30 +301,15 @@ class UniformToQuadtree:
         self.rearrange_leaf_idcs       = rearrange_indices_ext_int_2D(p)
         self.inv_rearrange_leaf_idcs   = jnp.argsort(self.rearrange_leaf_idcs) # invert
 
-        # leaf-level grids, for simplicity scaled on [-1, 1]
-        leaf_cheb_grids = prep_grids_cheb_2d(0, p, self.leaf_bounds)
-        leaf_unif_grids = prep_grids_unif_2d(0, n_per_leaf, self.leaf_bounds, rel_offset)
-        self.leaf_cheb_x  = leaf_cheb_grids[0]
-        self.leaf_cheb_y  = leaf_cheb_grids[1]
-        self.leaf_cheb_xy = leaf_cheb_grids[2]
-        self.leaf_unif_x  = leaf_unif_grids[0]
-        self.leaf_unif_y  = leaf_unif_grids[1]
-        self.leaf_unif_xy = leaf_unif_grids[2]
-
         # Tree-level grids, scaled on domain_bounds
-        tree_cheb_grids = prep_grids_cheb_2d(L, p, domain_bounds)
-        tree_unif_grids = prep_grids_unif_2d(L, n_per_leaf, domain_bounds, rel_offset)
+        tree_cheb_grids = prep_grids_cheb_2d(L, p, quad_domain_bounds)
+        tree_unif_grids = prep_grids_unif_2d(0, n_unif, unif_domain_bounds, rel_offset)
         self.tree_cheb_x  = tree_cheb_grids[0]
         self.tree_cheb_y  = tree_cheb_grids[1]
         self.tree_cheb_xy = tree_cheb_grids[2]
         self.tree_unif_x  = tree_unif_grids[0]
         self.tree_unif_y  = tree_unif_grids[1]
         self.tree_unif_xy = tree_unif_grids[2]
-        # print(f"tree_cheb_x.shape= {self.tree_cheb_x.shape}")
-        # print(f"tree_cheb_xy.shape={self.tree_cheb_xy.shape}")
-        # print(f"tree_unif_x.shape= {self.tree_unif_x.shape}")
-        # print(f"tree_unif_xy.shape={self.tree_unif_xy.shape}")
-
 
         # Get the chebyshev grid with hps tree ordering
         self.hps_tree_cheb_xy = (
@@ -248,14 +346,13 @@ class UniformToQuadtree:
         """
         L = self.L
         p = self.p
-        n_per_leaf = self.n_per_leaf
-        N = 2**L * n_per_leaf
+        n = self.n
         # leftover_shape = data_unif.shape[2:]
         # leftover_idcs  = 4 + jnp.arange(0, data_unif.ndim-2)
 
         data_tree_cheb = apply_conv_interp_2d(
             self.tree_unif_to_cheb_x,
             self.tree_unif_to_cheb_y,
-            data_unif.reshape(N, N),
+            data_unif.reshape(n, n),
         ).reshape(4**L, p**2)
         return data_tree_cheb
