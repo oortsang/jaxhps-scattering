@@ -151,7 +151,6 @@ vmapped_interp_to_point_2D = jax.vmap(
     _interp_to_point_2D, in_axes=(0, 0, 0, 0, None)
 )
 
-
 @partial(jax.jit, static_argnums=(1,))
 def interp_from_hps_3D(
     leaves: Tuple[DiscretizationNode3D],

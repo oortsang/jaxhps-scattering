@@ -280,7 +280,7 @@ def solve_scattering_problem(
     """
 
     # These things are fast to precompute
-
+    
     # Set up the HPS quadrature for l levels and polynomial order p
     logging.info("solve_scattering_problem: Creating tree...")
     xmin, xmax, ymin, ymax = domain_bounds
@@ -316,6 +316,7 @@ def solve_scattering_problem(
         use_ItI=True,
         eta=k,
     )
+    logging.info(f"Finished setting up the PDEProblem object; starting the timer")
     t_0 = default_timer()
 
     # Determine whether we need to use fused functions or can fit everything on the
@@ -332,11 +333,13 @@ def solve_scattering_problem(
             host_device=jax.devices()[0],
         )
     else:
+        logging.info(f"Starting local solve")
         Y_arr, T_arr, v_arr, h_arr = local_solve_stage_uniform_2D_ItI(
             pde_problem=t,
             host_device=jax.devices()[0],
             device=jax.devices()[0],
         )
+        logging.info("Finished local solve; starting merge stage")
         S_arr_lst, g_tilde_lst, T_ItI = merge_stage_uniform_2D_ItI(
             T_arr=T_arr,
             h_arr=h_arr,
@@ -345,8 +348,10 @@ def solve_scattering_problem(
             host_device=jax.devices()[0],
             return_T=True,
         )
+        logging.info(f"Finished merge stage")
 
     T_DtN = get_DtN_from_ItI(T_ItI, t.eta)
+    logging.info(f"Got DtN from ItI")
 
     logging.info(
         "solve_scattering_problem: Solving boundary integral equation..."
@@ -368,12 +373,15 @@ def solve_scattering_problem(
         eta=k,
     )
 
+    logging.info("Finished calculating incoming impedance data")
+
     # Delete exterior matrices we no longer need
     T_ItI.delete()
     T_DtN.delete()
     if bool_delete_SD:
         S.delete()
         D.delete()
+    logging.info("Deleted exterior matrices; starting to propagate the impedance data")
 
     # Propagate the resulting impedance data down to the leaves
     if bool_use_recomp:

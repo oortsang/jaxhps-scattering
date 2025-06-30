@@ -31,7 +31,8 @@ YMAX = 1
 SIGMA = 0.15
 SOURCE_DIRS = jnp.array([0.0])
 SD_MATRIX_FP = (
-    f"data/examples/SD_matrices/SD_k{K}_n{P - 2}_nside{2**L}_dom1.mat"
+    f"data/wave_scattering/SD_matrices/SD_k{K}_n{P - 2}_nside{2**L}_dom1.mat"
+    # f"data/examples/SD_matrices/SD_k{K}_n{P - 2}_nside{2**L}_dom1.mat"
 )
 S, D = load_SD_matrices(SD_MATRIX_FP)
 
