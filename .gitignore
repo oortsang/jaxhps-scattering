@@ -172,3 +172,6 @@ cpp/llvm*
 assets/accuracy_checks/*.png
 assets/accuracy_checks/
 .vscode/
+
+# Olivia's stuff
+*~ # emacs temporary files
