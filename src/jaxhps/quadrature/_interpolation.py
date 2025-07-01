@@ -35,27 +35,50 @@ def barycentric_lagrange_interpolation_matrix_1D(
     n = to_pts.shape[0]
 
     # Compute the inverses of the Barycentric weights
-    w = jnp.ones(p, dtype=jnp.float64)
-    for j in range(p):
-        for k in range(p):
-            if j != k:
-                w = w.at[j].mul(from_pts[j] - from_pts[k])
+    # (2025-07-01, OOT) Vectorized version
+    from_di = jnp.arange(p) # for use as diagonal indices for from_pts_x
+    tmp_from_dist = from_pts[:, jnp.newaxis] - from_pts[jnp.newaxis, :]
+    tmp_from_dist = tmp_from_dist.at[from_di,from_di].set(1)
+    w = jnp.prod(tmp_from_dist, axis=0)
+    # w = jnp.ones(p, dtype=jnp.float64)
+    # for j in range(p):
+    #     for k in range(p):
+    #         if j != k:
+    #             w = w.at[j].mul(from_pts[j] - from_pts[k])
+
+
     # print("barycentric_lagrange_interpolation_matrix: w", w)
 
     # Normalizing factor is sum_j w_j / (x - x_j)
-    norm_factors = jnp.zeros(n, dtype=jnp.float64)
-    for i in range(p):
-        norm_factors += 1 / (w[i] * (to_pts - from_pts[i]))
+    # (2025-07-01, OOT) Vectorized version
+    norm_factors = jnp.sum(
+        1 / (
+            w[:, jnp.newaxis] * (to_pts[jnp.newaxis, :] - from_pts[:, jnp.newaxis])
+        ),
+        axis = 0,
+    )
+    # # Reference code
+    # norm_factors_ref = jnp.zeros(n, dtype=jnp.float64)
+    # for i in range(p):
+    #     norm_factors_ref += 1 / (w[i] * (to_pts - from_pts[i]))
+    # print(jnp.all(norm_factors_ref==norm_factors))
 
-        # print("barycentric_lagrange_interpolation_matrix: norm_factors", norm_factors)
+    # print("barycentric_lagrange_interpolation_matrix: norm_factors", norm_factors)
 
     # Compute the matrix
-    matrix = jnp.zeros((n, p), dtype=jnp.float64)
-    for i in range(n):
-        for j in range(p):
-            matrix = matrix.at[i, j].set(
-                1 / ((to_pts[i] - from_pts[j]) * w[j] * norm_factors[i])
-            )
+    # (2025-07-01, OOT) Vectorized version
+    matrix = 1/ (
+        (to_pts[:, jnp.newaxis] - from_pts[jnp.newaxis, :])
+        * w[jnp.newaxis, :] * norm_factors[:, jnp.newaxis]
+    )
+    # # Reference code
+    # matrix_ref = jnp.zeros((n, p), dtype=jnp.float64)
+    # for i in range(n):
+    #     for j in range(p):
+    #         matrix_ref = matrix_ref.at[i, j].set(
+    #             1 / ((to_pts[i] - from_pts[j]) * w[j] * norm_factors[i])
+    #         )
+    # print(jnp.all(matrix==matrix_ref))
 
     # Check if any of the source and target points overlap
     # This code is semantically the same as what comes after.
