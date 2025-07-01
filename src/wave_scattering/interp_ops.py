@@ -1,25 +1,27 @@
-# wave_scattering/interp_ops.py
+# src/wave_scattering/interp_ops.py
 # Interpolation operator objects
 # Classes:
 # 1. QuadtreeToUniformFixedDomain
-# 2. UniformToQuadtree
+# 2. QuadtreeToUniform
+# 3. UniformToQuadtree
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 from typing import Tuple, Iterable
 
-from wave_scattering.interp_utils import (
+from src.wave_scattering.interp_utils import (
     prep_quadtree_to_unrolled_indices,
+    _rearrange_indices_ext_int_2D,
     prep_grids_cheb_2d,
     prep_grids_unif_2d,
     prep_conv_interp_2d,
     apply_conv_interp_2d,
 )
 
-from src.jaxhps._grid_creation_2D import (
-    rearrange_indices_ext_int as rearrange_indices_ext_int_2D,
-)
+# from src.jaxhps._grid_creation_2D import (
+#     rearrange_indices_ext_int as rearrange_indices_ext_int_2D,
+# )
 from src.jaxhps.quadrature import (
     barycentric_lagrange_interpolation_matrix_2D,
     # chebyshev_points,
@@ -86,7 +88,7 @@ class QuadtreeToUniformFixedDomain:
             to_pts_x=self.leaf_unif_x,
             to_pts_y=self.leaf_unif_y,
         )
-        self.rearrange_leaf_idcs = rearrange_indices_ext_int_2D(p)
+        self.rearrange_leaf_idcs = _rearrange_indices_ext_int_2D(p)
         self.interp_leaf_cheb_to_unif = (
             tmp_interp_leaf_cheb_to_unif
             [:, self.rearrange_leaf_idcs]
@@ -298,7 +300,7 @@ class UniformToQuadtree:
             L, s=1, new_order=new_order
         )
         self.unrolled_to_quadtree_idcs = jnp.argsort(self.quadtree_to_unrolled_idcs) # invert
-        self.rearrange_leaf_idcs       = rearrange_indices_ext_int_2D(p)
+        self.rearrange_leaf_idcs       = _rearrange_indices_ext_int_2D(p)
         self.inv_rearrange_leaf_idcs   = jnp.argsort(self.rearrange_leaf_idcs) # invert
 
         # Tree-level grids, scaled on domain_bounds

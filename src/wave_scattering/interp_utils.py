@@ -25,12 +25,12 @@ import numpy as np
 import scipy.sparse
 from typing import Tuple, Iterable
 
-from src.jaxhps.quadrature import (
-    chebyshev_points,
-)
-from src.jaxhps._grid_creation_2D import (
-    rearrange_indices_ext_int as rearrange_indices_ext_int_2D
-)
+# from src.jaxhps.quadrature import (
+#     chebyshev_points,
+# )
+# from src.jaxhps._grid_creation_2D import (
+#     rearrange_indices_ext_int as rearrange_indices_ext_int_2D
+# )
 
 # 1. Helper functions for Quadtree leaf ordering
 def reorder_leaves_indices(L: int, s: int = 1, new_order: tuple=(3,2,0,1)):
@@ -74,7 +74,7 @@ def reorder_leaves_indices(L: int, s: int = 1, new_order: tuple=(3,2,0,1)):
 def morton_to_flatten_indices(L: int, s: int=1, return_flat=True):
     """Converts the indices for morton ordering into a flattened structure
     Largely lifted from Matt Li's code; for our purposes s=1 seems sufficient
-    Matt Li's repo is private, but there is a copy in Borong Zhang's
+    Matt Li's original repo is private, but there is a copy in Borong Zhang's
     repository of Inverse Scattering Problem baseline approaches:
         https://github.com/borongzhang/ISP_baseline
     in src/utils.py.
@@ -122,20 +122,20 @@ def prep_quadtree_to_unrolled_indices(L: int, s: int=1, new_order: Tuple=(0,1,3,
 # 2. Grid-related helper functions
 ########################################
 # # Should I duplicate the Chebyshev grid function??
-# def _chebyshev_points(n: int) -> jax.Array:
-#     """Lifted from src/jax/quadrature/_discretization.py
-#     Returns n Chebyshev points over the interval [-1, 1]
-#     out[i] = cos(pi * (n-1 - i) / (n-1)) for i={0,...,n-1}
-#     The left side of the interval is returned first.
-#     Args:
-#         n (int): number of Chebyshev points to return
-#     Returns:
-#         jax.Array: The sampled points in [-1, 1] and the corresponding angles in [0, pi]
-#     """
-#     cos_args = jnp.arange(n, dtype=jnp.float64) / (n - 1)
-#     angles = jnp.flipud(jnp.pi * cos_args)
-#     pts = jnp.cos(angles)
-#     return pts
+def _chebyshev_points(n: int) -> jax.Array:
+    """Lifted from src/jax/quadrature/_discretization.py
+    Returns n Chebyshev points over the interval [-1, 1]
+    out[i] = cos(pi * (n-1 - i) / (n-1)) for i={0,...,n-1}
+    The left side of the interval is returned first.
+    Args:
+        n (int): number of Chebyshev points to return
+    Returns:
+        jax.Array: The sampled points in [-1, 1] and the corresponding angles in [0, pi]
+    """
+    cos_args = jnp.arange(n, dtype=jnp.float64) / (n - 1)
+    angles = jnp.flipud(jnp.pi * cos_args)
+    pts = jnp.cos(angles)
+    return pts
 
 def _product_grid(xs: jax.Array, ys: jax.Array) -> jax.Array:
     """Helper function to get the cartesian product of two grids
@@ -188,13 +188,13 @@ def prep_grids_cheb_2d(
     """
     # lb_x, ub_x  = domain_bounds[:2]
     # dl_x = ub_x - lb_x # domain length
-    # leaf_cheb_x = lb_x + dl_x * 0.5 * (1+chebyshev_points(p))
+    # leaf_cheb_x = lb_x + dl_x * 0.5 * (1+_chebyshev_points(p))
 
     # lb_y, ub_y  = domain_bounds[2:]
     # dl_y = ub_y - lb_y # domain length
-    # leaf_cheb_y = lb_y + dl_x * 0.5 * (1+chebyshev_points(p)[::-1])
-    leaf_cheb_x = chebyshev_points(p)
-    leaf_cheb_y = chebyshev_points(p)[::-1]
+    # leaf_cheb_y = lb_y + dl_x * 0.5 * (1+_chebyshev_points(p)[::-1])
+    leaf_cheb_x = _chebyshev_points(p)
+    leaf_cheb_y = _chebyshev_points(p)[::-1]
 
     tree_cheb_x  = _leaf_to_tree(leaf_cheb_x, L, domain_bounds)
     tree_cheb_y  = _leaf_to_tree(leaf_cheb_y, L, domain_bounds)
@@ -236,38 +236,35 @@ def prep_grids_unif_2d(
 
 # # A copy of rearrange_indices_ext_int from src/jaxhps/_grid_creation_2D.py
 # # in case we are no longer able to import from the src/ directory in the future...
-# def _rearrange_indices_ext_int_2D(n: int) -> jnp.ndarray:
-#     """This function gives the array indices to rearrange the 2D Cheby grid so that the
-#     4(p-1) boundary points are listed first, starting at the SW corner and going clockwise around the
-#     boundary. The interior points are listed after.
-#     """
+def _rearrange_indices_ext_int_2D(n: int) -> jnp.ndarray:
+    """This function gives the array indices to rearrange the 2D Cheby grid so that the
+    4(p-1) boundary points are listed first, starting at the SW corner and going clockwise around the
+    boundary. The interior points are listed after.
+    """
 
-#     idxes = np.zeros(n**2, dtype=int)
-#     # S border
-#     for i, j in enumerate(range(n - 1, n**2, n)):
-#         idxes[i] = j
-#     # W border
-#     for i, j in enumerate(range(n**2 - 2, n**2 - n - 1, -1)):
-#         idxes[n + i] = j
-#     # N border
-#     for i, j in enumerate(range(n**2 - 2 * n, 0, -n)):
-#         idxes[2 * n - 1 + i] = j
-#     # S border
-#     for i, j in enumerate(range(1, n - 1)):
-#         idxes[3 * n - 2 + i] = j
-#     # Loop through the indices in column-rasterized form and fill in the ones from the interior.
-#     current_idx = 4 * n - 4
-#     nums = np.arange(n**2)
-#     for i in nums:
-#         if i not in idxes:
-#             idxes[current_idx] = i
-#             current_idx += 1
-#         else:
-#             continue
-
-#     return jnp.array(idxes)
-
-
+    idxes = np.zeros(n**2, dtype=int)
+    # S border
+    for i, j in enumerate(range(n - 1, n**2, n)):
+        idxes[i] = j
+    # W border
+    for i, j in enumerate(range(n**2 - 2, n**2 - n - 1, -1)):
+        idxes[n + i] = j
+    # N border
+    for i, j in enumerate(range(n**2 - 2 * n, 0, -n)):
+        idxes[2 * n - 1 + i] = j
+    # S border
+    for i, j in enumerate(range(1, n - 1)):
+        idxes[3 * n - 2 + i] = j
+    # Loop through the indices in column-rasterized form and fill in the ones from the interior.
+    current_idx = 4 * n - 4
+    nums = np.arange(n**2)
+    for i in nums:
+        if i not in idxes:
+            idxes[current_idx] = i
+            current_idx += 1
+        else:
+            continue
+    return jnp.array(idxes)
 
 def reorder_tree_cheb_for_hps(
         tree_cheb_xy: jax.Array,
@@ -287,7 +284,7 @@ def reorder_tree_cheb_for_hps(
         )
     rearrange_leaf_idcs = rearrange_leaf_idcs \
         if rearrange_leaf_idcs is not None \
-        else rearrange_indices_ext_int_2D(p)
+        else _rearrange_indices_ext_int_2D(p)
     return (
         tree_cheb_xy
         .reshape(2**L, p, 2**L, p, 2)
