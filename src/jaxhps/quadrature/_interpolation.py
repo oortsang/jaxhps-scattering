@@ -36,9 +36,9 @@ def barycentric_lagrange_interpolation_matrix_1D(
 
     # Compute the inverses of the Barycentric weights
     # (2025-07-01, OOT) Vectorized version
-    from_di = jnp.arange(p) # for use as diagonal indices for from_pts_x
+    from_di = jnp.arange(p)  # for use as diagonal indices for from_pts_x
     tmp_from_dist = from_pts[:, jnp.newaxis] - from_pts[jnp.newaxis, :]
-    tmp_from_dist = tmp_from_dist.at[from_di,from_di].set(1)
+    tmp_from_dist = tmp_from_dist.at[from_di, from_di].set(1)
     w = jnp.prod(tmp_from_dist, axis=0)
     # # Original version
     # w = jnp.ones(p, dtype=jnp.float64)
@@ -47,16 +47,17 @@ def barycentric_lagrange_interpolation_matrix_1D(
     #         if j != k:
     #             w = w.at[j].mul(from_pts[j] - from_pts[k])
 
-
     # print("barycentric_lagrange_interpolation_matrix: w", w)
 
     # Normalizing factor is sum_j w_j / (x - x_j)
     # (2025-07-01, OOT) Vectorized version
     norm_factors = jnp.sum(
-        1 / (
-            w[:, jnp.newaxis] * (to_pts[jnp.newaxis, :] - from_pts[:, jnp.newaxis])
+        1
+        / (
+            w[:, jnp.newaxis]
+            * (to_pts[jnp.newaxis, :] - from_pts[:, jnp.newaxis])
         ),
-        axis = 0,
+        axis=0,
     )
     # # Original version
     # norm_factors_ref = jnp.zeros(n, dtype=jnp.float64)
@@ -68,9 +69,10 @@ def barycentric_lagrange_interpolation_matrix_1D(
 
     # Compute the matrix
     # (2025-07-01, OOT) Vectorized version
-    matrix = 1/ (
+    matrix = 1 / (
         (to_pts[:, jnp.newaxis] - from_pts[jnp.newaxis, :])
-        * w[jnp.newaxis, :] * norm_factors[:, jnp.newaxis]
+        * w[jnp.newaxis, :]
+        * norm_factors[:, jnp.newaxis]
     )
     # # Original version
     # matrix_ref = jnp.zeros((n, p), dtype=jnp.float64)
@@ -158,9 +160,9 @@ def barycentric_lagrange_interpolation_matrix_2D(
     # # w_x[j] = \prod_{k != j} (from_pts_x[j] - from_pts_x[k])
     # (2025-06-20, OOT) Vectorized version
     # Seems to be a bit faster than the original
-    from_x_di = jnp.arange(n_x) # for use as diagonal indices for from_pts_x
+    from_x_di = jnp.arange(n_x)  # for use as diagonal indices for from_pts_x
     tmp_from_xdist = from_pts_x[:, jnp.newaxis] - from_pts_x[jnp.newaxis, :]
-    tmp_from_xdist = tmp_from_xdist.at[from_x_di,from_x_di].set(1)
+    tmp_from_xdist = tmp_from_xdist.at[from_x_di, from_x_di].set(1)
     w_x = jnp.prod(tmp_from_xdist, axis=0)
     from_y_di = jnp.arange(n_y)
     tmp_from_ydist = from_pts_y[:, jnp.newaxis] - from_pts_y[jnp.newaxis, :]
@@ -261,17 +263,17 @@ def barycentric_lagrange_interpolation_matrix_3D(
 
     # Compute the inverses of the barycentric weights for x, y, and z dimensions.
     # (2025-07-01, OOT) Vectorized version
-    from_x_di = jnp.arange(n_x) # for use as diagonal indices for from_pts_x
+    from_x_di = jnp.arange(n_x)  # for use as diagonal indices for from_pts_x
     tmp_from_xdist = from_pts_x[:, jnp.newaxis] - from_pts_x[jnp.newaxis, :]
-    tmp_from_xdist = tmp_from_xdist.at[from_x_di,from_x_di].set(1)
+    tmp_from_xdist = tmp_from_xdist.at[from_x_di, from_x_di].set(1)
     w_x = jnp.prod(tmp_from_xdist, axis=0)
-    from_y_di = jnp.arange(n_y) # for use as diagonal indices for from_pts_y
+    from_y_di = jnp.arange(n_y)  # for use as diagonal indices for from_pts_y
     tmp_from_ydist = from_pts_y[:, jnp.newaxis] - from_pts_y[jnp.newaxis, :]
-    tmp_from_ydist = tmp_from_ydist.at[from_y_di,from_y_di].set(1)
+    tmp_from_ydist = tmp_from_ydist.at[from_y_di, from_y_di].set(1)
     w_y = jnp.prod(tmp_from_ydist, axis=0)
-    from_z_di = jnp.arange(n_z) # for use as diagonal indices for from_pts_z
+    from_z_di = jnp.arange(n_z)  # for use as diagonal indices for from_pts_z
     tmp_from_zdist = from_pts_z[:, jnp.newaxis] - from_pts_z[jnp.newaxis, :]
-    tmp_from_zdist = tmp_from_zdist.at[from_z_di,from_z_di].set(1)
+    tmp_from_zdist = tmp_from_zdist.at[from_z_di, from_z_di].set(1)
     w_z = jnp.prod(tmp_from_zdist, axis=0)
     # # Original version
     # w_x = jnp.ones(n_x, dtype=jnp.float64)
