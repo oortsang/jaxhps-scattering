@@ -32,7 +32,7 @@ def barycentric_lagrange_interpolation_matrix_1D(
         jax.Array: Has shape (p,n)
     """
     p = from_pts.shape[0]
-    n = to_pts.shape[0]
+    # n = to_pts.shape[0]
 
     # Compute the inverses of the Barycentric weights
     # (2025-07-01, OOT) Vectorized version
